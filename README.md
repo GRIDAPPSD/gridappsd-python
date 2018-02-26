@@ -18,7 +18,7 @@ The purpose of this repository is to document the chosen way of installing and/o
 
 ## Adding your application
 
-In order to add your application to the you will need to modify the docker-compose.yml file in the gridappsd-docker.  Under the gridappsd service there is a volumes leaf where you will add the path to your application and mount it on the container's filesystem.
+In order to add your application to the you will need to modify the docker-compose.yml file in the gridappsd-docker repository.  Under the gridappsd service there is a volumes leaf where you will add the path to your application and mount it on the container's filesystem.
 
 ## Debugging your python applications
 
