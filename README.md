@@ -13,8 +13,7 @@ The purpose of this repository is to document the chosen way of installing and/o
 ```` bash
 .
 ├── gridappsd-docker
-├── gridappsd-sample-app
-└── openadr-volttron
+└── gridappsd-sample-app
 ````
 
 ## Adding your application
