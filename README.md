@@ -4,11 +4,35 @@
 
 The purpose of this repository is to document the chosen way of installing and/or debugging applications into the GridAPPS-D docker container.
 
+## Sample Application Layout
+
+The following is the recommended structure for applications working with gridappsd:
+
+```` bash
+.
+├── README.md
+└── sample_app
+    ├── sample_app
+    │   └── app
+    │       ├── __init__.py
+    │       └── main.py
+    ├── requirements.txt
+    └── sample_app.config
+````
+
+The outer sample_app folder is a container for the sample_app.  It holds the sample_app.config file which gridappsd will use to lauch the application from inside the gridappsd container.  It should also include any 3rd party pip installable requirements for python such as numpy.  The main gridappsd python environment installs the following so need not be in your requirements files.
+
+```` python
+remote_pdb==1.2.0
+PyYaml==3.12
+stomp.py==4.1.11
+````
+
 ## Requirements
 
 1. Docker ce version 17.12 or better.  You can install this via the docker_install_ubuntu.sh script.  (note for mint you will need to modify the file to work with xenial rather than ubuntu generically)
 
-1. Please clone the repository <https://github.com/GRIDAPPSD/gridappsd-docker> next to this repository (they should both have the same parent folder)
+1. Please clone the repository <https://github.com/GRIDAPPSD/gridappsd-docker> (refered to as gridappsd-docker repository) next to this repository (they should both have the same parent folder)
 
 ```` bash
 .
@@ -47,4 +71,3 @@ telnet '127.0.0.1' 8888
 Once connected you can use any of the pdb commands to move to the next line set other breakpoints etc.  Documentation of those commands can be found at <https://docs.python.org/2/library/pdb.html#debugger-commands>.
 
 To exit the telnet shell type 'quit' and press enter.
-
