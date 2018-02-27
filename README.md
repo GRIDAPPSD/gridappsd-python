@@ -46,6 +46,12 @@ In order to add your application to the you will need to modify the docker-compo
 
 ## Debugging your python applications
 
+### PyCharm (In Progress)
+
+### PyDev (In Progress
+
+### Visual Studio Code (In Progress)
+
 ### Command line
 
 In gridappsd we include a python package called remote_pdb.  This is the only BSD licensed product that we have found to be able to allow us to remotely debug our python based applicatoins.  To use it we need a telnet client and we need to modify the sample-applicatoin to break at a trace_point.
