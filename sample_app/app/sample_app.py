@@ -99,7 +99,7 @@ def _connect(gossServer, stompPort, username, password):
     connection = stomp.Connection12([(gossServer, stompPort)])
     connection.start()
     connection.connect(username, password, wait=True)    
-    print('GOSS connection status: ' + str(goss_connection.is_connected()))
+    print('GOSS connection status: ' + str(connection.is_connected()))
     
 def _send(message,topic):
     connection.send(topic, message);
