@@ -63,7 +63,7 @@ In gridappsd we include a python package called remote_pdb.  This is the only BS
 from remote_pdb import RemotePdb
 
 # Add the following where you would like to break within the python app.
-RemotePdb('127.0.0.1', 8888).set_trace()
+RemotePdb('0.0.0.0', 8888).set_trace()
 
 ````
 
