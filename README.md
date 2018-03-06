@@ -12,10 +12,9 @@ The following is the recommended structure for applications working with gridapp
 .
 ├── README.md
 └── sample_app
-    ├── sample_app
-    │   └── app
-    │       ├── __init__.py
-    │       └── main.py
+    └── app
+    ├── __init__.py
+    └── main.py
     ├── requirements.txt
     └── sample_app.config
 ````
