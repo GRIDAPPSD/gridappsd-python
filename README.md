@@ -12,11 +12,12 @@ The following is the recommended structure for applications working with gridapp
 .
 ├── README.md
 └── sample_app
-    └── app
-    ├── __init__.py
-    └── main.py
+    ├── app
+    │   ├── __init__.py
+    │   └── sample_app.py
     ├── requirements.txt
-    └── sample_app.config
+    ├── sample_app.config
+    └── setup.py
 ````
 
 The outer sample_app folder is a container for the sample_app.  It holds the sample_app.config file which gridappsd will use to lauch the application from inside the gridappsd container.  It should also include any 3rd party pip installable requirements for python such as numpy.  The main gridappsd python environment installs the following so need not be in your requirements files.
