@@ -42,7 +42,18 @@ stomp.py==4.1.11
 
 ## Adding your application
 
-In order to add your application to the you will need to modify the docker-compose.yml file in the gridappsd-docker repository.  Under the gridappsd service there is a volumes leaf where you will add the path to your application and mount it on the container's filesystem.
+In order to add your application to the container you will need to modify the docker-compose.yml file included in the gridappsd-docker repository.  Under the gridappsd service there is an example volumes leaf that is commented out.  Uncomment and modify these lines to add the path for your application and conf file.  Adding these lines will mount the application on the container's filesystem when the container is started.
+
+````
+#    volumes:
+#      - ~/git/gridappsd-sample-app/sample_app:/gridappsd/applications/sample_app
+#      - ~/git/gridappsd-sample-app/sample_app/sample_app.config:/gridappsd/applications/sample_app.config
+
+    volumes:
+      - ~/git/[my_app_directory]/[my_app]:/gridappsd/applications/[my_app]
+      - ~/git/[my_app_directory]/[my_app]/[my_app.config]:/gridappsd/applications/[my_app.config]
+
+````
 
 ## Debugging your python applications
 
