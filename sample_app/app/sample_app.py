@@ -114,8 +114,6 @@ if __name__ == "__main__":
 
     parser.add_argument("simulationId",
                         help="Simulation id to use for responses on the message bus.")
-    parser.add_argument("-c", "--static_args",  
-                        help="The static input string for app, if used then -f will be ignored")                        
     parser.add_argument("-u", "--user", default="system",
                         help="The username to authenticate with the message bus.")
     parser.add_argument("-p", "--password", default="manager",
