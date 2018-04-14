@@ -1,0 +1,2 @@
+stomp.py==4.1.20
+PyYAML==3.12
