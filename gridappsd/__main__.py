@@ -50,6 +50,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
 
 logging.getLogger("stomp.py").setLevel(logging.INFO)
 
+
 def main(args=None):
 
     if not args:

@@ -51,7 +51,7 @@ setup(
     packages=packages,
     entry_points={
         'console_scripts': [
-              'fncs_goss_bridge = main'
+              'fncs_bridge = gridappsd.__main__:main'
         ]
     }
 )
