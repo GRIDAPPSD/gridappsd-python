@@ -52,6 +52,7 @@ _log = logging.getLogger(inspect.getmodulename(__file__))
 
 valid_log_levels = [DEBUG, INFO, WARNING, WARN, FATAL]
 
+
 class InvalidSimulationIdError(Exception):
     pass
 
@@ -75,6 +76,18 @@ class GridAPPSD(GOSS):
                 self._base_status_topic += "."
 
             self._simulation_status_topic = self._base_status_topic + str(simulation_id)
+
+    def model_query(self):
+        pass
+
+    def timeseries_query(self):
+        pass
+
+    def log_query(self):
+        pass
+
+    def get_platform_status(self):
+        pass
 
     def send_simulation_status(self, status, message, log_level=INFO):
 

@@ -39,7 +39,7 @@
 # -------------------------------------------------------------------------------
 from setuptools import setup, find_packages
 
-__version__ = '0.1'
+__version__ = '0.2'
 
 packages = find_packages('.')
 
@@ -49,9 +49,4 @@ setup(
     version=__version__,
     install_requires=['PyYaml', 'stomp.py'],
     packages=packages,
-    entry_points={
-        'console_scripts': [
-              'fncs_bridge = gridappsd.__main__:main'
-        ]
-    }
 )
