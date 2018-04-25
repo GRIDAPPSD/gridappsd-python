@@ -47,6 +47,7 @@ import logging
 from logging import DEBUG, INFO, WARNING, FATAL, WARN, getLevelName
 
 from . import GOSS
+from . import topics as t
 
 _log = logging.getLogger(inspect.getmodulename(__file__))
 
@@ -86,8 +87,11 @@ class GridAPPSD(GOSS):
     def log_query(self):
         pass
 
-    def get_platform_status(self):
-        pass
+    def get_platform_status(self, applications=True, services=True, appInstances=True, serviceInstances=True):
+        _log.debug("Retrieving platform status from GridAPPSD")
+        msg = dict(appInstances=appInstances, applications=applications, services=services,
+                   serviceInstances=serviceInstances)
+        return self.get_response(t.REQUEST_PLATFORM_STATUS, json.dumps(msg), timeout=30)
 
     def send_simulation_status(self, status, message, log_level=INFO):
 
