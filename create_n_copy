@@ -1,0 +1,5 @@
+python setup.py sdist
+docker cp dist/gridappsd-0.1.tar.gz 578e2175f112:/gridappsd/ 
+#docker cp dist/gridappsd-0.1.tar.gz gridappsddocker_gridappsd_1:/gridappsd/
+docker exec 578e2175f112 pip install gridappsd-0.1.tar.gz
+#docker exec gridappsddocker_gridappsd_1 pip install gridappsd-0.1.tar.gz
