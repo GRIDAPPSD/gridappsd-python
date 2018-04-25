@@ -43,16 +43,25 @@ Created on March 1, 2018
 @author: Craig Allwardt
 """
 
+from datetime import datetime
 import inspect
+import json
 import logging
 import os
+import random
+from time import sleep
 
 from stomp import Connection12 as Connection, ConnectionListener, PrintingListener
 
 import stomp
+
 import yaml
 
 _log = logging.getLogger(inspect.getmodulename(__file__))
+
+
+class TimeoutError(Exception):
+    pass
 
 
 class GOSS(object):
@@ -81,12 +90,47 @@ class GOSS(object):
     def send(self, topic, message):
         self._make_connection()
         _log.debug("Sending topic: {} body: {}".format(topic, message))
-        self._conn.send(body=message, destination=topic)
+        self._conn.send(body=message, destination=topic, headers={'reply-to': '/temp-queue/goss.response'} )
         # self._id += 1
         # if self._id > 10000:
         #     self._id = 1
 
-    def subscribe(self, topic, callback):
+    def get_response(self, topic, message, timeout=5):
+        id = datetime.now().strftime("%Y%m%d%h%M%s")
+        reply_to = "/temp-queue/response.{}".format(id)
+
+        class ResponseListener(object):
+            def __init__(self):
+                self.response = None
+
+            def on_message(self, header, message):
+                _log.debug("Internal on message is: {} {}".format(header, message))
+                try:
+                    self.response = json.loads(message) #dict(header=header, message=message)
+                except ValueError:
+                    self.response = dict(error="Invalid json returned",
+                                         header=header,
+                                         message=message)
+
+        listener = ResponseListener()
+        self.subscribe(reply_to, listener, id=random.randint(40, 2000))
+
+        self._conn.send(body=message, destination=topic, headers={'reply-to': reply_to})
+        count = 0
+
+        while count < timeout:
+            if listener.response is not None:
+                return listener.response
+
+            sleep(1)
+            count += 1
+
+        raise TimeoutError("Request not responded to in a timely manner!")
+
+    def subscribe(self, topic, callback, id=None):
+        if id is None:
+            id = self._id
+
         if not callback:
             err = "Invalid callback specified in subscription"
             _log.error(err)
@@ -97,7 +141,7 @@ class GOSS(object):
             raise AttributeError(err)
         self._make_connection()
         self._conn.set_listener(topic, callback)
-        self._conn.subscribe(destination=topic, ack='auto', id=self._id)
+        self._conn.subscribe(destination=topic, ack='auto', id=id)
 
     def _make_connection(self):
         if self._conn is None or not self._conn.is_connected():
