@@ -46,6 +46,7 @@ import inspect
 import logging
 from logging import DEBUG, INFO, WARNING, FATAL, WARN, getLevelName
 
+
 from . import GOSS
 from . import topics as t
 
@@ -53,16 +54,18 @@ _log = logging.getLogger(inspect.getmodulename(__file__))
 
 valid_log_levels = [DEBUG, INFO, WARNING, WARN, FATAL]
 
+POWERGRID_MODEL = "powergridmodel"
+
 
 class InvalidSimulationIdError(Exception):
     pass
 
 
 class GridAPPSD(GOSS):
-
+    # TODO Get the caller from the traceback/inspect module.
     def __init__(self, simulation_id=None,
                  source="",
-                 base_simulation_status_topic=None,
+                 base_simulation_status_topic=t.BASE_SIMULATION_STATUS_TOPIC,
                  **kwargs):
         super(GridAPPSD, self).__init__(**kwargs)
         self._simulation_status_topic = None
@@ -78,14 +81,40 @@ class GridAPPSD(GOSS):
 
             self._simulation_status_topic = self._base_status_topic + str(simulation_id)
 
-    def model_query(self):
-        pass
+    def query_object_types(self, model_id=None):
+        args = {}
+        if model_id:
+            args["modelId"] = model_id
+        payload = self._build_query_payload("QUERY_OBJECT_TYPES", **args)
+        return self.get_response(t.REQUEST_POWERGRID_DATA, payload, timeout=30)
 
-    def timeseries_query(self):
-        pass
+    def query_model_names(self, model_id=None):
+        args = {}
+        if model_id is not None:
+            args["modelId"] = model_id
+        payload = self._build_query_payload("QUERY_MODEL_NAMES", **args)
+        return self.get_response(t.REQUEST_POWERGRID_DATA, payload, timeout=30)
 
-    def log_query(self):
-        pass
+    def query_object(self, object_id, model_id=None):
+        if not object_id:
+            raise ValueError("Invalid object_id specified.")
+        args = dict(objectId=object_id)
+        if model_id is not None:
+            args["modelId"] = model_id
+        payload = self._build_query_payload("QUERY_OBJECT", **args)
+        return self.get_response(t.REQUEST_POWERGRID_DATA, payload, timeout=30)
+
+    def query_data(self, query, database_type=POWERGRID_MODEL, timeout=30):
+        request_type = None
+        if database_type == POWERGRID_MODEL:
+            request_type = 'QUERY'
+        else:
+            raise ValueError("Only supported {} currently".format(POWERGRID_MODEL))
+
+        payload = self._build_query_payload(request_type, queryString=query)
+        # Do this so we can eventually support other db through this mechanism.
+        request_topic = '.'.join((t.REQUEST_DATA, database_type))
+        return self.get_response(request_topic, json.dumps(payload), timeout=timeout)
 
     def get_platform_status(self, applications=True, services=True, appInstances=True, serviceInstances=True):
         _log.debug("Retrieving platform status from GridAPPSD")
@@ -118,6 +147,10 @@ class GridAPPSD(GOSS):
 
         return data
 
+    def _build_query_payload(self, request_type, response_format='JSON', **kwargs):
+        d = dict(requestType=request_type, resultFormat=response_format)
+        d.update(**kwargs)
+        return d
 
 
 

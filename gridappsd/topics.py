@@ -11,9 +11,13 @@ CONFIG = "/queue/goss.gridappsd.process.request.config"
 PLATFORM_STATUS = "/queue/goss.gridappsd.process.request.status.platform"
 
 BASE_TOPIC_PREFIX = "goss.gridappsd"
+PROCESS_PREFIX = ".".join((BASE_TOPIC_PREFIX, "process"))
+REQUEST_PLATFORM_STATUS = ".".join([PROCESS_PREFIX, "request.status.platform"])
 
-REQUEST_PLATFORM_STATUS = ".".join([BASE_TOPIC_PREFIX, "process.request.status.platform"])
+REQUEST_DATA = ".".join((PROCESS_PREFIX, "request.data"))
+REQUEST_SIMULATION_STATUS = ".".join((PROCESS_PREFIX, "request.status.simulation"))
 
+REQUEST_POWERGRID_DATA = ".".join((REQUEST_DATA, "powergridmodel"))
 
 """
 //topics
