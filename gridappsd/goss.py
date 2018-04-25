@@ -47,15 +47,10 @@ from datetime import datetime
 import inspect
 import json
 import logging
-import os
 import random
 from time import sleep
 
-from stomp import Connection12 as Connection, ConnectionListener, PrintingListener
-
-import stomp
-
-import yaml
+from stomp import Connection12 as Connection
 
 _log = logging.getLogger(inspect.getmodulename(__file__))
 
@@ -99,20 +94,26 @@ class GOSS(object):
         id = datetime.now().strftime("%Y%m%d%h%M%s")
         reply_to = "/temp-queue/response.{}".format(id)
 
+        # Change message to string if we have a dictionary.
+        if isinstance(message, dict):
+            message = json.dumps(message)
+
         class ResponseListener(object):
-            def __init__(self):
+            def __init__(self, topic):
                 self.response = None
+                self._topic = topic
 
             def on_message(self, header, message):
-                _log.debug("Internal on message is: {} {}".format(header, message))
-                try:
-                    self.response = json.loads(message) #dict(header=header, message=message)
-                except ValueError:
-                    self.response = dict(error="Invalid json returned",
-                                         header=header,
-                                         message=message)
+                if header['destination'] == self._topic:
+                    _log.debug("Internal on message is: {} {}".format(header, message))
+                    try:
+                        self.response = json.loads(message) #dict(header=header, message=message)
+                    except ValueError:
+                        self.response = dict(error="Invalid json returned",
+                                             header=header,
+                                             message=message)
 
-        listener = ResponseListener()
+        listener = ResponseListener(reply_to)
         self.subscribe(reply_to, listener, id=random.randint(40, 2000))
 
         self._conn.send(body=message, destination=topic, headers={'reply-to': reply_to})
@@ -149,153 +150,3 @@ class GOSS(object):
             self._conn = Connection([(self.stomp_address, self.stomp_port)])
             self._conn.connect(self.__user, self.__pass, wait=True)
 
-
-class JSONResponseListener(ConnectionListener):
-
-    def __init__(self, callback):
-        super(JSONResponseListener, self).__init__()
-        self._callback = callback
-
-    def on_connecting(self, host_and_port):
-        """
-        :param (str,int) host_and_port:
-        """
-        _log.debug('on_connecting %s %s' % host_and_port)
-
-    def on_connected(self, headers, body):
-        """
-        :param dict headers:
-        :param body:
-        """
-        _log.debug('on_connected %s %s' % (headers, body))
-
-    def on_disconnected(self):
-        _log.debug('on_disconnected')
-
-    def on_heartbeat_timeout(self):
-        _log.debug('on_heartbeat_timeout')
-
-    def on_before_message(self, headers, body):
-        """
-        :param dict headers:
-        :param body:
-        """
-        _log.debug('on_before_message %s %s' % (headers, body))
-        return headers, body
-
-    def on_message(self, headers, body):
-        """
-        :param dict headers:
-        :param body:
-        """
-        _log.debug('headers are dict: {}'.format(isinstance(headers, dict)))
-        _log.debug('on_message %s %s' % (headers, body))
-        self._callback(headers, body)
-
-    def on_receipt(self, headers, body):
-        """
-        :param dict headers:
-        :param body:
-        """
-        _log.debug('on_receipt %s %s' % (headers, body))
-
-    def on_error(self, headers, body):
-        """
-        :param dict headers:
-        :param body:
-        """
-        _log.debug('on_error %s %s' % (headers, body))
-
-    def on_send(self, frame):
-        """
-        :param Frame frame:
-        """
-        _log.debug('on_send %s %s %s' % (frame.cmd, frame.headers, frame.body))
-
-    def on_heartbeat(self):
-        _log.debug('on_heartbeat')
-
-# class JSONResponseListener(ConnectionListener):
-#
-#     def __init__(self, callback):
-#         self._callback = callback
-#
-#     def on_message(self, headers, message):
-#         print("{} {}".format(headers, message))
-#         self._callback(headers, message)
-#
-#     def on_error(self, headers, message):
-#         print("error: {} {}".format(headers, message))
-
-#
-# class GOSSListener(object):
-#     def on_message(self, headers, msg):
-#         message = {}
-#         try:
-#             message_str = 'received message ' + str(msg)
-#             if fncs.is_initialized():
-#                 _send_simulation_status('RUNNING', message_str, 'DEBUG')
-#             else:
-#                 _send_simulation_status('STARTED', message_str, 'DEBUG')
-#             json_msg = yaml.safe_load(str(msg))
-#             if json_msg['command'] == 'isInitialized':
-#                 message_str = 'isInitialized check: ' + str(is_initialized)
-#                 if fncs.is_initialized():
-#                     _send_simulation_status('RUNNING', message_str, 'DEBUG')
-#                 else:
-#                     _send_simulation_status('STARTED', message_str, 'DEBUG')
-#                 message['command'] = 'isInitialized'
-#                 message['response'] = str(is_initialized)
-#                 if (simulation_id != None):
-#                     message['output'] = _get_fncs_bus_messages(simulation_id)
-#                 message_str = 'Added isInitialized output, sending message ' + str(message) + ' connection ' + str(
-#                     goss_connection)
-#                 if fncs.is_initialized():
-#                     _send_simulation_status('RUNNING', message_str, 'DEBUG')
-#                 else:
-#                     _send_simulation_status('STARTED', message_str, 'DEBUG')
-#                 goss_connection.send(output_to_goss_topic, json.dumps(message))
-#                 goss_connection.send(output_to_goss_queue, json.dumps(message))
-#             elif json_msg['command'] == 'update':
-#                 message['command'] = 'update'
-#                 _publish_to_fncs_bus(simulation_id, json.dumps(json_msg['message']))  # does not return
-#             elif json_msg['command'] == 'nextTimeStep':
-#                 message_str = 'is next timestep'
-#                 _send_simulation_status('RUNNING', message_str, 'DEBUG')
-#                 message['command'] = 'nextTimeStep'
-#                 current_time = json_msg['currentTime']
-#                 message_str = 'incrementing to ' + str(current_time)
-#                 _send_simulation_status('RUNNING', message_str, 'DEBUG')
-#                 _done_with_time_step(
-#                     current_time)  # current_time is incrementing integer 0 ,1, 2.... representing seconds
-#                 message_str = 'done with timestep ' + str(current_time)
-#                 _send_simulation_status('RUNNING', message_str, 'DEBUG')
-#                 message_str = 'simulation id ' + str(simulation_id)
-#                 _send_simulation_status('RUNNING', message_str, 'DEBUG')
-#                 message['output'] = _get_fncs_bus_messages(simulation_id)
-#                 response_msg = json.dumps(message)
-#                 message_str = 'sending fncs output message ' + str(response_msg)
-#                 _send_simulation_status('RUNNING', message_str, 'DEBUG')
-#                 goss_connection.send(output_to_goss_topic, response_msg)
-#                 goss_connection.send(output_to_goss_queue, response_msg)
-#             elif json_msg['command'] == 'stop':
-#                 message_str = 'Stopping the simulation'
-#                 _send_simulation_status('stopped', message_str, 'INFO')
-#                 fncs.die()
-#                 sys.exit()
-#
-#         except Exception as e:
-#             message_str = 'Error in command ' + str(e)
-#             _send_simulation_status('ERROR', message_str, 'ERROR')
-#             if fncs.is_initialized():
-#                 fncs.die()
-#
-#     def on_error(self, headers, message):
-#         message_str = 'Error in goss listener ' + str(message)
-#         _send_simulation_status('ERROR', message_str, 'ERROR')
-#         if fncs.is_initialized():
-#             fncs.die()
-#
-#     def on_disconnected(self):
-#         if fncs.is_initialized():
-#             fncs.die()
