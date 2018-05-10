@@ -1,6 +1,6 @@
 DEFAULT_FNCS_LOCATION = 'tcp://localhost:5570'
-DEFAULT_INPUT_TOPIC = '/topic/goss.gridappsd.simulation.input'
-DEFAULT_OUTPUT_TOPIC = '/topic/goss.gridappsd.simulation.output'
+FNCS_BASE_INPUT_TOPIC = '/topic/goss.gridappsd.simulation.input'
+FNCS_BASE_OUTPUT_TOPIC = '/topic/goss.gridappsd.simulation.output'
 BASE_SIMULATION_STATUS_TOPIC = "/topic/goss.gridappsd.process.log.simulation"
 
 BLAZEGRAPH = "/queue/goss.gridappsd.process.request.data.powergridmodel"
@@ -18,6 +18,14 @@ REQUEST_DATA = ".".join((PROCESS_PREFIX, "request.data"))
 REQUEST_SIMULATION_STATUS = ".".join((PROCESS_PREFIX, "request.status.simulation"))
 
 REQUEST_POWERGRID_DATA = ".".join((REQUEST_DATA, "powergridmodel"))
+
+
+def fncs_input_topic(simulation_id):
+    return "{}.{}".format(FNCS_BASE_INPUT_TOPIC, simulation_id)
+
+
+def fncs_output_topic(simulation_id):
+    return "{}.{}".format(FNCS_BASE_OUTPUT_TOPIC, simulation_id)
 
 """
 //topics
