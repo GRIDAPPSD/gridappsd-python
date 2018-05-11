@@ -86,9 +86,6 @@ class GOSS(object):
         self._make_connection()
         _log.debug("Sending topic: {} body: {}".format(topic, message))
         self._conn.send(body=message, destination=topic, headers={'reply-to': '/temp-queue/goss.response'} )
-        # self._id += 1
-        # if self._id > 10000:
-        #     self._id = 1
 
     def get_response(self, topic, message, timeout=5):
         id = datetime.now().strftime("%Y%m%d%h%M%s")
@@ -140,8 +137,14 @@ class GOSS(object):
             err = "Invalid topic specified in subscription"
             _log.error(err)
             raise AttributeError(err)
+
         self._make_connection()
-        self._conn.set_listener(topic, callback)
+
+        # Handle the case where callback is a function.
+        if callable(callback):
+           self._conn.set_listener(topic, CallbackWrapperListener(callback))
+        else:
+            self._conn.set_listener(topic, callback)
         self._conn.subscribe(destination=topic, ack='auto', id=id)
 
     def _make_connection(self):
@@ -150,3 +153,11 @@ class GOSS(object):
             self._conn = Connection([(self.stomp_address, self.stomp_port)])
             self._conn.connect(self.__user, self.__pass, wait=True)
 
+
+class CallbackWrapperListener(object):
+
+    def __init__(self, callback):
+        self._callback = callback
+
+    def on_message(self, header, message):
+        self._callback(header, message)

@@ -1,3 +1,4 @@
+import json
 import logging
 from pprint import pprint, pformat
 import sys
@@ -18,10 +19,18 @@ if __name__ == '__main__':
         def on_message(self, headers, message):
             print("headers: {}\nmessage: {}".format(headers, message))
 
+    def on_message(headers, message):
+        print("function headers: {}\nmessage: {}".format(headers, message))
+
     gapps = GridAPPSD(stomp_address="127.0.0.1",
                       stomp_port=61613,
                       username='system',
                       password='manager')
+
+    gapps.subscribe('/topic/foo', on_message)
+    sleep(1)
+    gapps.send('/topic/foo', json.dumps(dict(bim='bash')))
+
 
     resp = gapps.get_platform_status()
     _log.debug("Got response of: {}".format(resp))
