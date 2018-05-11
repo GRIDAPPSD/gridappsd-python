@@ -34,7 +34,7 @@ class DifferenceBuilder(object):
         msg = dict(command="update",
                    input=dict(simulation_id=self._simulation_id,
                               message=dict(timestamp=datetime.now(tz=pytz.UTC).isoformat(sep=' '),  #."2018-01-08 13:27:00.000Z",
-                                           difference_mrid=uuid4(),
+                                           difference_mrid=str(uuid4()),
                                            reverse_differences=self._reverse,
                                            forward_differences=self._forward)))
         return msg.copy()
