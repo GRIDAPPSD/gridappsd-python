@@ -213,7 +213,7 @@ ORDER by ?name
 
     results = gridappsd_obj.query_data(query)
     capacitors = []
-    results_obj = json.loads(results['data'])
+    results_obj = results['data']
     for p in results_obj['results']['bindings']:
         capacitors.append(p['id']['value'])
 
