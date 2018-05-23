@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------------
-# Copyright (c) 2017, Battelle Memorial Institute All rights reserved.
+# Copyright (c) 2018, Battelle Memorial Institute All rights reserved.
 # Battelle Memorial Institute (hereinafter Battelle) hereby grants permission to any person or entity
 # lawfully obtaining a copy of this software and associated documentation files (hereinafter the
 # Software) to redistribute and use the Software in source and binary forms, with or without modification.
@@ -93,6 +93,10 @@ class GridAPPSD(GOSS):
         if model_id is not None:
             args["modelId"] = model_id
         payload = self._build_query_payload("QUERY_MODEL_NAMES", **args)
+        return self.get_response(t.REQUEST_POWERGRID_DATA, payload, timeout=30)
+
+    def query_model_info(self):
+        payload = self._build_query_payload("QUERY_MODEL_INFO")
         return self.get_response(t.REQUEST_POWERGRID_DATA, payload, timeout=30)
 
     def query_object(self, object_id, model_id=None):
