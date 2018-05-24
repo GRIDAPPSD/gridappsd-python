@@ -61,6 +61,13 @@ if __name__ == '__main__':
     def on_message(headers, message):
         print("Received: headers: {}\nmessage: {}".format(headers, message))
 
+    # Handle python 3 not having input_raw function.
+    try:
+        get_input = raw_input
+    except NameError:
+        get_input = input
+
+
     print("Creating GridAPPSD object")
     gapps = GridAPPSD(stomp_address="127.0.0.1",
                       stomp_port=61613,
@@ -69,28 +76,28 @@ if __name__ == '__main__':
 
     print("Subscribing to /topic/foo")
     gapps.subscribe('/topic/foo', on_message)
-    input("Press enter to send dict(bim='bash') to topic /topic/foo")
+    result = get_input("Press enter to send json.dumps(dict(bim='bash')) to topic /topic/foo")
     print("Sending data")
     gapps.send('/topic/foo', json.dumps(dict(bim='bash')))
     sleep(1)
 
-    input("Press enter to receive platform status")
+    get_input("Press enter to receive platform status")
     resp = gapps.get_platform_status()
     pprint(resp)
 
-    input("Press enter to query model info")
+    get_input("Press enter to query model info")
     resp = gapps.query_model_info()
     pprint(resp)
 
-    input("Press enter to query model names")
+    get_input("Press enter to query model names")
     resp = gapps.query_model_names()
     pprint(resp)
 
-    input("Press enter to query object types")
+    get_input("Press enter to query object types")
     resp = gapps.query_object_types()
     pprint(resp)
 
-    input("Press enter to run ad-hoc query")
+    get_input("Press enter to run ad-hoc query")
     # list all the connectivity nodes by feeder - CIMImporter when building GldNodes
     sparql = """
 PREFIX r:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -111,4 +118,5 @@ ORDER by ?feeder ?name
     resp = gapps.query_data(sparql)
     pprint(resp)
 
-    input("Press enter to exit")
+    get_input("Press enter to exit")
+    print()

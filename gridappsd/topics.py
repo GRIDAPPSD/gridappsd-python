@@ -68,11 +68,14 @@ def fncs_input_topic(simulation_id):
 def fncs_output_topic(simulation_id):
     return "{}.{}".format(FNCS_BASE_OUTPUT_TOPIC, simulation_id)
 
+
 def simulation_output_topic(simulation_id):
-	return "{}.{}.{}".format(BASE_SIMULATION_TOPIC, 'output', simulation_id)
+    return "{}.{}.{}".format(BASE_SIMULATION_TOPIC, 'output', simulation_id)
+
 
 def simulation_input_topic(simulation_id):
-	return "{}.{}.{}".format(BASE_SIMULATION_TOPIC, 'output', simulation_id)
+    return "{}.{}.{}".format(BASE_SIMULATION_TOPIC, 'output', simulation_id)
+
 
 """
 //topics
