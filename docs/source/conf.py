@@ -195,7 +195,9 @@ epub_exclude_files = ['search.html']
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
 
+
 import subprocess
+
 
 # Custom event handlers for gridappsd-python #
 def setup(app):
@@ -213,9 +215,10 @@ def generate_apidoc(app):
     print('BUILIDING api docs '+ __file__)
     print('CWD: '+os.getcwd())
 
-    #path_to_src = os.path.abspath(os.path.join(os.path.dirname(__file__), 'gridappsd'))
-    #path_to_output = os.path.abspath(os.path.join(os.path.dirname(__file__), 'source'))
-    cmd = ["sphinx-apidoc", '-M', '-d 4', '-o', 'source', '--force', '../../gridappsd']
+    gridappsd_src = '../gridappsd'
+    if os.environ.get("READTHEDOCS"):
+        gridappsd_src = '../../gridappsd'
+    cmd = ["sphinx-apidoc", '-M', '-d 4', '-o', 'source', '--force', gridappsd_src]
 
     subprocess.check_call(cmd)
     # print(path_to_src)

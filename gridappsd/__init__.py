@@ -39,11 +39,9 @@
 # -------------------------------------------------------------------------------
 """ GridAPPSD Python Connection Library
 
-The :mod:`gridappsd` contains three classes:
+The :mod:`gridappsd` contains a connection class :class:`gridappsd.GridAPPSD` for connecting with the
+main GridAPPSD executable.
 
-- :class:`gridappsd.gridappsd.GOSS`
-- :class:`gridappsd.GridAPPSD`
-- :class:`gridappsd.DifferenceBuilder`
 """
 from . goss import GOSS
 from . gridappsd import GridAPPSD

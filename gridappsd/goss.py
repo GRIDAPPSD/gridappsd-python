@@ -61,6 +61,8 @@ class TimeoutError(Exception):
 
 
 class GOSS(object):
+    """ Base class providing connections to a GOSS instance via stomp protocol
+    """
 
     def __init__(self, username='system', password='manager',
                  stomp_address='127.0.0.1', stomp_port='61613', id=1,

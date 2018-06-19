@@ -62,6 +62,8 @@ class InvalidSimulationIdError(Exception):
 
 
 class GridAPPSD(GOSS):
+    """ The main :class:`GridAPPSD` intface for connecting to a GridAPPSD instance
+    """
     # TODO Get the caller from the traceback/inspect module.
     def __init__(self, simulation_id=None,
                  source="",
@@ -82,6 +84,11 @@ class GridAPPSD(GOSS):
             self._simulation_status_topic = self._base_status_topic + str(simulation_id)
 
     def query_object_types(self, model_id=None):
+        """ Allows the caller to query the different object types.
+                
+        :param model_id:
+        :return:
+        """
         args = {}
         if model_id:
             args["modelId"] = model_id
