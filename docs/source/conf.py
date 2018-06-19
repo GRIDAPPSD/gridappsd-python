@@ -215,7 +215,7 @@ def generate_apidoc(app):
 
     #path_to_src = os.path.abspath(os.path.join(os.path.dirname(__file__), 'gridappsd'))
     #path_to_output = os.path.abspath(os.path.join(os.path.dirname(__file__), 'source'))
-    cmd = ["sphinx-apidoc", '-M', '-d 4', '-o', 'source', '--force', '../gridappsd']
+    cmd = ["sphinx-apidoc", '-M', '-d 4', '-o', 'source', '--force', '../../gridappsd']
 
     subprocess.check_call(cmd)
     # print(path_to_src)
