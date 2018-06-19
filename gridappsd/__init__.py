@@ -41,7 +41,7 @@
 
 The :mod:`gridappsd` contains three classes:
 
-- :class:`gridappsd.GOSS`
+- :class:`gridappsd.gridappsd.GOSS`
 - :class:`gridappsd.GridAPPSD`
 - :class:`gridappsd.DifferenceBuilder`
 """
