@@ -188,10 +188,43 @@ epub_copyright = copyright
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
 
-
 # -- Extension configuration -------------------------------------------------
 
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
+
+import subprocess
+
+# Custom event handlers for gridappsd-python #
+def setup(app):
+    """
+    Registers callback method on sphinx events. callback method used to
+    dynamically generate api-docs rst files which are then converted to html
+    by readthedocs
+    :param app:
+    """
+    app.connect('builder-inited', generate_apidoc)
+#    app.connect('build-finished', clean_apirst)
+
+
+def generate_apidoc(app):
+    print('BUILIDING api docs '+ __file__)
+    print('CWD: '+os.getcwd())
+
+    #path_to_src = os.path.abspath(os.path.join(os.path.dirname(__file__), 'gridappsd'))
+    #path_to_output = os.path.abspath(os.path.join(os.path.dirname(__file__), 'source'))
+    cmd = ["sphinx-apidoc", '-M', '-d 4', '-o', 'source', '--force', '../gridappsd']
+
+    subprocess.check_call(cmd)
+    # print(path_to_src)
+    # cmd = [
+    #     'javasphinx-apidoc',
+    #     path_to_src,
+    #     '-o',
+    #     'source/api_docs',
+    #     '-c',
+    #     'cache'
+    # ]
+    # subprocess.call(cmd)
