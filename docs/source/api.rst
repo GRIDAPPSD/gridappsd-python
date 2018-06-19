@@ -1,5 +1,5 @@
-API documentaiton
-=================
+GridAPSP Python API
+===================
 
 .. automodule:: gridappsd
    :members:
