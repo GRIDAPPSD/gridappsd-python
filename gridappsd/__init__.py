@@ -37,7 +37,14 @@
 # PACIFIC NORTHWEST NATIONAL LABORATORY operated by BATTELLE for the
 # UNITED STATES DEPARTMENT OF ENERGY under Contract DE-AC05-76RL01830
 # -------------------------------------------------------------------------------
+""" GridAPPSD Python Connection Library
 
+The :mod:`gridappsd` contains three classes:
+
+- :class:`gridappsd.GOSS`
+- :class:`gridappsd.GridAPPSD`
+- :class:`gridappsd.DifferenceBuilder`
+"""
 from . goss import GOSS
 from . gridappsd import GridAPPSD
 from . difference_builder import DifferenceBuilder
