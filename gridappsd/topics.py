@@ -60,6 +60,9 @@ REQUEST_SIMULATION_STATUS = ".".join((PROCESS_PREFIX, "request.status.simulation
 
 REQUEST_POWERGRID_DATA = ".".join((REQUEST_DATA, "powergridmodel"))
 
+REQUEST_REGISTER_APP = ".".join((PROCESS_PREFIX, "request.app.remote.register"))
+REQUEST_APP_START = ".".join((PROCESS_PREFIX, "request.app.start"))
+BASE_APPLICATION_HEARTBEAT = ".".join((BASE_TOPIC_PREFIX, "heartbeat"))
 
 def fncs_input_topic(simulation_id):
     return "{}.{}".format(FNCS_BASE_INPUT_TOPIC, simulation_id)
