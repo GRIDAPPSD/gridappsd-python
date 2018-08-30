@@ -91,7 +91,7 @@ class GOSS(object):
         self._conn.send(body=message, destination=topic, headers={'reply-to': '/temp-queue/goss.response'} )
 
     def get_response(self, topic, message, timeout=5):
-        id = datetime.now().strftime("%Y%m%d%h%M%s")
+        id = datetime.now().strftime("%Y%m%d%h%M%S")
         reply_to = "/temp-queue/response.{}".format(id)
 
         # Change message to string if we have a dictionary.
