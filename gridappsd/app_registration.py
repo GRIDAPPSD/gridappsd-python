@@ -30,6 +30,10 @@ class ApplicationController(object):
         self._stop_control_topic = None
         self._status_control_topic = None
         self._process = None
+        self._process_start_time = None
+        self._process_end_time = None
+        self._process_is_running = False
+        self._process_has_started = False
 
         if "type" not in self._configDict or self._configDict['type'] != 'REMOTE':
             _log.warn('Setting type to REMOTE you can remove this error by putting '
@@ -71,9 +75,17 @@ class ApplicationController(object):
     def __start_heartbeat(self):
         starttime = time.time()
         while True:
-            print("Sending")
-            self._gapd.send(self._heartbeat_topic, 'tick')
+            print("Seanding heartbeat {} {}".format(self._heartbeat_topic, self._application_id))
+            print("Heartbeat period: {}".format(self._heartbeat_period))
+            self._gapd.send(self._heartbeat_topic, self._application_id)
             time.sleep(self._heartbeat_period - ((time.time() - starttime) % self._heartbeat_period))
+
+    def __get_status(self):
+        """ Combines the status of the executable app into a dictionary
+        """
+        status = dict(
+
+        )
 
     def __handle_start(self, headers, message):
         obj = json.loads(message)
@@ -83,10 +95,8 @@ class ApplicationController(object):
         else:
             _log.debug("Attempting to start: {}".format(obj['command']))
             args = obj['command'].split(' ')
-            args.insert(0, '/e/git/gridappsd-python/venv/Scripts/python')
             subprocess.call(args=args)
         print("Handling Start: {} {}".format(headers, message))
-
 
     def __handle_stop(self, headers, message):
         print("Handling Stop: {} {}".format(headers, message))
