@@ -57,6 +57,7 @@ REQUEST_PLATFORM_STATUS = ".".join([PROCESS_PREFIX, "request.status.platform"])
 
 REQUEST_DATA = ".".join((PROCESS_PREFIX, "request.data"))
 REQUEST_SIMULATION_STATUS = ".".join((PROCESS_PREFIX, "request.status.simulation"))
+REQUEST_SIMULATION = ".".join((PROCESS_PREFIX, "request.simulation"))
 
 REQUEST_POWERGRID_DATA = ".".join((REQUEST_DATA, "powergridmodel"))
 

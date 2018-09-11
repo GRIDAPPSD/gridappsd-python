@@ -65,7 +65,7 @@ class GOSS(object):
     """
 
     def __init__(self, username='system', password='manager',
-                 stomp_address='127.0.0.1', stomp_port='61613',
+                 stomp_address='localhost', stomp_port='61613',
                  attempt_connection=True):
         self.__user = username
         self.__pass = password

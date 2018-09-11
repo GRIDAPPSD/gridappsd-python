@@ -1,5 +1,9 @@
 FROM python:3.5-jessie
 
+ENV GRIDAPPSD_URI="tcp://gridappsd:61613"
+ENV GRIDAPPSD_USER="system"
+ENV GRIDAPPSD_PASS="manager"
+
 #RUN pip --upgrade pip
 
 WORKDIR /usr/src/gridappsd-python

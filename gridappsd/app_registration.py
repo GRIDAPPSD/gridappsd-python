@@ -1,13 +1,20 @@
 import json
 import logging
+import os
 import time
 import threading
 import subprocess
+import shlex
 
 from . gridappsd import GridAPPSD
 from . topics import REQUEST_REGISTER_APP
 
 _log = logging.getLogger(__name__)
+
+# determine OS type
+posix = False
+if os.name == 'posix':
+    posix = True
 
 
 class ApplicationController(object):
@@ -57,7 +64,10 @@ class ApplicationController(object):
         response = self._gapd.get_response(REQUEST_REGISTER_APP,
                                            self._configDict,
                                            60)
-
+        if 'message' in response:
+            _log.error("An error regisering the application occured")
+            _log.error(response.get('message'))
+            raise ValueError(response.get('message'))
         self._application_id = response.get('applicationId')
         self._heartbeat_topic = response.get('heartbeatTopic')
         self._heartbeat_period = response.get('heartbeatPeriod', 10)
@@ -94,7 +104,11 @@ class ApplicationController(object):
             _log.error("Invalid message sent on start app.")
         else:
             _log.debug("Attempting to start: {}".format(obj['command']))
-            args = obj['command'].split(' ')
+            if posix:
+                args = [obj['command']]
+            else:
+                args = shlex.split(obj['command'])
+
             subprocess.call(args=args)
         print("Handling Start: {} {}".format(headers, message))
 
