@@ -8,8 +8,9 @@ from gridappsd import ApplicationController, GridAPPSD, utils
 
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
-                    format="%(asctime)s;%(levelname)s;%(message)s",
+                    format="%(asctime)s - %(name)s;%(levelname)s|%(message)s",
                     datefmt="%Y-%m-%d %H:%M:%S")
+logging.getLogger('stomp.py').setLevel(logging.ERROR)
 _log = logging.getLogger(__name__)
 
 problems = utils.validate_gridappsd_uri()
@@ -29,23 +30,22 @@ if not os.path.isfile("/appconfig"):
 
 config = json.loads(open("/appconfig").read())
 appreg = None
+gap = None
 while True:
 
     try:
-        gap = GridAPPSD(username=gridapspd_user, password=gridappsd_pass,
-                        address=utils.get_gridappsd_address())
+        if gap is None:
+            gap = GridAPPSD(username=gridapspd_user, password=gridappsd_pass,
+                            address=utils.get_gridappsd_address())
 
     except ConnectionRefusedError:  # Python 3 specific error code
         _log.debug("Retry in 10 seconds")
-        appreg = None
+        gap = appreg = None
         time.sleep(10)
     except stomp.exception.ConnectFailedException:
         _log.debug("Connect failed Retry in 10 seconds")
-        appreg = None
+        gap = appreg = None
         time.sleep(10)
-    # except TypeError:
-    #     _log.debug("Retry in 5 seconds")
-    #     time.sleep(5)
     else:
         if appreg is None:
             def end_app():
