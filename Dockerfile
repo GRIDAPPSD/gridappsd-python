@@ -1,4 +1,4 @@
-FROM python:3.5-jessie
+FROM python:3.6.6-jessie
 
 ENV GRIDAPPSD_URI="tcp://gridappsd:61613"
 ENV GRIDAPPSD_USER="system"

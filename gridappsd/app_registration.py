@@ -117,14 +117,14 @@ class ApplicationController(object):
         t.daemon = True
         t.start()
 
-        tp = threading.Thread(target=self.__print_from_queue)
-        tp.daemon = True
-        tp.start()
+        # tp = threading.Thread(target=self.__print_from_queue)
+        # tp.daemon = True
+        # tp.start()
 
     def __start_heartbeat(self):
         starttime = time.time()
         while True:
-            self._print_queue.put("Sending heartbeat for {}".format(self._application_id))
+            _log.debug("Sending heartbeat for {}".format(self._application_id))
             # print("Seanding heartbeat {} {}".format(self._heartbeat_topic, self._application_id))
             # print("Heartbeat period: {}".format(self._heartbeat_period))
             self._gapd.send(self._heartbeat_topic, self._application_id)

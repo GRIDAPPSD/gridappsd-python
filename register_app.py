@@ -7,7 +7,7 @@ import stomp
 from gridappsd import ApplicationController, GridAPPSD, utils
 
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
+logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format="%(asctime)s - %(name)s;%(levelname)s|%(message)s",
                     datefmt="%Y-%m-%d %H:%M:%S")
 logging.getLogger('stomp.py').setLevel(logging.ERROR)
