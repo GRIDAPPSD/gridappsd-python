@@ -58,6 +58,7 @@ while True:
             try:
                 appreg = ApplicationController(config, gridappsd=gap)
                 appreg.register_app(end_app)
+                _log.info('Application {} registered.'.format(config['id']))
             except ValueError:
                 sys.exit(1)
 
