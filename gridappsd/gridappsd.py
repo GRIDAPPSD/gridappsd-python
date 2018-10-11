@@ -66,10 +66,14 @@ class GridAPPSD(GOSS):
     """
     # TODO Get the caller from the traceback/inspect module.
     def __init__(self, simulation_id=None,
-                 source="",
                  base_simulation_status_topic=t.BASE_SIMULATION_STATUS_TOPIC,
-                 **kwargs):
-        super(GridAPPSD, self).__init__(**kwargs)
+                 address=('localhost', 61613), **kwargs):
+        if 'stomp_address' in kwargs and 'stomp_port' in kwargs:
+            address = (kwargs.pop('stomp_address'), kwargs.pop('stomp_port'))
+        super(GridAPPSD, self).__init__(
+            stomp_address=address[0],
+            stomp_port=address[1],
+            **kwargs)
         self._simulation_status_topic = None
         self._simulation_id = str(simulation_id)
         self._base_status_topic = base_simulation_status_topic

@@ -1,3 +1,5 @@
 stomp.py==4.1.20
 PyYAML==3.12
 pytz==2018.4
+psutil==5.4.7
+dateutils==0.6.6
