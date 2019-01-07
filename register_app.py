@@ -58,8 +58,9 @@ while True:
             try:
                 appreg = ApplicationController(config, gridappsd=gap)
                 appreg.register_app(end_app)
-            except ValueError:
-                sys.exit(1)
+            except:
+                _log.exception("An unhandled exception occured retrying app")
+                appreg = None
 
         time.sleep(2)
 
