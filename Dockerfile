@@ -1,4 +1,5 @@
-FROM python:3.6.6-jessie
+# Use latest slim Python image. Note that it's built on Debian Stretch.
+FROM python:slim
 
 ENV GRIDAPPSD_URI="tcp://gridappsd:61613"
 ENV GRIDAPPSD_USER="system"
