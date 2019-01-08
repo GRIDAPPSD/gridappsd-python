@@ -39,7 +39,7 @@
 # -------------------------------------------------------------------------------
 from setuptools import setup, find_packages
 
-__version__ = '1.7'
+__version__ = '1.8'
 
 packages = find_packages('.')
 
