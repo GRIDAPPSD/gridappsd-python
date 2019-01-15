@@ -66,6 +66,7 @@ class ApplicationController(object):
         self._shutting_down = False
         self._heartbeat_thread = None
         self._heartbeat_period = heatbeat_period
+        self._heartbeat_should_stop = False
         self._application_id = None
         self._heartbeat_topic = None
         self._start_control_topic = None
@@ -79,9 +80,11 @@ class ApplicationController(object):
         self._process_has_started = False
         self._end_callback = None
         self._print_queue = Queue()
+        self._heartbeat_thread = None
+
         if "type" not in self._configDict or self._configDict['type'] != 'REMOTE':
-            _log.warn('Setting type to REMOTE you can remove this error by putting '
-                      '"type": "REMOTE" in the app config file.')
+            _log.warning('Setting type to REMOTE you can remove this error by putting '
+                         '"type": "REMOTE" in the app config file.')
             self._configDict['type'] = 'REMOTE'
 
     def _validate_config(self):
@@ -94,6 +97,10 @@ class ApplicationController(object):
     @property
     def application_id(self):
         return self._application_id
+
+    @property
+    def heartbeat_valid(self):
+        return self._heartbeat_thread is not None
 
     def register_app(self, end_callback):
         print("Sending {}\n\tto {}".format(self._configDict,
@@ -116,22 +123,29 @@ class ApplicationController(object):
         self._end_callback = end_callback
 
         # TODO assuming good response start the heartbeat
-        t = threading.Thread(target=self.__start_heartbeat)
-        t.daemon = True
-        t.start()
+        self._heartbeat_thread = threading.Thread(target=self.__start_heartbeat,
+                                                  args=[self.__heartbeat_error])
+        self._heartbeat_thread.daemon = True
+        self._heartbeat_thread.start()
 
-        tp = threading.Thread(target=self.__print_from_queue)
-        tp.daemon = True
-        tp.start()
+        # tp = threading.Thread(target=self.__print_from_queue)
+        # tp.daemon = True
+        # tp.start()
 
-    def __start_heartbeat(self):
+    def __heartbeat_error(self):
+        self._heartbeat_thread = None
+
+    def __start_heartbeat(self, error_callback):
         starttime = time.time()
-        while True:
-            self._print_queue.put("Sending heartbeat for {}".format(self._application_id))
-            # print("Seanding heartbeat {} {}".format(self._heartbeat_topic, self._application_id))
-            # print("Heartbeat period: {}".format(self._heartbeat_period))
-            self._gapd.send(self._heartbeat_topic, self._application_id)
-            time.sleep(self._heartbeat_period - ((time.time() - starttime) % self._heartbeat_period))
+        try:
+            while True:
+                self._print_queue.put("Sending heartbeat for {}".format(self._application_id))
+                # print("Seanding heartbeat {} {}".format(self._heartbeat_topic, self._application_id))
+                # print("Heartbeat period: {}".format(self._heartbeat_period))
+                self._gapd.send(self._heartbeat_topic, self._application_id)
+                time.sleep(self._heartbeat_period - ((time.time() - starttime) % self._heartbeat_period))
+        except:
+            error_callback()
 
     def __get_status(self):
         """ Combines the status of the executable app into a dictionary

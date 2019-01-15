@@ -42,7 +42,7 @@ while True:
         _log.debug("Retry in 10 seconds")
         gap = appreg = None
         time.sleep(10)
-    except stomp.exception.ConnectFailedException:
+    except (stomp.exception.ConnectFailedException, OSError):
         _log.debug("Connect failed Retry in 10 seconds")
         gap = appreg = None
         time.sleep(10)
@@ -58,8 +58,14 @@ while True:
             try:
                 appreg = ApplicationController(config, gridappsd=gap)
                 appreg.register_app(end_app)
-            except ValueError:
-                sys.exit(1)
+            except:
+                _log.exception("An unhandled exception occured retrying app")
+                appreg = None
+                gap = None
+        else:
+            if not appreg.heartbeat_valid:
+                appreg = None
+                gap = None
 
         time.sleep(2)
 
