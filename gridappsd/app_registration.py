@@ -137,6 +137,7 @@ class ApplicationController(object):
 
     def __start_heartbeat(self, error_callback):
         starttime = time.time()
+
         try:
             while True:
                 self._print_queue.put("Sending heartbeat for {}".format(self._application_id))

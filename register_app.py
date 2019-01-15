@@ -7,7 +7,7 @@ import stomp
 from gridappsd import ApplicationController, GridAPPSD, utils
 
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
+logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format="%(asctime)s - %(name)s;%(levelname)s|%(message)s",
                     datefmt="%Y-%m-%d %H:%M:%S")
 logging.getLogger('stomp.py').setLevel(logging.ERROR)
@@ -58,6 +58,7 @@ while True:
             try:
                 appreg = ApplicationController(config, gridappsd=gap)
                 appreg.register_app(end_app)
+                _log.info('Application {} registered.'.format(config['id']))
             except:
                 _log.exception("An unhandled exception occured retrying app")
                 appreg = None
