@@ -85,6 +85,12 @@ class GOSS(object):
     def connect(self):
         self._make_connection()
 
+    def disconnect(self):
+        if self._conn:
+            self._conn.disconnect()
+
+        self._conn = None
+
     def send(self, topic, message):
         self._make_connection()
         _log.debug("Sending topic: {} body: {}".format(topic, message))
@@ -126,6 +132,8 @@ class GOSS(object):
             sleep(1)
             count += 1
 
+        self._conn.unsubscribe(id)
+
         raise TimeoutError("Request not responded to in a timely manner!")
 
     def subscribe(self, topic, callback):
@@ -155,7 +163,8 @@ class GOSS(object):
         if self._conn is None or not self._conn.is_connected():
             _log.debug("Creating connection")
             self._conn = Connection([(self.stomp_address, self.stomp_port)])
-            self._conn.connect(self.__user, self.__pass, wait=True)
+            self._conn.connect(self.__user, self.__pass)
+            self._conn.transport.wait_for_connection(5)
 
 
 class CallbackWrapperListener(object):
