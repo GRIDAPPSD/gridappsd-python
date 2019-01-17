@@ -18,9 +18,9 @@ def assigned_stomp_port():
     for connecting to the bus.
     """
 
-    random_port = random.randint(61618, 61700)
-    args = ['coilmq', '--port',  str(random_port)]
-    proc = subprocess.Popen(args)
+#     random_port = random.randint(61618, 61700)
+#     args = ['coilmq', '--port',  str(random_port)]
+#     proc = subprocess.Popen(args)
 
     # Use random port that was setup for testing
     # yield random_port
@@ -28,7 +28,7 @@ def assigned_stomp_port():
     # Use gridappsd normal port
     yield 61613
 
-    proc.kill()
+#     proc.kill()
 
 
 @pytest.fixture()
