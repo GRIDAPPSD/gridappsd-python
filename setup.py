@@ -39,9 +39,17 @@
 # -------------------------------------------------------------------------------
 from setuptools import setup, find_packages
 
-__version__ = '1.9'
+__version__ = '1.10'
 
 packages = find_packages('.')
+
+test_deps = [
+    'pytest'
+]
+
+extra_deps = {
+    'test': test_deps
+}
 
 # Setup
 setup(
@@ -49,4 +57,7 @@ setup(
     version=__version__,
     install_requires=['PyYaml', 'stomp.py', 'pytz'],
     packages=packages,
+    test_suite='tests',
+    tests_require=test_deps,
+    extras_require=extra_deps
 )
