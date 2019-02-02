@@ -46,7 +46,7 @@ BASE_SIMULATION_STATUS_TOPIC = "/topic/goss.gridappsd.process.log.simulation"
 
 BLAZEGRAPH = "/queue/goss.gridappsd.process.request.data.powergridmodel"
 LOGS = "/queue/goss.gridappsd.process.request.logs"
-TIMESERIES = "/queue/goss.gridappsd.process.request.timeseries"
+TIMESERIES = "/queue/goss.gridappsd.process.request.data.timeseries"
 
 CONFIG = "/queue/goss.gridappsd.process.request.config"
 PLATFORM_STATUS = "/queue/goss.gridappsd.process.request.status.platform"
