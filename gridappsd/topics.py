@@ -46,7 +46,7 @@ BASE_SIMULATION_STATUS_TOPIC = "/topic/goss.gridappsd.process.log.simulation"
 
 BLAZEGRAPH = "/queue/goss.gridappsd.process.request.data.powergridmodel"
 LOGS = "/queue/goss.gridappsd.process.request.logs"
-TIMESERIES = "/queue/goss.gridappsd.process.request.timeseries"
+TIMESERIES = "/queue/goss.gridappsd.process.request.data.timeseries"
 
 CONFIG = "/queue/goss.gridappsd.process.request.config"
 PLATFORM_STATUS = "/queue/goss.gridappsd.process.request.status.platform"
@@ -57,9 +57,13 @@ REQUEST_PLATFORM_STATUS = ".".join([PROCESS_PREFIX, "request.status.platform"])
 
 REQUEST_DATA = ".".join((PROCESS_PREFIX, "request.data"))
 REQUEST_SIMULATION_STATUS = ".".join((PROCESS_PREFIX, "request.status.simulation"))
+REQUEST_SIMULATION = ".".join((PROCESS_PREFIX, "request.simulation"))
 
 REQUEST_POWERGRID_DATA = ".".join((REQUEST_DATA, "powergridmodel"))
 
+REQUEST_REGISTER_APP = ".".join((PROCESS_PREFIX, "request.app.remote.register"))
+REQUEST_APP_START = ".".join((PROCESS_PREFIX, "request.app.start"))
+BASE_APPLICATION_HEARTBEAT = ".".join((BASE_TOPIC_PREFIX, "heartbeat"))
 
 def fncs_input_topic(simulation_id):
     return "{}.{}".format(FNCS_BASE_INPUT_TOPIC, simulation_id)

@@ -65,18 +65,18 @@ class GOSS(object):
     """
 
     def __init__(self, username='system', password='manager',
-                 stomp_address='127.0.0.1', stomp_port='61613', id=1,
+                 stomp_address='localhost', stomp_port='61613',
                  attempt_connection=True):
         self.__user = username
         self.__pass = password
         self.stomp_address = stomp_address
         self.stomp_port = stomp_port
         self._conn = None
-        self._id = id
+        self._ids = set()
+        self._topic_set = set()
 
         if attempt_connection:
             self._make_connection()
-        # simulation_id, 'system', 'manager', goss_server = '127.0.0.1', stomp_port = '61613'
 
     @property
     def connected(self):
@@ -85,13 +85,19 @@ class GOSS(object):
     def connect(self):
         self._make_connection()
 
+    def disconnect(self):
+        if self._conn:
+            self._conn.disconnect()
+
+        self._conn = None
+
     def send(self, topic, message):
         self._make_connection()
         _log.debug("Sending topic: {} body: {}".format(topic, message))
         self._conn.send(body=message, destination=topic, headers={'reply-to': '/temp-queue/goss.response'} )
 
     def get_response(self, topic, message, timeout=5):
-        id = datetime.now().strftime("%Y%m%d%h%M%s")
+        id = datetime.now().strftime("%Y%m%d%h%M%S")
         reply_to = "/temp-queue/response.{}".format(id)
 
         # Change message to string if we have a dictionary.
@@ -114,7 +120,7 @@ class GOSS(object):
                                              message=message)
 
         listener = ResponseListener(reply_to)
-        self.subscribe(reply_to, listener, id=random.randint(40, 2000))
+        self.subscribe(reply_to, listener)
 
         self._conn.send(body=message, destination=topic, headers={'reply-to': reply_to})
         count = 0
@@ -126,11 +132,14 @@ class GOSS(object):
             sleep(1)
             count += 1
 
+        self._conn.unsubscribe(id)
+
         raise TimeoutError("Request not responded to in a timely manner!")
 
-    def subscribe(self, topic, callback, id=None):
-        if id is None:
-            id = self._id
+    def subscribe(self, topic, callback):
+        id = str(random.randint(1,1000000))
+        while id in self._ids:
+            id = str(random.randint(1, 1000000))
 
         if not callback:
             err = "Invalid callback specified in subscription"
@@ -145,7 +154,7 @@ class GOSS(object):
 
         # Handle the case where callback is a function.
         if callable(callback):
-           self._conn.set_listener(topic, CallbackWrapperListener(callback))
+            self._conn.set_listener(topic, CallbackWrapperListener(callback, id))
         else:
             self._conn.set_listener(topic, callback)
         self._conn.subscribe(destination=topic, ack='auto', id=id)
@@ -154,13 +163,16 @@ class GOSS(object):
         if self._conn is None or not self._conn.is_connected():
             _log.debug("Creating connection")
             self._conn = Connection([(self.stomp_address, self.stomp_port)])
-            self._conn.connect(self.__user, self.__pass, wait=True)
+            self._conn.connect(self.__user, self.__pass)
+            self._conn.transport.wait_for_connection(5)
 
 
 class CallbackWrapperListener(object):
 
-    def __init__(self, callback):
+    def __init__(self, callback, subscription):
         self._callback = callback
+        self._subscription_id = subscription
 
     def on_message(self, header, message):
-        self._callback(header, message)
+        if header['subscription'] == self._subscription_id:
+            self._callback(header, message)

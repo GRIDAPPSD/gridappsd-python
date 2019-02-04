@@ -38,8 +38,9 @@
 # UNITED STATES DEPARTMENT OF ENERGY under Contract DE-AC05-76RL01830
 # -------------------------------------------------------------------------------
 
-from datetime import datetime
+import calendar
 from uuid import uuid4
+import time
 
 import pytz
 
@@ -70,10 +71,10 @@ class DifferenceBuilder(object):
         self._reverse = []
 
     def get_message(self):
-
+        epoch = calendar.timegm(time.gmtime())
         msg = dict(command="update",
                    input=dict(simulation_id=self._simulation_id,
-                              message=dict(timestamp=datetime.now(tz=pytz.UTC).isoformat(sep=' '),  #."2018-01-08 13:27:00.000Z",
+                              message=dict(timestamp=epoch,
                                            difference_mrid=str(uuid4()),
                                            reverse_differences=self._reverse,
                                            forward_differences=self._forward)))
