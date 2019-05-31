@@ -93,10 +93,7 @@ def sensor_output_topic(simulation_id):
     :param simulation_id:
     :return:
     """
-    original = simulation_output_topic(simulation_id)
-    partitioned = original.split('.')
-    new_topic = '.'.join(partitioned[:-2] + ['sensors'] + [partitioned[-1]])
-    return new_topic
+    return "{}.{}.{}".format(BASE_SIMULATION_TOPIC, 'sensors', simulation_id)
 
 """
 //topics
