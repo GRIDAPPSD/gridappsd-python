@@ -81,6 +81,23 @@ def simulation_input_topic(simulation_id):
     return "{}.{}.{}".format(BASE_SIMULATION_TOPIC, 'output', simulation_id)
 
 
+def sensor_output_topic(simulation_id):
+    """ Create an output topic for the sensor service to write to.
+
+    The sensor service repository can be found at:
+    https://github.com/GRIDAPPSD/gridappsd-sensor-simulator
+
+    The output topic will be based upon the main simulation_output_topic,
+    and be of the form /topic/goss.gridappsd.simulation.sensors.<simulation_id>.
+
+    :param simulation_id:
+    :return:
+    """
+    original = simulation_output_topic(simulation_id)
+    partitioned = original.split('.')
+    new_topic = '.'.join(partitioned[:-2] + ['sensors'] + [partitioned[-1]])
+    return new_topic
+
 """
 //topics
 	public static final String topic_prefix = "goss.gridappsd";
