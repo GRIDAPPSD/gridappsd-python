@@ -142,9 +142,9 @@ class GOSS(object):
         raise TimeoutError("Request not responded to in a timely manner!")
 
     def subscribe(self, topic, callback):
-        id = str(random.randint(1,1000000))
-        while id in self._ids:
-            id = str(random.randint(1, 1000000))
+        conn_id = str(random.randint(1,1000000))
+        while conn_id in self._ids:
+            conn_id = str(random.randint(1, 1000000))
 
         if not callback:
             err = "Invalid callback specified in subscription"
@@ -159,10 +159,16 @@ class GOSS(object):
 
         # Handle the case where callback is a function.
         if callable(callback):
-            self._conn.set_listener(topic, CallbackWrapperListener(callback, id))
+            self._conn.set_listener(topic,
+                                    CallbackWrapperListener(callback, conn_id))
         else:
             self._conn.set_listener(topic, callback)
-        self._conn.subscribe(destination=topic, ack='auto', id=id)
+        self._conn.subscribe(destination=topic, ack='auto', id=conn_id)
+
+        return conn_id
+
+    def unsubscribe(self, conn_id):
+        self._conn.unsubscribe(conn_id)
 
     def _make_connection(self):
         if self._conn is None or not self._conn.is_connected():
