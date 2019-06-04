@@ -142,6 +142,14 @@ class GOSS(object):
         raise TimeoutError("Request not responded to in a timely manner!")
 
     def subscribe(self, topic, callback):
+        """Subscribe to a given topic, and call callback on message.
+
+        :param topic: topic to subscribe to. See topics.py.
+        :param callback: function (callable) or class to be hit on
+            every message. Note the class must have an "on_message"
+            method. The function (or class's on_message method) will be
+            passed two arguments: header and message.
+        """
         conn_id = str(random.randint(1,1000000))
         while conn_id in self._ids:
             conn_id = str(random.randint(1, 1000000))
@@ -157,12 +165,24 @@ class GOSS(object):
 
         self._make_connection()
 
-        # Handle the case where callback is a function.
         if callable(callback):
+            # Handle the case where callback is a function.
             self._conn.set_listener(topic,
                                     CallbackWrapperListener(callback, conn_id))
         else:
+            # Case where the callback is (supposedly) a class.
+            if not hasattr(callback, 'on_message'):
+                m = "The given callback must have an 'on_message' method!"
+                raise AttributeError(m)
+
+            if not callable(callback.on_message):
+                m = "The given callback's 'on_message' attribute must be " \
+                    "callable!"
+                raise TypeError(m)
+
+            #
             self._conn.set_listener(topic, callback)
+
         self._conn.subscribe(destination=topic, ack='auto', id=conn_id)
 
         return conn_id
