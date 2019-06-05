@@ -42,10 +42,12 @@ DEFAULT_FNCS_LOCATION = 'tcp://localhost:5570'
 FNCS_BASE_INPUT_TOPIC = '/topic/goss.gridappsd.simulation.input'
 FNCS_BASE_OUTPUT_TOPIC = '/topic/goss.gridappsd.simulation.output'
 BASE_SIMULATION_TOPIC = '/topic/goss.gridappsd.simulation'
-BASE_SIMULATION_STATUS_TOPIC = "/topic/goss.gridappsd.process.log.simulation"
+BASE_SIMULATION_STATUS_TOPIC = "/topic/goss.gridappsd.simulation.log"
 
 BLAZEGRAPH = "/queue/goss.gridappsd.process.request.data.powergridmodel"
-LOGS = "/queue/goss.gridappsd.process.request.logs"
+# https://gridappsd.readthedocs.io/en/latest/using_gridappsd/index.html#querying-logs
+LOGS = "/queue/goss.gridappsd.process.request.data.log"
+# https://gridappsd.readthedocs.io/en/latest/using_gridappsd/index.html#timeseries-api
 TIMESERIES = "/queue/goss.gridappsd.process.request.data.timeseries"
 
 CONFIG = "/queue/goss.gridappsd.process.request.config"
@@ -64,6 +66,7 @@ REQUEST_POWERGRID_DATA = ".".join((REQUEST_DATA, "powergridmodel"))
 REQUEST_REGISTER_APP = ".".join((PROCESS_PREFIX, "request.app.remote.register"))
 REQUEST_APP_START = ".".join((PROCESS_PREFIX, "request.app.start"))
 BASE_APPLICATION_HEARTBEAT = ".".join((BASE_TOPIC_PREFIX, "heartbeat"))
+
 
 def fncs_input_topic(simulation_id):
     return "{}.{}".format(FNCS_BASE_INPUT_TOPIC, simulation_id)
@@ -94,6 +97,13 @@ def sensor_output_topic(simulation_id):
     :return:
     """
     return "{}.{}.{}".format(BASE_SIMULATION_TOPIC, 'sensors', simulation_id)
+
+
+def simulation_log_topic(simulation_id):
+    """https://gridappsd.readthedocs.io/en/latest/using_gridappsd/index.html#subscribing-to-logs
+    """
+    return "{}.{}".format(BASE_SIMULATION_STATUS_TOPIC, simulation_id)
+
 
 """
 //topics
