@@ -39,10 +39,10 @@
 # -------------------------------------------------------------------------------
 
 DEFAULT_FNCS_LOCATION = 'tcp://localhost:5570'
-FNCS_BASE_INPUT_TOPIC = '/topic/goss.gridappsd.simulation.input'
-FNCS_BASE_OUTPUT_TOPIC = '/topic/goss.gridappsd.simulation.output'
-BASE_SIMULATION_TOPIC = '/topic/goss.gridappsd.simulation'
-BASE_SIMULATION_STATUS_TOPIC = "/topic/goss.gridappsd.process.log.simulation"
+SIMULATION_BASE_TOPIC = '/topic/goss.gridappsd.simulation'
+SIMULATION_INPUT_TOPIC = '/topic/goss.gridappsd.simulation.input'
+SIMULATION_OUTPUT_TOPIC = '/topic/goss.gridappsd.simulation.output'
+SIMULATION_LOG_TOPIC = "/topic/goss.gridappsd.simulation.log"
 
 BLAZEGRAPH = "/queue/goss.gridappsd.process.request.data.powergridmodel"
 LOGS = "/queue/goss.gridappsd.process.request.logs"
@@ -66,19 +66,19 @@ REQUEST_APP_START = ".".join((PROCESS_PREFIX, "request.app.start"))
 BASE_APPLICATION_HEARTBEAT = ".".join((BASE_TOPIC_PREFIX, "heartbeat"))
 
 def fncs_input_topic(simulation_id):
-    return "{}.{}".format(FNCS_BASE_INPUT_TOPIC, simulation_id)
+    return "{}.{}".format(SIMULATION_INPUT_TOPIC, simulation_id)
 
 
 def fncs_output_topic(simulation_id):
-    return "{}.{}".format(FNCS_BASE_OUTPUT_TOPIC, simulation_id)
+    return "{}.{}".format(SIMULATION_INPUT_TOPIC, simulation_id)
 
 
 def simulation_output_topic(simulation_id):
-    return "{}.{}.{}".format(BASE_SIMULATION_TOPIC, 'output', simulation_id)
+    return "{}.{}.{}".format(SIMULATION_BASE_TOPIC, 'output', simulation_id)
 
 
 def simulation_input_topic(simulation_id):
-    return "{}.{}.{}".format(BASE_SIMULATION_TOPIC, 'output', simulation_id)
+    return "{}.{}.{}".format(SIMULATION_BASE_TOPIC, 'output', simulation_id)
 
 
 def sensor_output_topic(simulation_id):
@@ -93,7 +93,7 @@ def sensor_output_topic(simulation_id):
     :param simulation_id:
     :return:
     """
-    return "{}.{}.{}".format(BASE_SIMULATION_TOPIC, 'sensors', simulation_id)
+    return "{}.{}.{}".format(SIMULATION_BASE_TOPIC, 'sensors', simulation_id)
 
 """
 //topics
