@@ -70,6 +70,9 @@ class GridAPPSD(GOSS):
                  address=('localhost', 61613), **kwargs):
         if 'stomp_address' in kwargs and 'stomp_port' in kwargs:
             address = (kwargs.pop('stomp_address'), kwargs.pop('stomp_port'))
+        elif 'stomp_address' in kwargs and not 'stomp_port' in kwargs or \
+             'stomp_port' in kwargs and not 'stomp_address' in kwargs:
+            raise ValueError("If stomp_address is specified the so should stomp_port")
         super(GridAPPSD, self).__init__(
             stomp_address=address[0],
             stomp_port=address[1],

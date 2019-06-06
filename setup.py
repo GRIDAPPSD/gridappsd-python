@@ -55,7 +55,7 @@ extra_deps = {
 setup(
     name="gridappsd",
     version=__version__,
-    install_requires=['PyYaml', 'stomp.py', 'pytz'],
+    install_requires=['PyYaml', 'stomp.py', 'pytz', 'dateutils'],
     packages=packages,
     test_suite='tests',
     tests_require=test_deps,

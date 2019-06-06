@@ -66,7 +66,8 @@ class GOSS(object):
 
     def __init__(self, username='system', password='manager',
                  stomp_address='localhost', stomp_port='61613',
-                 attempt_connection=True):
+                 attempt_connection=True,
+                 override_threading=None):
         self.__user = username
         self.__pass = password
         self.stomp_address = stomp_address
@@ -74,6 +75,7 @@ class GOSS(object):
         self._conn = None
         self._ids = set()
         self._topic_set = set()
+        self._override_thread_fc = override_threading
 
         if attempt_connection:
             self._make_connection()
@@ -90,6 +92,9 @@ class GOSS(object):
             self._conn.disconnect()
 
         self._conn = None
+
+    def override_threading(self, callback):
+        self._override_thread_fc = callback
 
     def send(self, topic, message):
         self._make_connection()
@@ -171,8 +176,9 @@ class GOSS(object):
         if self._conn is None or not self._conn.is_connected():
             _log.debug("Creating connection")
             self._conn = Connection([(self.stomp_address, self.stomp_port)])
+            if self._override_thread_fc is not None:
+                self._conn.transport.override_threading(self._override_thread_fc)
             self._conn.connect(self.__user, self.__pass)
-            self._conn.transport.wait_for_connection(5)
 
 
 class CallbackWrapperListener(object):
