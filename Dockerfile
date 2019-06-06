@@ -6,7 +6,7 @@ ENV GRIDAPPSD_URI="tcp://gridappsd:${GRIDAPPSD_PORT}"
 ENV GRIDAPPSD_USER="system"
 ENV GRIDAPPSD_PASS="manager"
 
-#RUN pip --upgrade pip
+RUN pip install --upgrade pip
 
 WORKDIR /usr/src/gridappsd-python
 
