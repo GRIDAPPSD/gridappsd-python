@@ -118,7 +118,7 @@ class GOSS(object):
                 if header['destination'] == self._topic:
                     _log.debug("Internal on message is: {} {}".format(header, message))
                     try:
-                        self.response = json.loads(message) #dict(header=header, message=message)
+                        self.response = json.loads(message)
                     except ValueError:
                         self.response = dict(error="Invalid json returned",
                                              header=header,
@@ -134,7 +134,9 @@ class GOSS(object):
         listener = ResponseListener(reply_to)
         self.subscribe(reply_to, listener)
 
-        self._conn.send(body=message, destination=topic, headers={'reply-to': reply_to})
+        self._conn.send(body=message, destination=topic,
+                        headers={'reply-to': reply_to, 'GOSS_HAS_SUBJECT': True,
+                                 'GOSS_SUBJECT': self.__user})
         count = 0
 
         while count < timeout:
