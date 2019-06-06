@@ -1,9 +1,13 @@
 import json
+import logging
 import random
 import subprocess
 from time import sleep
 import threading
-from queue import Queue
+try:
+    from queue import Queue
+except ImportError:
+    from Queue import Queue
 
 import pytest
 
@@ -31,7 +35,7 @@ def assigned_stomp_port():
 #     proc.kill()
 
 
-@pytest.fixture()
+@pytest.fixture
 def goss_client(assigned_stomp_port):
     goss = GOSS(stomp_port=assigned_stomp_port)
 
@@ -40,11 +44,12 @@ def goss_client(assigned_stomp_port):
     goss.disconnect()
 
 
-def test_get_response(goss_client):
+def test_get_response(caplog, goss_client):
+    caplog.set_level(logging.DEBUG)
 
     def addem_callback(header, message):
-        # print("Addem callback")
-        # print("Threadid: {}".format(threading.get_ident()))
+        print("Addem callback")
+        print("Threadid: {}".format(threading.current_thread().ident))
         item = json.loads(message)
         total = 0
         for x in item:
@@ -56,19 +61,20 @@ def test_get_response(goss_client):
     gen_sub = []
 
     def generic_subscription(header, message):
+        print(" I am here!")
         gen_sub.append((header, message))
 
     # Simulate an rpc call.
     goss_client.subscribe("/addem", addem_callback)
 
-    goss_client.subscribe("/foo", generic_subscription)
+    goss_client.subscribe("foo", generic_subscription)
 
-    id_before = id(goss_client._conn)
+    # id_before = id(goss_client._conn)
     result = goss_client.get_response('/addem', json.dumps([5, 6]))
     assert result == 11
-    assert id_before == id(goss_client._conn)
+    # assert id_before == id(goss_client._conn)
 
-    goss_client.send("/foo", str(result))
+    goss_client.send("foo", str(result))
 
     count = 0
     while True:
@@ -103,8 +109,8 @@ def test_send_receive(goss_client):
             message_queue.put((headers, message))
 
     listener = MyListener()
-    goss_client.subscribe('/foo', listener)
-    goss_client.send('/foo', "I am a foo")
+    goss_client.subscribe('doah', listener)
+    goss_client.send('doah', "I am a foo")
     sleep(0.1)
     assert message_queue.qsize() == 1
     header, message = message_queue.get()
@@ -137,14 +143,43 @@ def test_multi_subscriptions(goss_client):
     def callback2(headers, message):
         message_queue2.put((headers, message))
 
-    goss_client.subscribe('/foo', callback1)
-    goss_client.subscribe('/bar', callback2)
-    goss_client.send('/foo', "I am a foo")
-    goss_client.send('/bar', "I am a bar")
-    sleep(0.1)
+    goss_client.subscribe('bim', callback1)
+    goss_client.subscribe('bar', callback2)
+    goss_client.send('bim', "I am a foo")
+    goss_client.send('bar', "I am a bar")
+    sleep(0.5)
     assert message_queue1.qsize() == 1
     assert message_queue2.qsize() == 1
     header, message = message_queue1.get()
+    assert message == "I am a foo"
+    header, message = message_queue2.get()
+    assert message == "I am a bar"
+
+
+@pytest.mark.xfail("Multiple topics can't be subscribed to the same topic at present.")
+def test_multi_subscriptions_same_topic(goss_client):
+
+    message_queue1 = Queue()
+    message_queue2 = Queue()
+
+    def callback1(headers, message):
+        message_queue1.put((headers, message))
+
+    def callback2(headers, message):
+        message_queue2.put((headers, message))
+
+    goss_client.subscribe('bim', callback1)
+    goss_client.subscribe('bim', callback2)
+    goss_client.send('bim', "I am a foo")
+    goss_client.send('bim', "I am a bar")
+    sleep(0.5)
+    assert message_queue1.qsize() == 2
+    assert message_queue2.qsize() == 2
+    header, message = message_queue1.get()
+    assert message == "I am a foo"
+    header, message = message_queue1.get()
+    assert message == "I am a bar"
+    header, message = message_queue2.get()
     assert message == "I am a foo"
     header, message = message_queue2.get()
     assert message == "I am a bar"
@@ -167,3 +202,21 @@ def test_response_class(goss_client):
     assert result
     assert len(result) == 2
     assert result[1] == json.dumps({"abc": "def"})
+
+
+def test_replace_subscription(caplog, goss_client):
+    caplog.set_level(logging.DEBUG)
+    original_queue = Queue()
+    after_queue = Queue()
+
+    def original_callback(headers, message):
+        original_queue.put((headers, message))
+
+    def after_callback(headers, message):
+        after_queue.put((headers, message))
+
+    goss_client.subscribe("woot", original_callback)
+    goss_client.send("woot", "This is a message")
+    sleep(0.5)
+
+    assert original_queue.qsize() == 1

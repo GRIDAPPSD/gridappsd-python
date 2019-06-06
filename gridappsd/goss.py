@@ -99,7 +99,7 @@ class GOSS(object):
     def send(self, topic, message):
         self._make_connection()
         _log.debug("Sending topic: {} body: {}".format(topic, message))
-        self._conn.send(body=message, destination=topic, headers={'reply-to': '/temp-queue/goss.response'} )
+        self._conn.send(body=message, destination=topic)
 
     def get_response(self, topic, message, timeout=5):
         id = datetime.now().strftime("%Y%m%d%h%M%S")
@@ -124,6 +124,13 @@ class GOSS(object):
                                              header=header,
                                              message=message)
 
+            def on_error(self, headers, message):
+                _log.error("ERR: {}".format(headers))
+                _log.error("OUR ERROR: {}".format(message))
+
+            def on_disconnect(self, header, message):
+                _log.debug("Disconnected")
+
         listener = ResponseListener(reply_to)
         self.subscribe(reply_to, listener)
 
@@ -132,12 +139,13 @@ class GOSS(object):
 
         while count < timeout:
             if listener.response is not None:
-                return listener.response
+                break
 
             sleep(1)
             count += 1
 
-        self._conn.unsubscribe(id)
+        if listener.response is not None:
+            return listener.response
 
         raise TimeoutError("Request not responded to in a timely manner!")
 
@@ -208,3 +216,8 @@ class CallbackWrapperListener(object):
     def on_message(self, header, message):
         if header['subscription'] == self._subscription_id:
             self._callback(header, message)
+
+    def on_error(self, header, message):
+        _log.error("Error for subscription: {}".format(self._subscription_id))
+        _log.error(header)
+        _log.error(message)
