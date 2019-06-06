@@ -156,8 +156,8 @@ def test_multi_subscriptions(goss_client):
     assert message == "I am a bar"
 
 
-@pytest.mark.xfail("Multiple topics can't be subscribed to the same topic at present.")
 def test_multi_subscriptions_same_topic(goss_client):
+    pytest.xfail("Multiple topics can't be subscribed to the same topic at present.")
 
     message_queue1 = Queue()
     message_queue2 = Queue()
