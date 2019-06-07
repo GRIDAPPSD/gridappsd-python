@@ -49,7 +49,7 @@ from . import GOSS
 from . import topics as t
 from . import utils
 from . simulation import Simulation
-from . configuration_types import ConfigurationType
+# from . configuration_types import ConfigurationType
 
 _log = logging.getLogger(inspect.getmodulename(__file__))
 
