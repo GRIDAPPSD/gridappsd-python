@@ -108,6 +108,8 @@ class GOSS(object):
         # Change message to string if we have a dictionary.
         if isinstance(message, dict):
             message = json.dumps(message)
+        elif isinstance(message, list):
+            message = json.dumps(message)
 
         class ResponseListener(object):
             def __init__(self, topic):
@@ -217,7 +219,11 @@ class CallbackWrapperListener(object):
 
     def on_message(self, header, message):
         if header['subscription'] == self._subscription_id:
-            self._callback(header, message)
+            try:
+                msg = json.loads(message)
+            except:
+                msg = message
+            self._callback(header, msg)
 
     def on_error(self, header, message):
         _log.error("Error for subscription: {}".format(self._subscription_id))

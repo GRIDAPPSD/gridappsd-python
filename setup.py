@@ -37,9 +37,16 @@
 # PACIFIC NORTHWEST NATIONAL LABORATORY operated by BATTELLE for the
 # UNITED STATES DEPARTMENT OF ENERGY under Contract DE-AC05-76RL01830
 # -------------------------------------------------------------------------------
+import pathlib
 from setuptools import setup, find_packages
 
-__version__ = '1.10'
+__version__ = '2019.06.0'
+
+# The directory containing this file
+HERE = pathlib.Path(__file__).parent
+
+# The text of the README file
+README = (HERE / "README.md").read_text()
 
 packages = find_packages('.')
 
@@ -56,8 +63,21 @@ setup(
     name="gridappsd",
     version=__version__,
     install_requires=['PyYaml', 'stomp.py', 'pytz', 'dateutils'],
+    description="GridAPPS-D python adapter",
     packages=packages,
     test_suite='tests',
     tests_require=test_deps,
-    extras_require=extra_deps
+    extras_require=extra_deps,
+    long_description=README,
+    long_description_content_type="text/markdown",
+    url="https://github.com/GRIDAPPSD/gridappsd-python",
+    author="GridAPPS-D Team",
+    author_email="craig.allwardt@pnnl.gov",
+    license="BSD",
+    classifiers=[
+        "License :: OSI Approved :: BSD License",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7"
+    ],
+    include_package_data=True
 )

@@ -37,15 +37,19 @@
 # PACIFIC NORTHWEST NATIONAL LABORATORY operated by BATTELLE for the
 # UNITED STATES DEPARTMENT OF ENERGY under Contract DE-AC05-76RL01830
 # -------------------------------------------------------------------------------
-import json
+
 import logging
-from pprint import pprint, pformat
 import sys
+import argparse
+from argparse import ArgumentParser
 from time import sleep
+import yaml
 
 from gridappsd import GridAPPSD
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
+assert sys.version_info >= (3, 6), "Minimum version is python 3.6"
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format="'%(asctime)s: %(name)-20s - %(levelname)-6s - %(message)s")
 
 logging.getLogger('stomp.py').setLevel(logging.WARNING)
@@ -54,69 +58,22 @@ _log = logging.getLogger("gridappsd.__main__")
 
 if __name__ == '__main__':
 
-    class Listener(object):
-        def on_message(self, headers, message):
-            print("headers: {}\nmessage: {}".format(headers, message))
+    parser = ArgumentParser()
 
-    def on_message(headers, message):
-        print("Received: headers: {}\nmessage: {}".format(headers, message))
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("-s", "--run-simulation", type=argparse.FileType('r'),
+                       help="Start running a simulation from a passed simulation file.")
 
-    # Handle python 3 not having input_raw function.
-    try:
-        get_input = raw_input
-    except NameError:
-        get_input = input
+    opts = parser.parse_args()
 
+    if opts.run_simulation:
+        def next_timestep(simulation, timestep):
+            simulation.pause()
+            sleep(1)
+            simulation.resume()
 
-    print("Creating GridAPPSD object")
-    gapps = GridAPPSD(stomp_address="127.0.0.1",
-                      stomp_port=61613,
-                      username='system',
-                      password='manager')
+        gappsd = GridAPPSD()
+        run_args = yaml.safe_load(opts.run_simulation)
 
-    print("Subscribing to /topic/foo")
-    gapps.subscribe('/topic/foo', on_message)
-    result = get_input("Press enter to send json.dumps(dict(bim='bash')) to topic /topic/foo")
-    print("Sending data")
-    gapps.send('/topic/foo', json.dumps(dict(bim='bash')))
-    sleep(1)
-
-    get_input("Press enter to receive platform status")
-    resp = gapps.get_platform_status()
-    pprint(resp)
-
-    get_input("Press enter to query model info")
-    resp = gapps.query_model_info()
-    pprint(resp)
-
-    get_input("Press enter to query model names")
-    resp = gapps.query_model_names()
-    pprint(resp)
-
-    get_input("Press enter to query object types")
-    resp = gapps.query_object_types()
-    pprint(resp)
-
-    get_input("Press enter to run ad-hoc query")
-    # list all the connectivity nodes by feeder - CIMImporter when building GldNodes
-    sparql = """
-PREFIX r:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX c:  <http://iec.ch/TC57/2012/CIM-schema-cim17#>
-SELECT ?feeder ?name WHERE {
- VALUES ?fdrid {"_49AD8E07-3BF9-A4E2-CB8F-C3722F837B62"}  # 13 bus
- ?fdr c:IdentifiedObject.mRID ?fdrid.
- ?s c:ConnectivityNode.ConnectivityNodeContainer ?fdr.
- ?s r:type c:ConnectivityNode.
- ?s c:IdentifiedObject.name ?name.
- ?fdr c:IdentifiedObject.name ?feeder.
-}
-ORDER by ?feeder ?name
-    """
-    print("QUERY")
-    print(sparql)
-    print()
-    resp = gapps.query_data(sparql)
-    pprint(resp)
-
-    get_input("Press enter to exit")
-    print()
+        simulation = gappsd.run_simulation(run_args, next_timestep)
+        simulation.simulation_main_loop()
