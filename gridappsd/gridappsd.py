@@ -91,6 +91,11 @@ class GridAPPSD(GOSS):
 
             self._simulation_status_topic = self._base_status_topic + str(simulation_id)
 
+    def run_simulation(self, run_config, timestamp_finished=None):
+        duration = run_config['simulation_config']['duration']
+        resp = self.get_response(t.REQUEST_SIMULATION, json.dumps(run_config))
+        return Simulation(self, resp, duration, timestamp_finished)
+
     def query_object_types(self, model_id=None):
         """ Allows the caller to query the different object types.
                 
