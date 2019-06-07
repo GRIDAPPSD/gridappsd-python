@@ -40,7 +40,7 @@
 import pathlib
 from setuptools import setup, find_packages
 
-__version__ = '2019.06.0'
+__version__ = '2019.6.0'
 
 # The directory containing this file
 HERE = pathlib.Path(__file__).parent
