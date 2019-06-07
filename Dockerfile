@@ -1,5 +1,5 @@
 # Use latest slim Python image. Note that it's built on Debian Stretch.
-FROM python3:slim
+FROM python:3.6-slim
 
 ENV GRIDAPPSD_PORT="61613"
 ENV GRIDAPPSD_URI="tcp://gridappsd:${GRIDAPPSD_PORT}"
