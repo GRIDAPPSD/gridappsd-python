@@ -99,7 +99,7 @@ class GOSS(object):
     def send(self, topic, message):
         self._make_connection()
         _log.debug("Sending topic: {} body: {}".format(topic, message))
-        self._conn.send(body=message, destination=topic, headers={'reply-to': '/temp-queue/goss.response'} )
+        self._conn.send(body=message, destination=topic)
 
     def get_response(self, topic, message, timeout=5):
         id = datetime.now().strftime("%Y%m%d%h%M%S")
@@ -107,6 +107,8 @@ class GOSS(object):
 
         # Change message to string if we have a dictionary.
         if isinstance(message, dict):
+            message = json.dumps(message)
+        elif isinstance(message, list):
             message = json.dumps(message)
 
         class ResponseListener(object):
@@ -118,26 +120,36 @@ class GOSS(object):
                 if header['destination'] == self._topic:
                     _log.debug("Internal on message is: {} {}".format(header, message))
                     try:
-                        self.response = json.loads(message) #dict(header=header, message=message)
+                        self.response = json.loads(message)
                     except ValueError:
                         self.response = dict(error="Invalid json returned",
                                              header=header,
                                              message=message)
 
+            def on_error(self, headers, message):
+                _log.error("ERR: {}".format(headers))
+                _log.error("OUR ERROR: {}".format(message))
+
+            def on_disconnect(self, header, message):
+                _log.debug("Disconnected")
+
         listener = ResponseListener(reply_to)
         self.subscribe(reply_to, listener)
 
-        self._conn.send(body=message, destination=topic, headers={'reply-to': reply_to})
+        self._conn.send(body=message, destination=topic,
+                        headers={'reply-to': reply_to, 'GOSS_HAS_SUBJECT': True,
+                                 'GOSS_SUBJECT': self.__user})
         count = 0
 
         while count < timeout:
             if listener.response is not None:
-                return listener.response
+                break
 
             sleep(1)
             count += 1
 
-        self._conn.unsubscribe(id)
+        if listener.response is not None:
+            return listener.response
 
         raise TimeoutError("Request not responded to in a timely manner!")
 
@@ -207,4 +219,13 @@ class CallbackWrapperListener(object):
 
     def on_message(self, header, message):
         if header['subscription'] == self._subscription_id:
-            self._callback(header, message)
+            try:
+                msg = json.loads(message)
+            except:
+                msg = message
+            self._callback(header, msg)
+
+    def on_error(self, header, message):
+        _log.error("Error for subscription: {}".format(self._subscription_id))
+        _log.error(header)
+        _log.error(message)
