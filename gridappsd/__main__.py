@@ -67,6 +67,7 @@ if __name__ == '__main__':
     opts = parser.parse_args()
 
     if opts.run_simulation:
+        # Example of how to pause simulation
         def next_timestep(simulation, timestep):
             simulation.pause()
             sleep(1)
@@ -75,5 +76,8 @@ if __name__ == '__main__':
         gappsd = GridAPPSD()
         run_args = yaml.safe_load(opts.run_simulation)
 
-        simulation = gappsd.run_simulation(run_args, next_timestep)
+        # if wanting to use the above next_timestep function use this
+        # instead of the one below.
+        # simulation = gappsd.run_simulation(run_args, next_timestep)
+        simulation = gappsd.run_simulation(run_args)
         simulation.simulation_main_loop()
