@@ -42,10 +42,12 @@ DEFAULT_FNCS_LOCATION = 'tcp://localhost:5570'
 FNCS_BASE_INPUT_TOPIC = '/topic/goss.gridappsd.simulation.input'
 FNCS_BASE_OUTPUT_TOPIC = '/topic/goss.gridappsd.simulation.output'
 BASE_SIMULATION_TOPIC = '/topic/goss.gridappsd.simulation'
-BASE_SIMULATION_STATUS_TOPIC = "/topic/goss.gridappsd.process.log.simulation"
+BASE_SIMULATION_STATUS_TOPIC = "/topic/goss.gridappsd.simulation.log"
 
 BLAZEGRAPH = "/queue/goss.gridappsd.process.request.data.powergridmodel"
-LOGS = "/queue/goss.gridappsd.process.request.logs"
+# https://gridappsd.readthedocs.io/en/latest/using_gridappsd/index.html#querying-logs
+LOGS = "/queue/goss.gridappsd.process.request.data.log"
+# https://gridappsd.readthedocs.io/en/latest/using_gridappsd/index.html#timeseries-api
 TIMESERIES = "/queue/goss.gridappsd.process.request.data.timeseries"
 
 CONFIG = "/queue/goss.gridappsd.process.request.config"
@@ -65,20 +67,99 @@ REQUEST_REGISTER_APP = ".".join((PROCESS_PREFIX, "request.app.remote.register"))
 REQUEST_APP_START = ".".join((PROCESS_PREFIX, "request.app.start"))
 BASE_APPLICATION_HEARTBEAT = ".".join((BASE_TOPIC_PREFIX, "heartbeat"))
 
-def fncs_input_topic(simulation_id):
-    return "{}.{}".format(FNCS_BASE_INPUT_TOPIC, simulation_id)
+
+def service_input_topic(service_id, simulation_id):
+    """ Utility method for getting the input topic for a specific service.
+
+    The service id should be the registered service with the platform.  One
+    can get the list of registered services by using the `GridAPPSD.get_platform_status()`
+    method with services=True.
+
+    Examples of service_id are as follows:
+        - dnp3
+
+    :param service_id:
+    :param simulation_id:
+    :return:
+    """
+    assert service_id, "service_id cannot be empty"
+    assert simulation_id, "simulation_id cannot be empty"
+    return f"{BASE_SIMULATION_TOPIC}.{service_id}.{simulation_id}.input"
 
 
-def fncs_output_topic(simulation_id):
-    return "{}.{}".format(FNCS_BASE_OUTPUT_TOPIC, simulation_id)
+def service_output_topic(service_id, simulation_id):
+    """ Utility method for getting the output topic for a specific service.
+
+    The service id should be the registered service with the platform.  One
+    can get the list of registered services by using the `GridAPPSD.get_platform_status()`
+    method with services=True.
+
+    Examples of service_id are as follows:
+        - dnp3
+
+    :param service_id:
+    :param simulation_id:
+    :return:str: Topic to subscribe to for service specific output.
+    """
+    assert service_id, "Service id cannot be empty"
+    assert simulation_id, "Simulation id cannot be empty"
+    return f"{BASE_SIMULATION_TOPIC}.{service_id}.{simulation_id}.output"
+
+
+def application_input_topic(application_id, simulation_id):
+    """ Utility method for getting the input topic for a specific application.
+
+    The application_id should be the registered service with the platform.  One
+    can get the list of registered application by using the `GridAPPSD.get_platform_status()`
+    method with applications=True.
+
+    :param application_id:
+    :param simulation_id:
+    :return:str: Topic to publish to for a specific application.
+    """
+    assert application_id, "application_id cannot be empty"
+    assert simulation_id, "simulation_id cannot be empty"
+    return f"{BASE_SIMULATION_TOPIC}.{application_id}.{simulation_id}.input"
+
+
+def application_output_topic(application_id, simulation_id):
+    """ Utility method for getting the output topic for a specific application.
+
+    The application_id should be the registered service with the platform.  One
+    can get the list of registered application by using the `GridAPPSD.get_platform_status()`
+    method with applications=True.
+
+    :param application_id:
+    :param simulation_id:
+    :return: str: Topic to subscribe to for application specific output.
+    """
+    assert application_id, "application_id cannot be empty"
+    assert simulation_id, "simulation_id cannot be empty"
+    return f"{BASE_SIMULATION_TOPIC}.{application_id}.{simulation_id}.output"
 
 
 def simulation_output_topic(simulation_id):
+    """ Gets the topic for subscribing to output from the simulation.
+
+    :param simulation_id:
+    :return: str: Topic to subscribe to data from teh simulation.
+    """
     return "{}.{}.{}".format(BASE_SIMULATION_TOPIC, 'output', simulation_id)
 
 
 def simulation_input_topic(simulation_id):
-    return "{}.{}.{}".format(BASE_SIMULATION_TOPIC, 'output', simulation_id)
+    """ Gets the topic to write data to for the simulation
+
+    :param simulation_id:
+    :return: str: Topic to write data for the simulation.
+    """
+    return "{}.{}.{}".format(BASE_SIMULATION_TOPIC, 'input', simulation_id)
+
+
+def simulation_log_topic(simulation_id):
+    """https://gridappsd.readthedocs.io/en/latest/using_gridappsd/index.html#subscribing-to-logs
+    """
+    return "{}.{}".format(BASE_SIMULATION_STATUS_TOPIC, simulation_id)
 
 
 """

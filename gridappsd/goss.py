@@ -99,7 +99,7 @@ class GOSS(object):
     def send(self, topic, message):
         self._make_connection()
         _log.debug("Sending topic: {} body: {}".format(topic, message))
-        self._conn.send(body=message, destination=topic, headers={'reply-to': '/temp-queue/goss.response'} )
+        self._conn.send(body=message, destination=topic)
 
     def get_response(self, topic, message, timeout=5):
         id = datetime.now().strftime("%Y%m%d%h%M%S")
@@ -107,6 +107,8 @@ class GOSS(object):
 
         # Change message to string if we have a dictionary.
         if isinstance(message, dict):
+            message = json.dumps(message)
+        elif isinstance(message, list):
             message = json.dumps(message)
 
         class ResponseListener(object):
@@ -118,33 +120,51 @@ class GOSS(object):
                 if header['destination'] == self._topic:
                     _log.debug("Internal on message is: {} {}".format(header, message))
                     try:
-                        self.response = json.loads(message) #dict(header=header, message=message)
+                        self.response = json.loads(message)
                     except ValueError:
                         self.response = dict(error="Invalid json returned",
                                              header=header,
                                              message=message)
 
+            def on_error(self, headers, message):
+                _log.error("ERR: {}".format(headers))
+                _log.error("OUR ERROR: {}".format(message))
+
+            def on_disconnect(self, header, message):
+                _log.debug("Disconnected")
+
         listener = ResponseListener(reply_to)
         self.subscribe(reply_to, listener)
 
-        self._conn.send(body=message, destination=topic, headers={'reply-to': reply_to})
+        self._conn.send(body=message, destination=topic,
+                        headers={'reply-to': reply_to, 'GOSS_HAS_SUBJECT': True,
+                                 'GOSS_SUBJECT': self.__user})
         count = 0
 
         while count < timeout:
             if listener.response is not None:
-                return listener.response
+                break
 
             sleep(1)
             count += 1
 
-        self._conn.unsubscribe(id)
+        if listener.response is not None:
+            return listener.response
 
         raise TimeoutError("Request not responded to in a timely manner!")
 
     def subscribe(self, topic, callback):
-        id = str(random.randint(1,1000000))
-        while id in self._ids:
-            id = str(random.randint(1, 1000000))
+        """Subscribe to a given topic, and call callback on message.
+
+        :param topic: topic to subscribe to. See topics.py.
+        :param callback: function (callable) or class to be hit on
+            every message. Note the class must have an "on_message"
+            method. The function (or class's on_message method) will be
+            passed two arguments: header and message.
+        """
+        conn_id = str(random.randint(1,1000000))
+        while conn_id in self._ids:
+            conn_id = str(random.randint(1, 1000000))
 
         if not callback:
             err = "Invalid callback specified in subscription"
@@ -157,12 +177,30 @@ class GOSS(object):
 
         self._make_connection()
 
-        # Handle the case where callback is a function.
         if callable(callback):
-            self._conn.set_listener(topic, CallbackWrapperListener(callback, id))
+            # Handle the case where callback is a function.
+            self._conn.set_listener(topic,
+                                    CallbackWrapperListener(callback, conn_id))
         else:
+            # Case where the callback is (supposedly) a class.
+            if not hasattr(callback, 'on_message'):
+                m = "The given callback must have an 'on_message' method!"
+                raise AttributeError(m)
+
+            if not callable(callback.on_message):
+                m = "The given callback's 'on_message' attribute must be " \
+                    "callable!"
+                raise TypeError(m)
+
+            #
             self._conn.set_listener(topic, callback)
-        self._conn.subscribe(destination=topic, ack='auto', id=id)
+
+        self._conn.subscribe(destination=topic, ack='auto', id=conn_id)
+
+        return conn_id
+
+    def unsubscribe(self, conn_id):
+        self._conn.unsubscribe(conn_id)
 
     def _make_connection(self):
         if self._conn is None or not self._conn.is_connected():
@@ -181,4 +219,13 @@ class CallbackWrapperListener(object):
 
     def on_message(self, header, message):
         if header['subscription'] == self._subscription_id:
-            self._callback(header, message)
+            try:
+                msg = json.loads(message)
+            except:
+                msg = message
+            self._callback(header, msg)
+
+    def on_error(self, header, message):
+        _log.error("Error for subscription: {}".format(self._subscription_id))
+        _log.error(header)
+        _log.error(message)
