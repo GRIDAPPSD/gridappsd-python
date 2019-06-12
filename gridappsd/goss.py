@@ -108,6 +108,8 @@ class GOSS(object):
         # Change message to string if we have a dictionary.
         if isinstance(message, dict):
             message = json.dumps(message)
+        elif isinstance(message, list):
+            message = json.dumps(message)
 
         class ResponseListener(object):
             def __init__(self, topic):
@@ -118,7 +120,7 @@ class GOSS(object):
                 if header['destination'] == self._topic:
                     _log.debug("Internal on message is: {} {}".format(header, message))
                     try:
-                        self.response = json.loads(message) #dict(header=header, message=message)
+                        self.response = json.loads(message)
                     except ValueError:
                         self.response = dict(error="Invalid json returned",
                                              header=header,
@@ -134,7 +136,9 @@ class GOSS(object):
         listener = ResponseListener(reply_to)
         self.subscribe(reply_to, listener)
 
-        self._conn.send(body=message, destination=topic, headers={'reply-to': reply_to})
+        self._conn.send(body=message, destination=topic,
+                        headers={'reply-to': reply_to, 'GOSS_HAS_SUBJECT': True,
+                                 'GOSS_SUBJECT': self.__user})
         count = 0
 
         while count < timeout:
@@ -215,7 +219,11 @@ class CallbackWrapperListener(object):
 
     def on_message(self, header, message):
         if header['subscription'] == self._subscription_id:
-            self._callback(header, message)
+            try:
+                msg = json.loads(message)
+            except:
+                msg = message
+            self._callback(header, msg)
 
     def on_error(self, header, message):
         _log.error("Error for subscription: {}".format(self._subscription_id))

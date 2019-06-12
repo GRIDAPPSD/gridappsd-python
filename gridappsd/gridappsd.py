@@ -38,17 +38,18 @@
 # UNITED STATES DEPARTMENT OF ENERGY under Contract DE-AC05-76RL01830
 # -------------------------------------------------------------------------------
 
-from __future__ import absolute_import
-
 from datetime import datetime
 import json
 import inspect
 import logging
-from logging import DEBUG, INFO, WARNING, FATAL, WARN, getLevelName
+from logging import DEBUG, INFO, WARNING, FATAL, WARN
 
 
 from . import GOSS
 from . import topics as t
+from . import utils
+from . simulation import Simulation
+# from . configuration_types import ConfigurationType
 
 _log = logging.getLogger(inspect.getmodulename(__file__))
 
@@ -62,7 +63,7 @@ class InvalidSimulationIdError(Exception):
 
 
 class GridAPPSD(GOSS):
-    """ The main :class:`GridAPPSD` intface for connecting to a GridAPPSD instance
+    """ The main :class:`GridAPPSD` interface for connecting to a GridAPPSD instance
     """
     # TODO Get the caller from the traceback/inspect module.
     def __init__(self, simulation_id=None,
@@ -89,6 +90,11 @@ class GridAPPSD(GOSS):
                 self._base_status_topic += "."
 
             self._simulation_status_topic = self._base_status_topic + str(simulation_id)
+
+    def run_simulation(self, run_config, timestamp_finished=None):
+        duration = run_config['simulation_config']['duration']
+        resp = self.get_response(t.REQUEST_SIMULATION, json.dumps(run_config))
+        return Simulation(self, resp, duration, timestamp_finished)
 
     def query_object_types(self, model_id=None):
         """ Allows the caller to query the different object types.

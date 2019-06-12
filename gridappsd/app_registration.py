@@ -163,6 +163,10 @@ class ApplicationController(object):
     def __handle_start(self, headers, message):
         _log.debug("Handling start")
         obj = json.loads(message)
+        if isinstance(message, str):
+            obj = json.loads(message)
+        else:
+            obj = message
         # print("Handling Start: {}\ndict:\n{}".format(headers, obj))
 
         if 'command' not in obj:

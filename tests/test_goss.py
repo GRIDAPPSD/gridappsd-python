@@ -50,18 +50,20 @@ def test_get_response(caplog, goss_client):
     def addem_callback(header, message):
         print("Addem callback")
         print("Threadid: {}".format(threading.current_thread().ident))
-        item = json.loads(message)
+        if isinstance(message, str):
+            item = json.loads(message)
+        else:
+            item = message
         total = 0
         for x in item:
             total += x
 
         reply_to = header['reply-to']
-        goss_client.send(reply_to, str(total))
+        goss_client.send(reply_to, json.dumps(dict(result=total)))
 
     gen_sub = []
 
     def generic_subscription(header, message):
-        print(" I am here!")
         gen_sub.append((header, message))
 
     # Simulate an rpc call.
@@ -70,11 +72,11 @@ def test_get_response(caplog, goss_client):
     goss_client.subscribe("foo", generic_subscription)
 
     # id_before = id(goss_client._conn)
-    result = goss_client.get_response('/addem', json.dumps([5, 6]))
-    assert result == 11
+    result = goss_client.get_response('/addem', [5, 6])
+    assert result['result'] == 11
     # assert id_before == id(goss_client._conn)
 
-    goss_client.send("foo", str(result))
+    goss_client.send("foo", str(result['result']))
 
     count = 0
     while True:
@@ -86,8 +88,8 @@ def test_get_response(caplog, goss_client):
     assert gen_sub
     assert len(gen_sub) == 1
     assert len(gen_sub[0]) == 2
-    assert gen_sub[0][1] == '11'
-    assert result == 11
+    assert gen_sub[0][1] == 11
+    assert result['result'] == 11
 
 
 def test_connect(assigned_stomp_port):
@@ -156,8 +158,8 @@ def test_multi_subscriptions(goss_client):
     assert message == "I am a bar"
 
 
-@pytest.mark.xfail("Multiple topics can't be subscribed to the same topic at present.")
 def test_multi_subscriptions_same_topic(goss_client):
+    pytest.xfail("Multiple topics can't be subscribed to the same topic at present.")
 
     message_queue1 = Queue()
     message_queue2 = Queue()
