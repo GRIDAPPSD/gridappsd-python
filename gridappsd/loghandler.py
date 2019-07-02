@@ -37,9 +37,10 @@ class Logger:
             "source": utils.get_gridappsd_application_id(),
             "processId": "{}-{}".format(utils.get_gridappsd_application_id(), sim_id),
             "timestamp": utils.utc_timestamp(),
-            "procesStatus": str(status),
+            "processStatus": str(status),
             "logMessage": str(message),
-            "logLevel": logging.getLevelName(level)
+            "logLevel": logging.getLevelName(level),
+            "storeToDb": True
         }
 
         self._gaps.send(topic, status_message)
