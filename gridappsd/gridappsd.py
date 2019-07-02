@@ -47,6 +47,7 @@ from logging import DEBUG, INFO, WARNING, FATAL, WARN
 
 from . import GOSS
 from . import topics as t
+from . loghandler import Logger
 from . import utils
 from . simulation import Simulation
 # from . configuration_types import ConfigurationType
@@ -95,6 +96,9 @@ class GridAPPSD(GOSS):
         duration = run_config['simulation_config']['duration']
         resp = self.get_response(t.REQUEST_SIMULATION, json.dumps(run_config))
         return Simulation(self, resp, duration, timestamp_finished)
+
+    def get_logger(self):
+        return Logger(self)
 
     def query_object_types(self, model_id=None):
         """ Allows the caller to query the different object types.
