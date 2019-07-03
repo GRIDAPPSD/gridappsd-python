@@ -71,7 +71,7 @@ BASE_APPLICATION_HEARTBEAT = ".".join((BASE_TOPIC_PREFIX, "heartbeat"))
 def platform_log_topic():
     """ Utility method for getting the platform.log base topic
     """
-    return "{}.{}".format(BASE_TOPIC_PREFIX, "platform.log")
+    return "/topic/{}.{}".format(BASE_TOPIC_PREFIX, "platform.log")
 
 
 def service_input_topic(service_id, simulation_id):

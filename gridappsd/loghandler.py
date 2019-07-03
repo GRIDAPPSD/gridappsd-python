@@ -26,7 +26,9 @@ class Logger:
         self.log(message, logging.WARNING)
 
     def log(self, message, level=logging.DEBUG):
-        status = os.environ.get("GRIDAPPSD_APPLICATION_STATUS", "UNKNOWN")
+        status = os.environ.get("GRIDAPPSD_APPLICATION_STATUS")
+        if not status:
+            raise AttributeError("Invalid GRIDAPPSD_APPLICATION_STATUS environmental variable.")
         sim_id = utils.get_gridappsd_simulation_id()
         if sim_id is not None:
             topic = t.simulation_log_topic(sim_id)
@@ -36,7 +38,6 @@ class Logger:
         status_message = {
             "source": utils.get_gridappsd_application_id(),
             "processId": "{}-{}".format(utils.get_gridappsd_application_id(), sim_id),
-            "timestamp": utils.utc_timestamp(),
             "processStatus": str(status),
             "logMessage": str(message),
             "logLevel": logging.getLevelName(level),

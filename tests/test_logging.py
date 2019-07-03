@@ -26,7 +26,8 @@ def test_required_application_id_set(logger_mock):
 
 
 @mock.patch.dict(os.environ,
-                 dict(GRIDAPPSD_APPLICATION_ID='test_log_levels'))
+                 dict(GRIDAPPSD_APPLICATION_ID='test_log_levels',
+                      GRIDAPPSD_APPLICATION_STATUS="STOPPED"))
 def test_no_simulation_id_topic_or_application_id(logger_mock):
     """If no simulation then the topic should be the platform log topic"""
 
@@ -39,7 +40,7 @@ def test_no_simulation_id_topic_or_application_id(logger_mock):
     topic, message = gapps.send.call_args.args
 
     assert expected_topic == topic
-    assert 'UNKNOWN' == message['procesStatus']
+    assert 'STOPPED' == message['processStatus']
 
 
 GRIDAPPSD_SIMULATION_ID = "541"
@@ -60,7 +61,7 @@ def test_log(logger_mock):
     assert 'test_log_levels' == message['source']
     assert 'DEBUG' == message['logLevel']
     assert 'foo' == message['logMessage']
-    assert 'ERROR' == message['procesStatus']
+    assert 'ERROR' == message['processStatus']
     gapps.send.reset_mock()
 
     log.info("bar")
@@ -105,6 +106,6 @@ def test_topic_and_status_set_correctly(logger_mock):
     topic, message = gapps.send.call_args.args
 
     assert expected_topic == topic
-    assert "RUNNING" == message['procesStatus']
+    assert "RUNNING" == message['processStatus']
 
 

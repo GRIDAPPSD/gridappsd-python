@@ -170,6 +170,7 @@ class GridAPPSD(GOSS):
             "procesStatus": status,
             "logMessage": str(message),
             "logLevel": log_level,
+            "storeToDb": True
         }
         data = json.dumps(status_message)
 

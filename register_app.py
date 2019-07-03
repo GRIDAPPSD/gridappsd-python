@@ -7,7 +7,8 @@ import stomp
 from gridappsd import ApplicationController, GridAPPSD, utils
 
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+loglevel = logging.INFO
+logging.basicConfig(stream=sys.stdout, level=loglevel,
                     format="%(asctime)s - %(name)s;%(levelname)s|%(message)s",
                     datefmt="%Y-%m-%d %H:%M:%S")
 logging.getLogger('stomp.py').setLevel(logging.ERROR)
@@ -29,6 +30,13 @@ if not os.path.isfile("/appconfig"):
     sys.exit(1)
 
 config = json.loads(open("/appconfig").read())
+
+if "id" not in config:
+    _log.error("Invalid appconfig, must have a unique id set.")
+    sys.exit(1)
+
+os.environ['GRIDAPPSD_APPLICATION_ID'] = config['id']
+
 appreg = None
 gap = None
 while True:
@@ -46,6 +54,10 @@ while True:
         _log.debug("Connect failed Retry in 10 seconds")
         gap = appreg = None
         time.sleep(10)
+    except KeyboardInterrupt:
+        gap = appreg = None
+        _log.info("Exiting app")
+        break
     else:
         if appreg is None:
             def end_app():
