@@ -99,7 +99,7 @@ class GOSS(object):
     def send(self, topic, message):
         self._make_connection()
         _log.debug("Sending topic: {} body: {}".format(topic, message))
-        self._conn.send(body=message, destination=topic)
+        self._conn.send(body=message, destination=topic, 'GOSS_HAS_SUBJECT': True, 'GOSS_SUBJECT': self.__user}
 
     def get_response(self, topic, message, timeout=5):
         id = datetime.now().strftime("%Y%m%d%h%M%S")
