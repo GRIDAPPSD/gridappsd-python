@@ -6,7 +6,7 @@ from . topics import simulation_input_topic, simulation_output_topic, simulation
 
 
 class Simulation(object):
-    def __init__(self, gapps, simulation_id: str, duration: int, timestep_finished=None):
+    def __init__(self, gapps, simulation_id, duration, timestep_finished=None):
         self.gappsd = gapps
         self.simulation_id = simulation_id
         self._show_timesteps = True
@@ -31,7 +31,7 @@ class Simulation(object):
         if self._show_timesteps:
             # print(headers, message)
             # print(headers)
-            sys.stdout.write(f"{message['logMessage']}\n")
+            sys.stdout.write("{}\n".format(message['logMessage']))
             # print(message["logMessage"])
 
     @property

@@ -37,16 +37,17 @@
 # PACIFIC NORTHWEST NATIONAL LABORATORY operated by BATTELLE for the
 # UNITED STATES DEPARTMENT OF ENERGY under Contract DE-AC05-76RL01830
 # -------------------------------------------------------------------------------
-import pathlib
+from os import path
 from setuptools import setup, find_packages
 
 __version__ = '2019.6.1'
 
 # The directory containing this file
-HERE = pathlib.Path(__file__).parent
+HERE = path.dirname(__file__)
 
 # The text of the README file
-README = (HERE / "README.md").read_text()
+with open(path.join(HERE, "README.md")) as fp:
+    README = fp.read()
 
 packages = find_packages('.')
 
