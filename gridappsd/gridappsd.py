@@ -129,9 +129,12 @@ class GridAPPSD(GOSS):
         return self.get_response(t.REQUEST_POWERGRID_DATA, payload, timeout=30)
     
     def query_object_dictionary(self, model_id, object_type=None, object_id=None):
+        if not model_id:
+            raise ValueError("model_id is not specified.")
         if not object_id and not object_type:
             raise ValueError("No obejct_id or object_type specified.")
-        args = dict(model_id=model_id)
+        args={}
+        args["modelId"] = model_id
         if object_id is not None:
             args["objectId"] = object_id
         if object_type is not None:
