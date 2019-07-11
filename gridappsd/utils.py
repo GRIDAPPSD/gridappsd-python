@@ -29,6 +29,10 @@ def epoche_to_datetime(epoche):
     return datetime.datetime.fromtimestamp(epoche)
 
 
+def utc_timestamp():
+    return datetime_to_epoche(datetime.datetime.utcnow())
+
+
 def validate_gridappsd_uri():
     problems = []
 
@@ -64,3 +68,27 @@ def get_gridappsd_user():
 
 def get_gridappsd_pass():
     return __GRIDAPPSD_PASS__
+
+
+def get_gridappsd_application_id():
+    """ Retrieve the application_id from the environment.
+
+    In order to use this function an environmental variable `GRIDAPPSD_APPLICATION_ID`
+    must have been set.  For docker containers this is done in the
+    `gridappsd.app_registration` callback when the application is started.  If the
+    environmental variable is not set an AttributeError will be raised.
+    """
+    app_id = os.environ.get("GRIDAPPSD_APPLICATION_ID")
+    if not app_id:
+        raise AttributeError("environmental variable for GRIDAPPSD_APPLICATION_ID is not set")
+    return app_id
+
+
+def get_gridappsd_simulation_id():
+    """ Retrieve simulation_id from environment.
+
+    This method will return a `None` if the GRIDAPPSD_SIMULATION_ID environmental
+    variable is not set.
+    """
+    simulation_id = os.environ.get("GRIDAPPSD_SIMULATION_ID")
+    return simulation_id

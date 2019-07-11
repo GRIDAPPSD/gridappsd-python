@@ -99,8 +99,11 @@ class GOSS(object):
     def send(self, topic, message):
         self._make_connection()
         _log.debug("Sending topic: {} body: {}".format(topic, message))
-        self._conn.send(body=message, destination=topic, headers={'GOSS_HAS_SUBJECT': True, 'GOSS_SUBJECT': self.__user})
-
+        if isinstance(message, list) or isinstance(message, dict):
+            message = json.dumps(message)
+        self._conn.send(body=message, destination=topic,
+                        headers={'GOSS_HAS_SUBJECT': True,
+                                 
     def get_response(self, topic, message, timeout=5):
         id = datetime.now().strftime("%Y%m%d%h%M%S")
         reply_to = "/temp-queue/response.{}".format(id)
