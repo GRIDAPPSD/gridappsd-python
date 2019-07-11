@@ -103,8 +103,7 @@ class GOSS(object):
             message = json.dumps(message)
         self._conn.send(body=message, destination=topic,
                         headers={'GOSS_HAS_SUBJECT': True,
-                                 'GOSS_SUBJECT': self.__user})
-
+                                 
     def get_response(self, topic, message, timeout=5):
         id = datetime.now().strftime("%Y%m%d%h%M%S")
         reply_to = "/temp-queue/response.{}".format(id)
