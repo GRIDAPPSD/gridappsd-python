@@ -37,10 +37,11 @@
 # PACIFIC NORTHWEST NATIONAL LABORATORY operated by BATTELLE for the
 # UNITED STATES DEPARTMENT OF ENERGY under Contract DE-AC05-76RL01830
 # -------------------------------------------------------------------------------
+
 from os import path
 from setuptools import setup, find_packages
 
-__version__ = '2019.6.1'
+__version__ = '2019.7.0'
 
 # The directory containing this file
 HERE = path.dirname(__file__)
@@ -77,6 +78,7 @@ setup(
     license="BSD",
     classifiers=[
         "License :: OSI Approved :: BSD License",
+        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7"
     ],
