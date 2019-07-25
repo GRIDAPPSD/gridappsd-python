@@ -11,9 +11,11 @@ import subprocess
 import threading
 import shlex
 import sys
+import os
 
 from . gridappsd import GridAPPSD
 from . topics import REQUEST_REGISTER_APP
+from . import utils
 
 _log = logging.getLogger(__name__)
 
@@ -36,9 +38,10 @@ class Job(threading.Thread):
         self.running = False
 
     def run(self):
-        _log.debug("Running thread!")
         try:
             self.running = True
+            os.environ['GRIDAPPSD_APPLICATION_STATUS'] = 'RUNNING'
+
             p = subprocess.Popen(args=self._args,
                                  shell=False,
                                  stdout=self._out,
@@ -46,10 +49,14 @@ class Job(threading.Thread):
 
             # Loop while process is executing
             while p.poll() is None and self.running:
+                os.environ['GRIDAPPSD_APPLICATION_STATUS'] = 'RUNNING'
                 time.sleep(1)
 
         except Exception as e:
+            os.environ['GRIDAPPSD_APPLICATION_STATUS'] = 'ERROR'
             _log.error(repr(e))
+        else:
+            os.environ['GRIDAPPSD_APPLICATION_STATUS'] = 'STOPPED'
 
 
 class ApplicationController(object):
@@ -60,6 +67,7 @@ class ApplicationController(object):
         if not isinstance(gridappsd, GridAPPSD):
             raise ValueError("Invalid gridappsd instance passed.")
 
+        os.environ['GRIDAPPSD_APPLICATION_STATUS'] = 'STOPPED'
         self._configDict = config.copy()
         self._validate_config()
         self._gapd = gridappsd
@@ -81,6 +89,7 @@ class ApplicationController(object):
         self._end_callback = None
         self._print_queue = Queue()
         self._heartbeat_thread = None
+        os.environ['GRIDAPPSD_APPLICATION_STATUS'] = 'STOPPED'
 
         if "type" not in self._configDict or self._configDict['type'] != 'REMOTE':
             _log.warning('Setting type to REMOTE you can remove this error by putting '
@@ -105,6 +114,8 @@ class ApplicationController(object):
     def register_app(self, end_callback):
         print("Sending {}\n\tto {}".format(self._configDict,
                                            REQUEST_REGISTER_APP))
+        self._gapd.get_logger().debug("Started App Registration")
+
         response = self._gapd.get_response(REQUEST_REGISTER_APP,
                                            self._configDict,
                                            60)
@@ -118,6 +129,9 @@ class ApplicationController(object):
         self._start_control_topic = response.get('startControlTopic')
         self._stop_control_topic = response.get('stopControlTopic')
 
+        os.environ["GRIDAPPSD_APPLICATION_ID"] = self._application_id
+        os.environ['GRIDAPPSD_APPLICATION_STATUS'] = 'STOPPED'
+
         self._gapd.subscribe(self._stop_control_topic, self.__handle_stop)
         self._gapd.subscribe(self._start_control_topic, self.__handle_start)
         self._end_callback = end_callback
@@ -127,10 +141,8 @@ class ApplicationController(object):
                                                   args=[self.__heartbeat_error])
         self._heartbeat_thread.daemon = True
         self._heartbeat_thread.start()
-
-        # tp = threading.Thread(target=self.__print_from_queue)
-        # tp.daemon = True
-        # tp.start()
+        self._gapd.get_logger().debug("Heartbeat registereed for application {}".format(
+            utils.get_gridappsd_application_id()))
 
     def __heartbeat_error(self):
         self._heartbeat_thread = None
@@ -148,13 +160,6 @@ class ApplicationController(object):
         except:
             error_callback()
 
-    def __get_status(self):
-        """ Combines the status of the executable app into a dictionary
-        """
-        status = dict(
-
-        )
-
     def __print_from_queue(self):
         while True:
             buff = self._print_queue.get(block=True)
@@ -162,12 +167,12 @@ class ApplicationController(object):
 
     def __handle_start(self, headers, message):
         _log.debug("Handling start")
-        obj = json.loads(message)
         if isinstance(message, str):
             obj = json.loads(message)
         else:
             obj = message
-        # print("Handling Start: {}\ndict:\n{}".format(headers, obj))
+        os.environ['GRIDAPPSD_APPLICATION_STATUS'] = 'STARTING'
+        self._gapd.get_logger().debug("Handling Start: {}\ndict:\n{}".format(headers, obj))
 
         if 'command' not in obj:
             # Send log to gridappsd
@@ -178,47 +183,16 @@ class ApplicationController(object):
             job = Job(args)
             job.daemon = True
             job.start()
-            # self._thread = Job(self._print_queue, obj)
-            # self._thread.daemon = True
-            # self._thread.start()
-
-    # def __start_application(self, obj):
-    #     args = shlex.split(obj['command'])
-    #     try:
-    #         (pipe_r, pipe_w) = os.pipe()
-    #         p = subprocess.Popen(args=args,
-    #                              shell=False,
-    #                              stdout=pipe_r,
-    #                              stderr=pipe_r)
-    #
-    #         # Loop while process is executing
-    #         while p.poll() is None:
-    #             # See the following for select
-    #             # https://docs.python.org/3.5/library/select.html#select.select
-    #             # the third argument as 0 makes the call non-blocking.
-    #             #
-    #             # There is data available when this is true
-    #             while len(select.select([pipe_r], [], [], 0)[0]) == 1:
-    #                 # Read up to 1 KB of data
-    #                 buffer = os.read(pipe_r, 1024)
-    #                 print(buffer)
-    #                 os.write(0, buffer)
-    #
-    #         os.close(pipe_r)
-    #         os.close(pipe_w)
-    #     except Exception as e:
-    #         _log.error(repr(e))
-    #         if pipe_r is not None:
-    #             os.close(pipe_r)
-    #         if pipe_w is not None:
-    #             os.close(pipe_w)
+            self._gapd.get_logger().debug("Job Started: {}".format(job.running))
 
     def __handle_stop(self, headers, message):
         print("Handling Stop: {} {}".format(headers, message))
+        os.environ['GRIDAPPSD_APPLICATION_STATUS'] = 'STOPPING'
         if self._thread:
             self._thread.join()
         if self._end_callback is not None:
             self._end_callback()
+        os.environ['GRIDAPPSD_APPLICATION_STATUS'] = 'STOPPED'
 
     def shutdown(self):
         self._shutting_down = True

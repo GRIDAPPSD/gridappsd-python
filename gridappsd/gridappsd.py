@@ -47,6 +47,7 @@ from logging import DEBUG, INFO, WARNING, FATAL, WARN
 
 from . import GOSS
 from . import topics as t
+from . loghandler import Logger
 from . import utils
 from . simulation import Simulation
 # from . configuration_types import ConfigurationType
@@ -96,6 +97,9 @@ class GridAPPSD(GOSS):
         resp = self.get_response(t.REQUEST_SIMULATION, json.dumps(run_config))
         return Simulation(self, resp, duration, timestamp_finished)
 
+    def get_logger(self):
+        return Logger(self)
+
     def query_object_types(self, model_id=None):
         """ Allows the caller to query the different object types.
                 
@@ -126,6 +130,20 @@ class GridAPPSD(GOSS):
         if model_id is not None:
             args["modelId"] = model_id
         payload = self._build_query_payload("QUERY_OBJECT", **args)
+        return self.get_response(t.REQUEST_POWERGRID_DATA, payload, timeout=30)
+    
+    def query_object_dictionary(self, model_id, object_type=None, object_id=None):
+        if not model_id:
+            raise ValueError("model_id is not specified.")
+        if not object_id and not object_type:
+            raise ValueError("No obejct_id or object_type specified.")
+        args={}
+        args["modelId"] = model_id
+        if object_id is not None:
+            args["objectId"] = object_id
+        if object_type is not None:
+            args["objectType"] = object_type
+        payload = self._build_query_payload("QUERY_OBJECT_DICT", **args)
         return self.get_response(t.REQUEST_POWERGRID_DATA, payload, timeout=30)
 
     def query_data(self, query, database_type=POWERGRID_MODEL, timeout=30):
@@ -166,6 +184,7 @@ class GridAPPSD(GOSS):
             "procesStatus": status,
             "logMessage": str(message),
             "logLevel": log_level,
+            "storeToDb": True
         }
         data = json.dumps(status_message)
 

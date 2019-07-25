@@ -68,6 +68,12 @@ REQUEST_APP_START = ".".join((PROCESS_PREFIX, "request.app.start"))
 BASE_APPLICATION_HEARTBEAT = ".".join((BASE_TOPIC_PREFIX, "heartbeat"))
 
 
+def platform_log_topic():
+    """ Utility method for getting the platform.log base topic
+    """
+    return "/topic/{}.{}".format(BASE_TOPIC_PREFIX, "platform.log")
+
+
 def service_input_topic(service_id, simulation_id):
     """ Utility method for getting the input topic for a specific service.
 
