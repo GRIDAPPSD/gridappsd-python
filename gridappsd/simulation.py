@@ -1,13 +1,11 @@
 from __future__ import absolute_import, print_function
-from collections import deque
+
+from copy import deepcopy
 import json
 import logging
-import sys
-import time
 
 from . import topics as t
-from . topics import simulation_input_topic, platform_log_topic
-
+from .topics import simulation_input_topic
 
 _log = logging.getLogger(__name__)
 
@@ -40,7 +38,7 @@ class Simulation(object):
         assert isinstance(gapps, GridAPPSD), "Must be an instance of GridAPPSD"
         assert isinstance(run_config, dict)
         self._gapps = gapps
-        self._run_config = run_config.copy()
+        self._run_config = deepcopy(run_config)
 
         # Will be populated when the simulation is first started.
         self.simulation_id = None
@@ -65,10 +63,14 @@ class Simulation(object):
         """
         resp = self._gapps.get_response(t.REQUEST_SIMULATION, json.dumps(self._run_config))
 
+        if 'simulationId' not in resp:
+            message = "Simulation was not able to run\n" + str(resp)
+            raise Exception(message)
+        self.simulation_id = resp['simulationId']
         # Subscribe to the different components necessary to run and receive
         # simulated measurements and messages.
-        self._gapps.subscribe(t.simulation_log_topic(resp['simulationId']), self.__on_simulation_log)
-        self._gapps.subscribe(t.simulation_output_topic(resp['simulationId']), self.__onmeasurement)
+        self._gapps.subscribe(t.simulation_log_topic(self.simulation_id), self.__on_simulation_log)
+        self._gapps.subscribe(t.simulation_output_topic(self.simulation_id), self.__onmeasurement)
         self._gapps.subscribe(t.platform_log_topic(), self.__on_platformlog)
 
         for p in self.__on_start:
@@ -106,7 +108,7 @@ class Simulation(object):
 
     def __on_platformlog(self, headers, message):
         if self.simulation_id == message['processId']:
-            _log.debug("Message found for this simulation: {}".format(message))
+            _log.debug("__on_platformlog: {}".format(message))
 
         if 'command' in message:
             _log.debug("Command was: {}".format(message))

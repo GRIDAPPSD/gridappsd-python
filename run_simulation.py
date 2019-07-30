@@ -17,6 +17,13 @@ _log = logging.getLogger(__name__)
 #                            "Line_name": "_C1C3E687-6FFD-C753-582B-632A27E28507"
 #                        },
 
+# 123-based PV model
+# "power_system_config": {
+#                            "GeographicalRegion_name": "_73C512BD-7249-4F50-50DA-D93849B89C43",
+#                            "SubGeographicalRegion_name": "_1CD7D2EE-3C91-3248-5662-A43EFEFAC224",
+#                            "Line_name": "_E407CBB6-8C8D-9BC9-589C-AB83FBF0826D"
+#                        },
+
 # 8500-based model
 # {"power_system_config": {
 #     "GeographicalRegion_name":"_73C512BD-7249-4F50-50DA-D93849B89C43",
@@ -27,19 +34,22 @@ _log = logging.getLogger(__name__)
 run_config = {
     "power_system_config": {
         # 9500 node system
-        #"Line_name": "_AAE94E4A-2465-6F5E-37B1-3E72183A4E44",
+        # "Line_name": "_AAE94E4A-2465-6F5E-37B1-3E72183A4E44",
 
         # 8500 node system
         # "Line_name": "_4F76A5F9-271D-9EB8-5E31-AA362D86F2C3",
         # 123 node
-        "Line_name": "_4F76A5F9-271D-9EB8-5E31-AA362D86F2C3"
+        # "Line_name": "_C1C3E687-6FFD-C753-582B-632A27E28507"
+
+        # 123 PV node
+        "Line_name": "_E407CBB6-8C8D-9BC9-589C-AB83FBF0826D"
 
         # "GeographicalRegion_name": "_73C512BD-7249-4F50-50DA-D93849B89C43",
         # "SubGeographicalRegion_name": "_1CD7D2EE-3C91-3248-5662-A43EFEFAC224",
         # "Line_name": "_C1C3E687-6FFD-C753-582B-632A27E28507"
     },
     "application_config": {
-        "applications": [{"name": "sample_app", "config_string": ""}]
+        "applications": [] #{"name": "sample_app", "config_string": ""}]
     },
     "simulation_config": {
         "start_time": "1562453292",
@@ -82,11 +92,11 @@ sim_complete = False
 
 
 def onstart(sim):
-    print("Sim started")
+    print("Sim started: {}".format(sim.simulation_id))
 
 
 def onmeasurment(sim, timestamp, measurements):
-    pass
+    pprint(measurements)
 
 
 def ontimestep(sim, timestep):
@@ -102,6 +112,7 @@ def onfinishsimulation(sim):
     global sim_complete
     sim_complete = True
     print("Completed simulator")
+
 
 sim.add_onstart_callback(onstart)
 sim.add_onmesurement_callback(onmeasurment)
