@@ -51,7 +51,9 @@ import logging
 import random
 from time import sleep
 
+from .utils import get_gridappsd_user, get_gridappsd_pass
 from stomp import Connection12 as Connection
+from stomp.exception import NotConnectedException
 
 _log = logging.getLogger(inspect.getmodulename(__file__))
 
@@ -64,12 +66,17 @@ class GOSS(object):
     """ Base class providing connections to a GOSS instance via stomp protocol
     """
 
-    def __init__(self, username='system', password='manager',
+    def __init__(self, username=None, password=None,
                  stomp_address='localhost', stomp_port='61613',
                  attempt_connection=True,
-                 override_threading=None):
-        self.__user = username
-        self.__pass = password
+                 override_threading=None, stomp_log_level=logging.WARNING,
+                 goss_log_level=logging.INFO):
+
+        logging.getLogger('stomp.py').setLevel(stomp_log_level)
+        logging.getLogger('goss').setLevel(goss_log_level)
+
+        self.__user = username if username is not None else get_gridappsd_user()
+        self.__pass = password if password is not None else get_gridappsd_pass()
         self.stomp_address = stomp_address
         self.stomp_port = stomp_port
         self._conn = None
@@ -82,7 +89,7 @@ class GOSS(object):
 
     @property
     def connected(self):
-        return self._conn is not None
+        return self._conn is not None and self._conn.is_connected()
 
     def connect(self):
         self._make_connection()
@@ -212,7 +219,14 @@ class GOSS(object):
             self._conn = Connection([(self.stomp_address, self.stomp_port)])
             if self._override_thread_fc is not None:
                 self._conn.transport.override_threading(self._override_thread_fc)
-            self._conn.connect(self.__user, self.__pass)
+            try:
+                self._conn.connect(self.__user, self.__pass, wait=True)
+            except TypeError:
+                pass
+            except NotConnectedException:
+                pass
+            except AttributeError:
+                pass
 
 
 class CallbackWrapperListener(object):
