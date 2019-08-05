@@ -10,6 +10,11 @@ from .topics import simulation_input_topic
 _log = logging.getLogger(__name__)
 
 
+class SimulationFailedToStartError(Exception):
+    """Exception raised if a simulation fails to start."""
+    pass
+
+
 class Simulation(object):
     """ Simulation object allows controlling simulations through a python API.
 
@@ -17,20 +22,9 @@ class Simulation(object):
     a python API.  It is capable of starting, stopping, pausing and restarting simulations
     that are run on GridAPPSD.
 
-    There are three events that can be monitored by multiple callbacks:
-
-        - timestep:
-
-            This event is triggered each time a timestep has been triggered
-
-        - on_timestep_begin:
-
-            This event is triggered when a new tiemtep has been started.
-
-        - on_finished:
-
-            This event is triggered when the simulation has completed.
-
+    There are four events that can be registered: ontimestep, onmeasurement, oncomplete, and
+    onstart.  To register one of the events call the method add_ontimestep_callback,
+    add_onmesurement_callback, add_oncomplete_callback or add_onstart_callback method respectively.
     """
     def __init__(self, gapps, run_config):
         # Protect from circular import.
@@ -65,7 +59,7 @@ class Simulation(object):
 
         if 'simulationId' not in resp:
             message = "Simulation was not able to run\n" + str(resp)
-            raise Exception(message)
+            raise SimulationFailedToStartError(message)
         self.simulation_id = resp['simulationId']
         # Subscribe to the different components necessary to run and receive
         # simulated measurements and messages.
@@ -95,15 +89,65 @@ class Simulation(object):
         self._gapps.send(simulation_input_topic(self.simulation_id), json.dumps(command))
 
     def add_onmesurement_callback(self, callback, device_filter=()):
+        """ registers an onmeasurment callback to be called when measurements have come through.
+
+        Note:
+
+            The device_filter has not been fully implemented at present!
+
+        The callback parameter must be a function that takes three arguments (the simulation object,
+        a timstep and a measurement dictionary)
+
+        Callback Example:
+
+            def onmeasurment(sim, timestep, measurements):
+                print("timestep: {}, measurement: {}".format(timestep, measurements))
+
+        :param callback: Function to be called during running of simulation
+        :param device_filter: Future filter of measurements
+        :return:
+        """
         self.__filterable_measurement_callback_set.add((callback, device_filter))
 
     def add_onstart_callback(self, callback):
+        """ registers a start callback that is called when the simulation is started
+
+        Callback Example:
+
+            def onstart(sim):
+                print("Sim started: {}".format(sim.simulation_id))
+
+
+
+        :param callback:
+        :return:
+        """
         self.__on_start.add(callback)
 
     def add_oncomplete_callback(self, callback):
+        """ registers a completion callback when the last timestep has been requested.
+
+        Callback Example:
+
+            def onfinishsimulation(sim):
+                print("Completed simulator")
+
+        :param callback:
+        :return:
+        """
         self.__on_simulation_complete_callbacks.add(callback)
 
     def add_ontimestep_callback(self, callback):
+        """ register a timestep callback
+
+        Callback Example:
+
+            def ontimestep(sim, timestep):
+                print("Timestamp: {}".format(timestep))
+
+        :param callback:
+        :return:
+        """
         self.__on_next_timestep_callbacks.add(callback)
 
     def __on_platformlog(self, headers, message):
