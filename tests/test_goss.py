@@ -9,6 +9,7 @@ try:
 except ImportError:
     from Queue import Queue
 
+from mock import Mock
 import pytest
 
 from gridappsd import GOSS
@@ -202,8 +203,8 @@ def test_response_class(goss_client):
 
     print(result)
     assert result
-    assert len(result) == 2
-    assert result[1] == json.dumps({"abc": "def"})
+    assert 2 == len(result)
+    assert result[1] == {"abc": "def"}
 
 
 def test_replace_subscription(caplog, goss_client):
@@ -222,3 +223,5 @@ def test_replace_subscription(caplog, goss_client):
     sleep(0.5)
 
     assert original_queue.qsize() == 1
+
+

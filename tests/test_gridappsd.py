@@ -1,8 +1,11 @@
 from pprint import pprint
+from time import sleep
 
 import pytest
 
 from gridappsd import GridAPPSD
+
+from gridappsd import GridAPPSD, topics
 
 
 @pytest.fixture
@@ -51,3 +54,32 @@ def test_get_model_info(gappsd):
 
     assert len(correct_keys) == 0
 
+
+def test_listener_multi_topic(gappsd):
+
+    class Listener():
+        def __init__(self):
+            self.call_count = 0
+
+        def reset(self):
+            self.call_count = 0
+
+        def on_message(self, headers, message):
+            print("Message was: {}".format(message))
+            self.call_count += 1
+
+    listener = Listener()
+
+    input_topic = topics.simulation_input_topic("5144")
+    output_topic = topics.simulation_output_topic("5144")
+
+    gappsd.subscribe(input_topic, listener)
+    gappsd.subscribe(output_topic, listener)
+
+    gappsd.send(input_topic, "Any message")
+    sleep(1)
+    assert 1 == listener.call_count
+    listener.reset()
+    gappsd.send(output_topic, "No big deal")
+    sleep(1)
+    assert 1 == listener.call_count
