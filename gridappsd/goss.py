@@ -131,7 +131,10 @@ class GOSS(object):
                 if header['destination'] == self._topic:
                     _log.debug("Internal on message is: {} {}".format(header, message))
                     try:
-                        self.response = json.loads(message)
+                        if isinstance(message, dict):
+                            self.response = message
+                        else:
+                            self.response = json.loads(message)
                     except ValueError:
                         self.response = dict(error="Invalid json returned",
                                              header=header,
@@ -173,7 +176,7 @@ class GOSS(object):
             method. The function (or class's on_message method) will be
             passed two arguments: header and message.
         """
-        conn_id = str(random.randint(1,1000000))
+        conn_id = str(random.randint(1, 1000000))
         while conn_id in self._ids:
             conn_id = str(random.randint(1, 1000000))
 
@@ -203,8 +206,13 @@ class GOSS(object):
                     "callable!"
                 raise TypeError(m)
 
-            #
-            self._conn.set_listener(topic, callback)
+            # Fix for https://github.com/GRIDAPPSD/GOSS-GridAPPS-D/issues/1072
+            # register the onmessage from the passed listener object.  This is not
+            # necessarily an ideal solution because we aren't also passing on the
+            # other functions in the lifecycle, however this does pass the
+            # test that was written so that listeners aren't called multiple times.
+            self._conn.set_listener(topic,
+                                    CallbackWrapperListener(callback.on_message, conn_id))
 
         self._conn.subscribe(destination=topic, ack='auto', id=conn_id)
 
