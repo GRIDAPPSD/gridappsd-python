@@ -151,8 +151,12 @@ class Simulation(object):
         self.__on_next_timestep_callbacks.add(callback)
 
     def __on_platformlog(self, headers, message):
-        if self.simulation_id == message['processId']:
-            _log.debug("__on_platformlog: {}".format(message))
+        try:
+            if self.simulation_id == message['processId']:
+                _log.debug("__on_platformlog: {}".format(message))
+        except KeyError:
+            _log.warning('__on_platformlog: Incoming message is missing the '
+                         'processId field! Message: {}'.format(message))
 
         if 'command' in message:
             _log.debug("Command was: {}".format(message))
