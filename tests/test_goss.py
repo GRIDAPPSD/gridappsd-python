@@ -51,6 +51,7 @@ def test_get_response(caplog, goss_client):
     def addem_callback(header, message):
         print("Addem callback")
         print("Threadid: {}".format(threading.current_thread().ident))
+
         if isinstance(message, str):
             item = json.loads(message)
         else:
@@ -60,7 +61,10 @@ def test_get_response(caplog, goss_client):
             total += x
 
         reply_to = header['reply-to']
-        goss_client.send(reply_to, json.dumps(dict(result=total)))
+        response = dict(result=total)
+        print("Sending back topic: {topic} {response}".format(topic=reply_to,
+                                                              response=response))
+        goss_client.send(reply_to, json.dumps(response))
 
     gen_sub = []
 
@@ -89,7 +93,6 @@ def test_get_response(caplog, goss_client):
     assert gen_sub
     assert len(gen_sub) == 1
     assert len(gen_sub[0]) == 2
-    assert gen_sub[0][1] == 11
     assert result['result'] == 11
 
 
@@ -127,8 +130,8 @@ def test_callback_function(goss_client):
     def callback1(headers, message):
         message_queue1.put((headers, message))
 
-    goss_client.subscribe('/foo', callback1)
-    goss_client.send('/foo', "I am a foo")
+    goss_client.subscribe('foo', callback1)
+    goss_client.send('foo', "I am a foo")
     sleep(0.1)
     assert message_queue1.qsize() == 1
     header, message = message_queue1.get()
@@ -141,13 +144,16 @@ def test_multi_subscriptions(goss_client):
     message_queue2 = Queue()
 
     def callback1(headers, message):
+        print(f"mq1 {headers} {message}")
         message_queue1.put((headers, message))
 
     def callback2(headers, message):
+        print(f"mq2 {headers} {message}")
         message_queue2.put((headers, message))
 
     goss_client.subscribe('bim', callback1)
     goss_client.subscribe('bar', callback2)
+    sleep(0.5)
     goss_client.send('bim', "I am a foo")
     goss_client.send('bar', "I am a bar")
     sleep(0.5)
@@ -160,19 +166,22 @@ def test_multi_subscriptions(goss_client):
 
 
 def test_multi_subscriptions_same_topic(goss_client):
-    pytest.xfail("Multiple topics can't be subscribed to the same topic at present.")
+    # pytest.xfail("Multiple topics can't be subscribed to the same topic at present.")
 
     message_queue1 = Queue()
     message_queue2 = Queue()
 
     def callback1(headers, message):
+        print(f"handling callback1 {message} ")
         message_queue1.put((headers, message))
 
     def callback2(headers, message):
+        print(f"handling callback2 {message} ")
         message_queue2.put((headers, message))
 
-    goss_client.subscribe('bim', callback1)
+    indx1 = goss_client.subscribe('bim', callback1)
     goss_client.subscribe('bim', callback2)
+    sleep(0.5)
     goss_client.send('bim', "I am a foo")
     goss_client.send('bim', "I am a bar")
     sleep(0.5)
@@ -192,19 +201,21 @@ def test_response_class(goss_client):
 
     message_queue = Queue()
 
-    class SubListener():
+    class SubListener:
         def on_message(self, header, message):
             message_queue.put((header, message))
 
-    goss_client.subscribe("/bar", SubListener())
-    goss_client.send("/bar", json.dumps({'abc': 'def'}))
+    goss_client.subscribe("/topic/bar", SubListener())
+    sleep(0.5)
+    goss_client.send("/topic/bar", {"abc": "def"})
 
     result = message_queue.get()
 
     print(result)
     assert result
     assert 2 == len(result)
-    assert result[1] == {"abc": "def"}
+
+    assert dict(abc="def") == result[1]
 
 
 def test_replace_subscription(caplog, goss_client):

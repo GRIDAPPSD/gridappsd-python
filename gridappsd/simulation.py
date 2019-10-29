@@ -63,6 +63,10 @@ class Simulation(object):
         self.simulation_id = resp['simulationId']
         # Subscribe to the different components necessary to run and receive
         # simulated measurements and messages.
+        print("sim_log: {}".format(t.simulation_log_topic(self.simulation_id)))
+        print("sim_output_log: {}".format(t.simulation_output_topic(self.simulation_id)))
+        print("sim_platform_log: {}".format(t.platform_log_topic()))
+
         self._gapps.subscribe(t.simulation_log_topic(self.simulation_id), self.__on_simulation_log)
         self._gapps.subscribe(t.simulation_output_topic(self.simulation_id), self.__onmeasurement)
         self._gapps.subscribe(t.platform_log_topic(), self.__on_platformlog)
@@ -151,8 +155,12 @@ class Simulation(object):
         self.__on_next_timestep_callbacks.add(callback)
 
     def __on_platformlog(self, headers, message):
-        if self.simulation_id == message['processId']:
-            _log.debug("__on_platformlog: {}".format(message))
+        if 'processId' in message:
+            if self.simulation_id == message['processId']:
+                # print("headers: {}\nmessage: {}".format(headers, message))
+                _log.debug("__on_platformlog: {}".format(message))
+            else:
+                print("Not my process id but {}\nmessage:{}".format(message['processId'], message))
 
         if 'command' in message:
             _log.debug("Command was: {}".format(message))
