@@ -306,24 +306,3 @@ class CallbackRouter(object):
         _log.error("Error in callback router")
         _log.error(header)
         _log.error(message)
-
-
-class CallbackWrapperListener(object):
-
-    def __init__(self, callback, subscription):
-        self._callback = callback
-        self._subscription_id = subscription
-
-    def on_message(self, header, message):
-        print(f"CallbackWrapper {header} {message}")
-        if header['subscription'] == self._subscription_id:
-            try:
-                msg = json.loads(message)
-            except:
-                msg = message
-            self._callback(header, msg)
-
-    def on_error(self, header, message):
-        _log.error("Error for subscription: {}".format(self._subscription_id))
-        _log.error(header)
-        _log.error(message)
