@@ -108,7 +108,10 @@ class Simulation(object):
         :param device_filter: Future filter of measurements
         :return:
         """
-        self.__filterable_measurement_callback_set.add((callback, device_filter))
+        # self.__filterable_measurement_callback_set.add((callback, device_filter))
+        if device_filter:
+            raise NotImplemented("device filter not set at this time due to time constraints.")
+        self.__filterable_measurement_callback_set.add(callback)
 
     def add_onstart_callback(self, callback):
         """ registers a start callback that is called when the simulation is started
@@ -186,4 +189,4 @@ class Simulation(object):
         timestamp = message['message']['timestamp']
         measurements = message['message']['measurements']
         for p in self.__filterable_measurement_callback_set:
-            p[0](self, timestamp, measurements)
+            p(self, timestamp, measurements)
