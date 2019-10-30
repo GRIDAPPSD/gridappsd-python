@@ -1,0 +1,46 @@
+{
+	"power_system_config": {
+		"GeographicalRegion_name": "_73C512BD-7249-4F50-50DA-D93849B89C43",
+		"SubGeographicalRegion_name": "_A1170111-942A-6ABD-D325-C64886DC4D7D",
+		"Line_name": "_AAE94E4A-2465-6F5E-37B1-3E72183A4E44"
+	},
+	"application_config": {
+		"applications": []
+	},
+	"simulation_config": {
+		"start_time": "1563865200",
+		"duration": "86400",
+		"simulator": "GridLAB-D",
+		"timestep_frequency": "1000",
+		"timestep_increment": "1000",
+		"run_realtime": false,
+		"simulation_name": "test9500new",
+		"power_flow_solver_method": "NR",
+		"model_creation_config": {
+			"load_scaling_factor": "1",
+			"schedule_name": "ieeezipload",
+			"z_fraction": "0",
+			"i_fraction": "1",
+			"p_fraction": "0",
+			"randomize_zipload_fractions": false,
+			"use_houses": true
+		}
+	},
+	"test_config": {
+		"events": [],
+		"appId": ""
+	},
+	"service_configs": [{
+		"id": "gridappsd-sensor-simulator",
+		"user_options": {
+			"default-perunit-confidence-band": 0.02,
+			"sensors-config": {},
+			"default-normal-value": 208,
+			"random-seed": 0,
+			"default-aggregation-interval": 300,
+			"passthrough-if-not-specified": false,
+			"default-perunit-drop-rate": 0.01,
+			"simulate-all": true
+		}
+	}]
+}
