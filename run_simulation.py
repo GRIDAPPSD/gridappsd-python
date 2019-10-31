@@ -14,7 +14,7 @@ from gridappsd.simulation import Simulation
 logging.basicConfig(level=logging.DEBUG)
 _log = logging.getLogger(__name__)
 
-logging.getLogger("gridappsd.simulation").setLevel(logging.DEBUG)
+logging.getLogger("gridappsd.simulation").setLevel(logging.INFO)
 
 
 sensor_test = {
@@ -47,7 +47,7 @@ import time, datetime
 start_time = time.mktime(datetime.datetime.today().timetuple())
 
 try:
-    gapps = GridAPPSD(goss_log_level=logging.DEBUG)
+    gapps = GridAPPSD(goss_log_level=logging.INFO)
 except ConnectFailedException:
     print("Failed to connect, possible system is not running or login invalid!")
     sys.exit()
@@ -66,7 +66,7 @@ measurement_output = []
 
 
 def onstart(sim):
-    print("Sim started: {}".format(sim.simulation_id))
+    _log.info("Sim started: {}".format(sim.simulation_id))
 
 
 publish_number = 0
@@ -75,10 +75,6 @@ sim_publish_number = 0
 
 def onmeasurment(sim, timestamp, measurements):
     global publish_number
-
-    if not os.path.exists('measurement_first.json'):
-        with open("measurement_first.json", "w") as p:
-            p.write(json.dumps(measurements, indent=4))
     publish_number += 1
     #
     # for k, v in measurements.items():
@@ -88,12 +84,13 @@ def onmeasurment(sim, timestamp, measurements):
     #     # v['class'] = sensor_test[k]['class']
     #     # v['type'] = sensor_test[k]['type']
     #     measurement_output.append(v)
-    print(f"Publish number: {publish_number} timestamp: {timestamp}")
+    _log.info("{timestamp} publish number: {publish_number}".format(publish_number=publish_number,
+                                                                    timestamp=timestamp))
 #    fd.write(f"{json.dumps(measurements)}\n")
 
 
 def ontimestep(sim, timestep):
-    print("next timestep {}".format(timestep))
+    _log.info("next timestep {timestep}".format(timestep=timestep))
     #print("Pausing simulation")
     # sim.pause()
     # sleep(2)
@@ -105,14 +102,15 @@ def onfinishsimulation(sim):
     global sim_complete
     sim_complete = True
     # fd.close()
-    print("Completed simulator")
+    _log.info("Simulation complete")
 
 
 def on_simulated_output(header, message):
     global sim_publish_number
     sim_publish_number += 1
     timestamp = message['message']['timestamp']
-    print(f"Simulation ublish number: {publish_number} timestamp: {timestamp}")
+    _log.info("{timestamp} simulation publish number: {sim_publish_number} timestamp: {timestamp}".format(timestamp=timestamp,
+                                                                                                          sim_publish_number=sim_publish_number))
     # print('SIMULATED MESSAGE IS HERE!')
     # measurements = message['message']['measurements']
     # timestamp = message['message']['timestamp']
@@ -144,6 +142,8 @@ try:
 except KeyboardInterrupt:
     pass
 
+# Sleep to write to influx hopefully not necessary
+sleep(180)
 complete_time = time.mktime(datetime.datetime.today().timetuple())
 
 print(f"Took: {(complete_time - start_time) / 3600} minutes")
