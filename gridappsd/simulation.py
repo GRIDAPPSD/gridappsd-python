@@ -3,7 +3,6 @@ from __future__ import absolute_import, print_function
 from copy import deepcopy
 import json
 import logging
-from weakref import WeakSet
 
 from . import topics as t
 from .topics import simulation_input_topic
@@ -38,9 +37,9 @@ class Simulation(object):
         # Will be populated when the simulation is first started.
         self.simulation_id = None
 
-        self.__on_start = WeakSet()
-        self.__on_next_timestep_callbacks = WeakSet()
-        self.__on_simulation_complete_callbacks = WeakSet()
+        self.__on_start = set()
+        self.__on_next_timestep_callbacks = set()
+        self.__on_simulation_complete_callbacks = set()
 
         self._measurement_count = 0
         self._log_count = 0
@@ -51,7 +50,7 @@ class Simulation(object):
         # Devices that the user wants measurements from
         self._device_measurement_filter = {}
 
-        self.__filterable_measurement_callback_set = WeakSet()
+        self.__filterable_measurement_callback_set = set()
 
     def start_simulation(self):
         """ Start the configured simulation by calling the REQUEST_SIMULATION endpoint.
