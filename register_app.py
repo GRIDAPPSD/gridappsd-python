@@ -8,7 +8,7 @@ from gridappsd import ApplicationController, GridAPPSD, utils
 
 
 loglevel = logging.INFO
-logging.basicConfig(stream=sys.stdout, level=loglevel,
+logging.basicConfig(stream=sys.stdout, filename="/tmp/gridappsd-python.log", level=loglevel,
                     format="%(asctime)s - %(name)s;%(levelname)s|%(message)s",
                     datefmt="%Y-%m-%d %H:%M:%S")
 logging.getLogger('stomp.py').setLevel(logging.ERROR)
