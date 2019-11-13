@@ -1,11 +1,14 @@
 import json
 # from pprint import pprint
+import os
 import time
 import pytest
 
 from gridappsd import GridAPPSD, topics as t
 from gridappsd.simulation import Simulation
 
+# The directory containing this file
+HERE = os.path.dirname(__file__)
 
 @pytest.fixture
 def gappsd():
@@ -18,7 +21,7 @@ def gappsd():
 
 @pytest.fixture
 def base_config():
-    with open("simulation_fixtures/13_node_2_min_base.json") as fp:
+    with open("{HERE}/simulation_fixtures/13_node_2_min_base.json".format(HERE=HERE)) as fp:
         data = json.load(fp)
     yield data
 
