@@ -29,12 +29,20 @@ def base_config():
 def test_simulation_no_duplicate_measurement_timestamps(gappsd, base_config):
     sim = Simulation(gappsd, base_config)
     timestampset = set()
+    timestampset2 = set()
     complete = False
 
     def onmeasurement(sim, timestamp, measurements):
-        assert timestamp not in timestampset
+        nonlocal timestampset
+        #assert timestamp not in timestampset
         print(f"timestamp is {timestamp}")
         timestampset.add(timestamp)
+
+    def onsubscribetooutput(header, message):
+        nonlocal timestampset2
+        timestamp = message['message']['timestamp']
+        assert timestamp not in timestampset2
+        timestampset2.add(timestamp)
 
     def oncomplete(sim):
         nonlocal complete
@@ -43,6 +51,7 @@ def test_simulation_no_duplicate_measurement_timestamps(gappsd, base_config):
     sim.add_onmesurement_callback(onmeasurement)
     sim.add_oncomplete_callback(oncomplete)
     sim.start_simulation()
+    gappsd.subscribe(t.simulation_output_topic(sim.simulation_id), onsubscribetooutput)
     going = 0
     while not complete:
         going += 1
