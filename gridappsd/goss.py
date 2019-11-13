@@ -296,7 +296,7 @@ class CallbackRouter(object):
 
     def on_message(self, headers, message):
         destination = headers['destination']
-        _log.debug("Topic map keys are: {keys}".format(keys=self._topics_callback_map.keys()))
+        # _log.debug("Topic map keys are: {keys}".format(keys=self._topics_callback_map.keys()))
         if destination in self._topics_callback_map:
             self._queue_callerback.put((self._topics_callback_map[destination], headers, message))
         else:
