@@ -37,7 +37,7 @@ def test_simulation_no_duplicate_measurement_timestamps(gappsd, base_config):
         timestampset.add(timestamp)
 
     def oncomplete(sim):
-        global complete
+        nonlocal complete
         complete = True
 
     sim.add_onmesurement_callback(onmeasurement)
