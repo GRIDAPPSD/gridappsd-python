@@ -1,86 +1,55 @@
+import json
 import logging
 from pprint import pprint
 import sys
+import os
 from time import sleep
 
 from stomp.exception import ConnectFailedException
 
-from gridappsd import GridAPPSD
+from gridappsd import GridAPPSD, topics as t
 from gridappsd.simulation import Simulation
+# from measureables import get_sensor_config
 
 logging.basicConfig(level=logging.DEBUG)
 _log = logging.getLogger(__name__)
-# 123-based model
-# "power_system_config": {
-#                            "GeographicalRegion_name": "_73C512BD-7249-4F50-50DA-D93849B89C43",
-#                            "SubGeographicalRegion_name": "_1CD7D2EE-3C91-3248-5662-A43EFEFAC224",
-#                            "Line_name": "_C1C3E687-6FFD-C753-582B-632A27E28507"
-#                        },
 
-# 123-based PV model
-# "power_system_config": {
-#                            "GeographicalRegion_name": "_73C512BD-7249-4F50-50DA-D93849B89C43",
-#                            "SubGeographicalRegion_name": "_1CD7D2EE-3C91-3248-5662-A43EFEFAC224",
-#                            "Line_name": "_E407CBB6-8C8D-9BC9-589C-AB83FBF0826D"
-#                        },
-
-# 8500-based model
-# {"power_system_config": {
-#     "GeographicalRegion_name":"_73C512BD-7249-4F50-50DA-D93849B89C43",
-#     "SubGeographicalRegion_name":"_A1170111-942A-6ABD-D325-C64886DC4D7D",
-#     "Line_name":"_4F76A5F9-271D-9EB8-5E31-AA362D86F2C3"},
+logging.getLogger("gridappsd.simulation").setLevel(logging.INFO)
 
 
-run_config = {
-    "power_system_config": {
-        # 9500 node system
-        # "Line_name": "_AAE94E4A-2465-6F5E-37B1-3E72183A4E44",
-
-        # 8500 node system
-        # "Line_name": "_4F76A5F9-271D-9EB8-5E31-AA362D86F2C3",
-        # 123 node
-        # "Line_name": "_C1C3E687-6FFD-C753-582B-632A27E28507"
-
-        # 123 PV node
-        "Line_name": "_E407CBB6-8C8D-9BC9-589C-AB83FBF0826D"
-
-        # "GeographicalRegion_name": "_73C512BD-7249-4F50-50DA-D93849B89C43",
-        # "SubGeographicalRegion_name": "_1CD7D2EE-3C91-3248-5662-A43EFEFAC224",
-        # "Line_name": "_C1C3E687-6FFD-C753-582B-632A27E28507"
-    },
-    "application_config": {
-        "applications": [] #{"name": "sample_app", "config_string": ""}]
-    },
-    "simulation_config": {
-        "start_time": "1562453292",
-        "duration": "10",
-        "simulator": "GridLAB-D",
-        "timestep_frequency": "1000",
-        "timestep_increment": "1000",
-        "run_realtime": False,
-        "simulation_name": "simulation_name",
-        "power_flow_solver_method": "NR",
-        "model_creation_config": {
-            "load_scaling_factor": "1",
-            "schedule_name": "ieeezipload",
-            "z_fraction": "0",
-            "i_fraction": "1",
-            "p_fraction": "0",
-            "randomize_zipload_fractions": False,
-            "use_houses": True
-        }
-    },
-    "test_config": {
-        "events": [],
-        "appId": "sample_app" #"#"_C1C3E687-6FFD-C753-582B-632A27E28507"
-    }
+sensor_test = {
+    "_9c4360bc-13ee-47f0-8a8c-0acb6c2a9930": {"class": "Breaker", "type": "A"},  # Breaker (Analog) (A)
+    "_9e76659c-c1e2-47d8-bd97-3a5d31c72bc1": {"class": "LoadBreakSwitch", "type": "A"},  # LoadBreakSwitch (Analog) (A)
+    "_8e46d152-edbe-4190-8dfc-d4322bbc6fb8": {"class": "ACLineSegment", "type": "PNV"},  # ACLineSegment (Analog) (PNV)
+    "_91c8096b-527e-4b17-9b60-608c2e89b0ef": {"class": "PowerTransformer", "type": "PNV"},  # PowerTransformer (Analog) (PNV)
+    "_7a5ce176-8185-4118-8f49-d1628692d783": {"class": "ACLineSegment", "type": "VA"},  # ACLineSegment (Analog) (VA)
+    "_d3fc08bf-ab76-4bba-a3c3-b8de144310f7": {"class": "PowerTransformer", "type": "VA"},  # PowerTransformer (Analog) (VA)
+    "_81ebcbfc-f8fe-4b7d-9735-0b00356b24dd": {"class": "Breaker", "type": "Pos"},  # Breaker (Discrete) (Pos)
+    "_9530188b-b0f6-4337-84ec-2fc9282740b3": {"class": "Recloser", "type": "Pos"},  # Recloser (Discrete) (Pos)
 }
+config_file = "history_config.json"
 
+with open(config_file) as fp:
+    run_config = json.load(fp)
+
+line_mrid = run_config['power_system_config']['Line_name']
+
+# indx = 0
+# node = None
+# for node in run_config['service_configs']:
+#     if node['id'] == "gridappsd-sensor-simulator":
+#         break
+# if node is None:
+#     raise AttributeError("Sensor service configuration is invalid.")
+# node['user_options']['sensors-config'] = get_sensor_config(line_mrid)
+import time, datetime
+
+start_time = time.mktime(datetime.datetime.today().timetuple())
 
 try:
-    gapps = GridAPPSD()
+    gapps = GridAPPSD(goss_log_level=logging.INFO)
 except ConnectFailedException:
-    print("Login possibly invalid!")
+    print("Failed to connect, possible system is not running or login invalid!")
     sys.exit()
 
 if not gapps.connected:
@@ -90,28 +59,67 @@ sim = Simulation(gapps, run_config)
 
 sim_complete = False
 
+# fd = open("measurements.txt", 'w')
+
+sim_output = []
+measurement_output = []
+
 
 def onstart(sim):
-    print("Sim started: {}".format(sim.simulation_id))
+    _log.info("Sim started: {}".format(sim.simulation_id))
+
+
+publish_number = 0
+sim_publish_number = 0
 
 
 def onmeasurment(sim, timestamp, measurements):
-    pprint(measurements)
+    global publish_number
+    publish_number += 1
+    #
+    # for k, v in measurements.items():
+    #
+    #     v['timestamp'] = timestamp
+    #     #
+    #     # v['class'] = sensor_test[k]['class']
+    #     # v['type'] = sensor_test[k]['type']
+    #     measurement_output.append(v)
+    _log.info("{timestamp} publish number: {publish_number}".format(publish_number=publish_number,
+                                                                    timestamp=timestamp))
+#    fd.write(f"{json.dumps(measurements)}\n")
 
 
 def ontimestep(sim, timestep):
-    print("next timestep {}".format(timestep))
-    print("Pausing simulation")
-    sim.pause()
-    sleep(2)
-    print("Resuming simulation")
-    sim.resume()
+    _log.info("next timestep {timestep}".format(timestep=timestep))
+    #print("Pausing simulation")
+    # sim.pause()
+    # sleep(2)
+    # print("Resuming simulation")
+    # sim.resume()
 
 
 def onfinishsimulation(sim):
     global sim_complete
     sim_complete = True
-    print("Completed simulator")
+    # fd.close()
+    _log.info("Simulation complete")
+
+
+def on_simulated_output(header, message):
+    global sim_publish_number
+    sim_publish_number += 1
+    timestamp = message['message']['timestamp']
+    _log.info("{timestamp} simulation publish number: {sim_publish_number} timestamp: {timestamp}".format(timestamp=timestamp,
+                                                                                                          sim_publish_number=sim_publish_number))
+    # print('SIMULATED MESSAGE IS HERE!')
+    # measurements = message['message']['measurements']
+    # timestamp = message['message']['timestamp']
+    # for k, v in measurements.items():
+    #
+    #     v['timestamp'] = timestamp
+    #     # v['class'] = sensor_test[k]['class']
+    #     # v['type'] = sensor_test[k]['type']
+    #     sim_output.append(v)
 
 
 sim.add_onstart_callback(onstart)
@@ -119,12 +127,29 @@ sim.add_onmesurement_callback(onmeasurment)
 sim.add_ontimestep_callback(ontimestep)
 sim.add_oncomplete_callback(onfinishsimulation)
 sim.start_simulation()
+read_topic = t.service_output_topic("gridappsd-sensor-simulator", sim.simulation_id)
+_log.debug("Reading topic for sensor output {read_topic}".format(read_topic=read_topic))
+gapps.subscribe(read_topic, on_simulated_output)
 
 try:
 
     while True:
         if sim_complete:
+            # print("sim output")
+            # pprint(sim_output)
             break
         sleep(0.1)
 except KeyboardInterrupt:
     pass
+
+# Sleep to write to influx hopefully not necessary
+sleep(180)
+complete_time = time.mktime(datetime.datetime.today().timetuple())
+
+print(f"Took: {(complete_time - start_time) / 3600} minutes")
+
+# with open("sim_output.txt", 'w') as fp:
+#     fp.write(json.dumps(sim_output, indent=4))
+#
+# with open("measuremnt_output.txt", 'w') as fp:
+#     fp.write(json.dumps(measurement_output, indent=4))

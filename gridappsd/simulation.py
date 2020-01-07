@@ -45,7 +45,7 @@ class Simulation(object):
         self._log_count = 0
         self._platform_log_count = 0
 
-        self._num_timesteps = run_config['simulation_config']['duration']
+        self._num_timesteps = round(float(run_config['simulation_config']['duration']))
 
         # Devices that the user wants measurements from
         self._device_measurement_filter = {}
@@ -166,7 +166,7 @@ class Simulation(object):
         if 'logMessage' in message:
             log_message = message['logMessage']
             # if this is the last timestamp then call the finished callbacks
-            if log_message == "incrementing to {}".format(int(self._num_timesteps)):
+            if log_message == "incrementing to {}".format(self._num_timesteps):
                 for p in self.__on_simulation_complete_callbacks:
                     p(self)
             elif log_message.startswith("incrementing to "):

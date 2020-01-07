@@ -45,11 +45,21 @@ Created on March 1, 2018
 """
 
 from datetime import datetime
+from collections import defaultdict
 import inspect
 import json
 import logging
+import sys
 import random
 from time import sleep
+
+try:
+    from queue import Queue
+except ImportError:
+    from Queue import Queue
+
+import threading
+
 
 from .utils import get_gridappsd_user, get_gridappsd_pass
 from stomp import Connection12 as Connection
@@ -83,6 +93,7 @@ class GOSS(object):
         self._ids = set()
         self._topic_set = set()
         self._override_thread_fc = override_threading
+        self._router_callback = CallbackRouter()
 
         if attempt_connection:
             self._make_connection()
@@ -105,9 +116,9 @@ class GOSS(object):
 
     def send(self, topic, message):
         self._make_connection()
-        _log.debug("Sending topic: {} body: {}".format(topic, message))
         if isinstance(message, list) or isinstance(message, dict):
             message = json.dumps(message)
+        _log.debug("Sending topic: {} body: {}".format(topic, message))
         self._conn.send(body=message, destination=topic,
                         headers={'GOSS_HAS_SUBJECT': True,
                                   'GOSS_SUBJECT': self.__user})
@@ -128,17 +139,17 @@ class GOSS(object):
                 self._topic = topic
 
             def on_message(self, header, message):
-                if header['destination'] == self._topic:
-                    _log.debug("Internal on message is: {} {}".format(header, message))
-                    try:
-                        if isinstance(message, dict):
-                            self.response = message
-                        else:
-                            self.response = json.loads(message)
-                    except ValueError:
-                        self.response = dict(error="Invalid json returned",
-                                             header=header,
-                                             message=message)
+
+                _log.debug("Internal on message is: {} {}".format(header, message))
+                try:
+                    if isinstance(message, dict):
+                        self.response = message
+                    else:
+                        self.response = json.loads(message)
+                except ValueError:
+                    self.response = dict(error="Invalid json returned",
+                                         header=header,
+                                         message=message)
 
             def on_error(self, headers, message):
                 _log.error("ERR: {}".format(headers))
@@ -191,10 +202,14 @@ class GOSS(object):
 
         self._make_connection()
 
+        if self._conn.get_listener('gridappsd') is None:
+            self._conn.set_listener('gridappsd', self._router_callback)
+
         if callable(callback):
-            # Handle the case where callback is a function.
-            self._conn.set_listener(topic,
-                                    CallbackWrapperListener(callback, conn_id))
+            self._router_callback.add_callback(topic, callback)
+            # Handle the case where callback is a function
+            # self._conn.set_listener(conn_id,
+            #                         CallbackWrapperListener(callback, conn_id))
         else:
             # Case where the callback is (supposedly) a class.
             if not hasattr(callback, 'on_message'):
@@ -211,9 +226,11 @@ class GOSS(object):
             # necessarily an ideal solution because we aren't also passing on the
             # other functions in the lifecycle, however this does pass the
             # test that was written so that listeners aren't called multiple times.
-            self._conn.set_listener(topic,
-                                    CallbackWrapperListener(callback.on_message, conn_id))
+            self._router_callback.add_callback(topic, callback.on_message)
+            # self._conn.set_listener(conn_id,
+            #                         CallbackWrapperListener(callback.on_message, conn_id))
 
+        _log.debug("Subscribing to {topic}".format(topic=topic))
         self._conn.subscribe(destination=topic, ack='auto', id=conn_id)
 
         return conn_id
@@ -237,21 +254,55 @@ class GOSS(object):
                 pass
 
 
-class CallbackWrapperListener(object):
+class CallbackRouter(object):
 
-    def __init__(self, callback, subscription):
-        self._callback = callback
-        self._subscription_id = subscription
+    def __init__(self):
+        self.callbacks = {}
+        self._topics_callback_map = defaultdict(list)
+        self._queue_callerback = Queue()
+        self._thread = threading.Thread(target=self.run_calbacks)
+        self._thread.daemon = True
+        self._thread.start()
 
-    def on_message(self, header, message):
-        if header['subscription'] == self._subscription_id:
+    def run_calbacks(self):
+        _log.info("Starting thread queue")
+        while True:
+            cb, hdrs, msg = self._queue_callerback.get()
             try:
-                msg = json.loads(message)
+                msg = json.loads(msg)
             except:
-                msg = message
-            self._callback(header, msg)
+                pass
+                # msg = message
+
+            for c in cb:
+                c(hdrs, msg)
+            sleep(0.01)
+
+    def add_callback(self, topic, callback):
+        if not topic.startswith('/topic/') and not topic.startswith('/temp-queue/'):
+            topic = "/queue/{topic}".format(topic=topic)
+        if callback in self._topics_callback_map[topic]:
+            raise ValueError("Callbacks can only be used one time per topic")
+        _log.debug("Added callbac using topic {topic}".format(topic=topic))
+        self._topics_callback_map[topic].append(callback)
+
+    def remove_callback(self, topic, callback):
+        if topic in self._topics_callback_map:
+            callbacks = self._topics_callback_map[topic]
+            try:
+                callbacks.remove(callback)
+            except ValueError:
+                pass
+
+    def on_message(self, headers, message):
+        destination = headers['destination']
+        _log.debug("Topic map keys are: {keys}".format(keys=self._topics_callback_map.keys()))
+        if destination in self._topics_callback_map:
+            self._queue_callerback.put((self._topics_callback_map[destination], headers, message))
+        else:
+            _log.error("INVALID DESTINATION {destination}".format(destination=destination))
 
     def on_error(self, header, message):
-        _log.error("Error for subscription: {}".format(self._subscription_id))
+        _log.error("Error in callback router")
         _log.error(header)
         _log.error(message)
