@@ -26,10 +26,8 @@ class Simulation(object):
     onstart.  To register one of the events call the method add_ontimestep_callback,
     add_onmesurement_callback, add_oncomplete_callback or add_onstart_callback method respectively.
     """
-    def __init__(self, gapps, run_config):
-        # Protect from circular import.
-        from . import GridAPPSD
-        assert isinstance(gapps, GridAPPSD), "Must be an instance of GridAPPSD"
+    def __init__(self, gapps: 'GridAPPSD', run_config):
+        assert type(gapps).__name__ == 'GridAPPSD',  "Must be an instance of GridAPPSD"
         assert isinstance(run_config, dict)
         self._gapps = gapps
         self._run_config = deepcopy(run_config)
