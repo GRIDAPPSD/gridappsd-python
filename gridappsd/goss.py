@@ -246,12 +246,12 @@ class GOSS(object):
                 self._conn.transport.override_threading(self._override_thread_fc)
             try:
                 self._conn.connect(self.__user, self.__pass, wait=True)
-            except TypeError:
-                pass
-            except NotConnectedException:
-                pass
-            except AttributeError:
-                pass
+            except TypeError as e:
+                _log.error("TypeError: {e}".format(e=e))
+            except NotConnectedException as e:
+                _log.error("NotConnectedException: {e}".format(e=e))
+            except AttributeError as e:
+                _log.error("AttributeError: {e}".format(e=e))
 
 
 class CallbackRouter(object):
@@ -260,11 +260,11 @@ class CallbackRouter(object):
         self.callbacks = {}
         self._topics_callback_map = defaultdict(list)
         self._queue_callerback = Queue()
-        self._thread = threading.Thread(target=self.run_calbacks)
+        self._thread = threading.Thread(target=self.run_callbacks)
         self._thread.daemon = True
         self._thread.start()
 
-    def run_calbacks(self):
+    def run_callbacks(self):
         _log.info("Starting thread queue")
         while True:
             cb, hdrs, msg = self._queue_callerback.get()
