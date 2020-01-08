@@ -1,5 +1,5 @@
-stomp.py==4.1.22
-PyYAML==5.1.2
+stomp.py==5.0.1
+PyYAML==5.3
 pytz==2019.3
 # psutil==5.4.7
 dateutils==0.6.7
