@@ -17,7 +17,7 @@ __GRIDAPPSD_URI_PARSED__ = urlparse(__GRIDAPPSD_URI__)
 
 
 def datetime_to_epoche(dt):
-    return time.mktime(dt.timetuple()) * 1000
+    return int(time.mktime(dt.timetuple()) * 1000)
 
 
 def datestr_to_epoche(dt_str):

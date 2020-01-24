@@ -50,6 +50,7 @@ from . import topics as t
 from . loghandler import Logger
 from . import utils
 from . simulation import Simulation
+from .houses import Houses
 # from . configuration_types import ConfigurationType
 
 _log = logging.getLogger(inspect.getmodulename(__file__))
@@ -79,6 +80,7 @@ class GridAPPSD(GOSS):
             stomp_address=address[0],
             stomp_port=address[1],
             **kwargs)
+        self._houses = Houses(self)
         self._simulation_status_topic = None
         self._simulation_id = str(simulation_id)
         self._base_status_topic = base_simulation_status_topic
@@ -99,6 +101,9 @@ class GridAPPSD(GOSS):
 
     def get_logger(self):
         return Logger(self)
+
+    def get_houses(self) -> Houses:
+        return self._houses
 
     def query_object_types(self, model_id=None):
         """ Allows the caller to query the different object types.
