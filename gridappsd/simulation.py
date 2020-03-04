@@ -85,6 +85,15 @@ class Simulation(object):
         _log.debug("Resuming simulation")
         command = dict(command="resume")
         self._gapps.send(simulation_input_topic(self.simulation_id), json.dumps(command))
+        
+    def resume_pause_at(self, pause_in):
+        """ Resume the simulation and have it automatically pause after specified amount of seconds later.
+        
+        :param pause_in: number of seconds to run before pausing the simulation
+        """
+        _log.debug("Resuming simulation. Will pause after {} seconds".format(pause_in))
+        command = dict(command="resumePauseAt", input=dict(pauseIn=pause_in))
+        self._gapps.send(simulation_input_topic(self.simulation_id), json.dumps(command))
 
     def add_onmesurement_callback(self, callback, device_filter=()):
         """ registers an onmeasurment callback to be called when measurements have come through.
