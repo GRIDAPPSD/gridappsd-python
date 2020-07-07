@@ -51,6 +51,7 @@ import json
 import logging
 import sys
 import random
+import base64
 from time import sleep
 
 try:
@@ -94,6 +95,7 @@ class GOSS(object):
         self._topic_set = set()
         self._override_thread_fc = override_threading
         self._router_callback = CallbackRouter()
+        self.__token = None
 
         if attempt_connection:
             self._make_connection()
@@ -241,11 +243,66 @@ class GOSS(object):
     def _make_connection(self):
         if self._conn is None or not self._conn.is_connected():
             _log.debug("Creating connection")
+            if(self.__token is None):
+
+                #get token
+                #get initial connection
+                replyDest = "temp.token_resp."+self.__user
+                #self._conn2.connect(self.__user, self.__pass, wait=True)
+
+                #create token request string
+                userAuthStr = self.__user+":"+self.__pass
+                base64Str = base64.b64encode(userAuthStr.encode())
+
+                #set up token callback
+                #send request to token topic
+                tokenTopic = "/topic/pnnl.goss.token.topic"
+
+                tmpConn = Connection([(self.stomp_address, self.stomp_port)])
+                if self._override_thread_fc is not None:
+                    tmpConn.transport.override_threading(self._override_thread_fc)
+                tmpConn.connect(self.__user, self.__pass, wait=True)
+                
+                class TokenResponseListener():
+                    def __init__(self):
+                        self.__token = None
+
+                    def get_token(self):
+                        return self.__token
+
+                    def on_message(self, header, message):
+                        _log.debug("Internal on message is: {} {}".format(header, message))
+                        
+                        self.__token = str(message)
+                    def on_error(self, headers, message): 
+                        _log.error("ERR: {}".format(headers))
+                        _log.error("OUR ERROR: {}".format(message))
+
+                    def on_disconnect(self, header, message):
+                        _log.debug("Disconnected")
+                #receive token and set token variable
+                #set callback
+                listener = TokenResponseListener()
+                #self.subscribe(replyDest, listener)
+                tmpConn.subscribe('/queue/'+replyDest, 123)
+                tmpConn.set_listener('token_resp', listener)
+                tmpConn.send(body=base64Str, destination=tokenTopic,
+                        headers={'reply-to': replyDest})
+                #while token is null or for x iterations
+                iter=0
+                while((self.__token is None) and (iter<10)):
+                    #wait
+                    self.__token = listener.get_token()
+                    sleep(1)
+                    iter+=1
+
+                
+
             self._conn = Connection([(self.stomp_address, self.stomp_port)])
             if self._override_thread_fc is not None:
                 self._conn.transport.override_threading(self._override_thread_fc)
             try:
-                self._conn.connect(self.__user, self.__pass, wait=True)
+                self._conn.connect(self.__token, "", wait=True)
             except TypeError as e:
                 _log.error("TypeError: {e}".format(e=e))
             except NotConnectedException as e:
