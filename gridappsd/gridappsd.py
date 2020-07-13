@@ -38,19 +38,17 @@
 # UNITED STATES DEPARTMENT OF ENERGY under Contract DE-AC05-76RL01830
 # -------------------------------------------------------------------------------
 
-from datetime import datetime
-import json
 import inspect
+import json
 import logging
+from datetime import datetime
 from logging import DEBUG, INFO, WARNING, FATAL, WARN
-
 
 from . import GOSS
 from . import topics as t
-from . loghandler import Logger
-from . import utils
-from . simulation import Simulation
 from .houses import Houses
+from .loghandler import Logger
+
 # from . configuration_types import ConfigurationType
 
 _log = logging.getLogger(inspect.getmodulename(__file__))
@@ -94,12 +92,12 @@ class GridAPPSD(GOSS):
 
             self._simulation_status_topic = self._base_status_topic + str(simulation_id)
 
-    def run_simulation(self, run_config, timestamp_finished=None):
-        duration = run_config['simulation_config']['duration']
-        resp = self.get_response(t.REQUEST_SIMULATION, json.dumps(run_config))
-        return Simulation(self, resp, duration, timestamp_finished)
-
     def get_logger(self):
+        """
+        Return a log instance for interacting with the log within the gridappsd platform
+
+        :return: :class:`gridappsd.loghandler.Logger`
+        """
         return Logger(self)
 
     def get_houses(self) -> Houses:
