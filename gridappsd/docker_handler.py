@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from copy import deepcopy
+from datetime import datetime, timedelta
 import logging
 import os
 from pathlib import Path
@@ -212,11 +213,12 @@ if HAS_DOCKER:
                     self._container_def[service]['containerid'] = container.id
             print([x.name for x in client.containers.list()])
 
-        def wait_for_log_pattern(self, container, pattern):
+        def wait_for_log_pattern(self, container, pattern, timeout=30):
             assert self._container_def.get(container), f"Container {container} is not in definition."
             client = docker.from_env()
             container = client.containers.get(self._container_def.get(container)['containerid'])
-            for p in container.logs(stream=True):
+            until = datetime.now() + timedelta(timeout)
+            for p in container.logs(stream=True, until=until):
                 print(p)
                 if pattern in p.decode('utf-8'):
                     break

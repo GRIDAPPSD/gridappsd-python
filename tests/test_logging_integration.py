@@ -8,15 +8,13 @@ from gridappsd.loghandler import Logger
 
 
 @pytest.fixture
-def logger_and_gridapspd():
+def logger_and_gridapspd(gridappsd_client):
 
-    gapps = GridAPPSD()
-    logger = Logger(gapps)
+    logger = Logger(gridappsd_client)
 
-    yield logger, gapps
+    yield logger, gridappsd_client
 
     logger = None
-    gapps = None
 
 
 @mock.patch.dict(os.environ,
