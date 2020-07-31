@@ -1,12 +1,17 @@
+import inspect
 import logging
 import time
+from copy import deepcopy
+import sys
 
 import docker
 
 from gridappsd import GridAPPSD
-from gridappsd.docker_handler import run_dependency_containers, Containers, run_gridappsd_container
+from gridappsd.docker_handler import (run_dependency_containers, Containers, run_gridappsd_container, run_containers,
+                                      default_docker_dependencies, default_gridappsd_docker)
 
-_log = logging.getLogger(__file__)
+logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
+_log = logging.getLogger(inspect.getmodulename(__file__))
 
 
 def test_can_reset_all_containers():
@@ -30,6 +35,7 @@ def test_can_reset_all_containers():
     cont = Containers(config)
     cont.start()
     assert len(client.containers.list()) == 1
+    time.sleep(30)
     Containers.reset_all_containers()
     assert not client.containers.list()
     cont.stop()
@@ -47,14 +53,61 @@ def test_can_dependencies_continue_after_context_manager():
     assert len(client.containers.list()) == 5
 
 
+def test_multiple_runs_in_a_row_with_dependency_context_manager():
+
+    Containers.reset_all_containers()
+
+    with run_dependency_containers():
+        pass
+
+    client = docker.from_env()
+
+    assert len(client.containers.list()) == 5
+
+    with run_gridappsd_container():
+        timeout = 0
+        gapps = None
+        time.sleep(10)
+        while timeout < 30:
+            try:
+                gapps = GridAPPSD()
+                gapps.connect()
+                break
+            except:
+                time.sleep(1)
+                timeout += 1
+
+        assert gapps
+        assert gapps.connected
+
+    with run_gridappsd_container():
+        timeout = 0
+        gapps = None
+        time.sleep(10)
+        while timeout < 30:
+            try:
+                gapps = GridAPPSD()
+                gapps.connect()
+                break
+            except:
+                time.sleep(1)
+                timeout += 1
+
+        assert gapps
+        assert gapps.connected
+
+
 def test_can_start_gridappsd_within_dependency_context_manager_all_cleanup():
 
     Containers.reset_all_containers()
 
-    # True in this method will remove the containsers
-    with run_dependency_containers(True) as dep_con:
-        # Default cleanup is true within run_gridappsd_container method
-        with run_gridappsd_container() as gapps_con:
+    # config = deepcopy(default_docker_dependencies)
+    # config.update(deepcopy(default_gridappsd_docker))
+
+    with run_dependency_containers(True) as cont:
+        # True in this method will remove the containsers
+        with run_gridappsd_container(True) as dep_con:
+            # Default cleanup is true within run_gridappsd_container method
             timeout = 0
             gapps = None
             time.sleep(10)
