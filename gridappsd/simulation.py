@@ -1,5 +1,4 @@
-from __future__ import absolute_import, print_function
-
+import time
 from copy import deepcopy
 import json
 import logging
@@ -31,6 +30,7 @@ class Simulation(object):
         assert isinstance(run_config, dict)
         self._gapps = gapps
         self._run_config = deepcopy(run_config)
+        self._running_or_paused = False
 
         # Will be populated when the simulation is first started.
         self.simulation_id = None
@@ -58,7 +58,10 @@ class Simulation(object):
         if 'simulationId' not in resp:
             message = "Simulation was not able to run\n" + str(resp)
             raise SimulationFailedToStartError(message)
+
+        self._running_or_paused = True
         self.simulation_id = resp['simulationId']
+
         # Subscribe to the different components necessary to run and receive
         # simulated measurements and messages.
         self._gapps.subscribe(t.simulation_log_topic(self.simulation_id), self.__on_simulation_log)
@@ -73,19 +76,45 @@ class Simulation(object):
         _log.debug("Pausing simulation")
         command = dict(command="pause")
         self._gapps.send(simulation_input_topic(self.simulation_id), json.dumps(command))
+        self._running_or_paused = True
 
     def stop(self):
         """ Stop the simulation"""
         _log.debug("Stopping simulation")
         command = dict(command="stop")
         self._gapps.send(simulation_input_topic(self.simulation_id), json.dumps(command))
+        self._running_or_paused = True
 
     def resume(self):
         """ Resume the simulation"""
         _log.debug("Resuming simulation")
         command = dict(command="resume")
         self._gapps.send(simulation_input_topic(self.simulation_id), json.dumps(command))
-        
+        self._running_or_paused = True
+
+    def run_loop(self):
+        """ Loop around the running of the simulation itself.
+
+        Example:
+
+            gapps = GridAPPSD()
+
+            # Create simulation object.
+            simulation = Simulation(gapps, config)
+            simulation.add_ontimestep_callback(ontimestep)
+            simulation.add_oncomplete_callback(oncomplete)
+            simulation.add_onmesurement_callback(onmeasurment)
+            simulation.add_onstart_callback(onstart)
+            simulation.run_loop()
+
+        """
+        if not self._running_or_paused:
+            _log.debug("Running simulation in loop until simulation is done.")
+            self.start_simulation()
+
+        while self._running_or_paused:
+            time.sleep(0.01)
+
     def resume_pause_at(self, pause_in):
         """ Resume the simulation and have it automatically pause after specified amount of seconds later.
         
@@ -94,6 +123,7 @@ class Simulation(object):
         _log.debug("Resuming simulation. Will pause after {} seconds".format(pause_in))
         command = dict(command="resumePauseAt", input=dict(pauseIn=pause_in))
         self._gapps.send(simulation_input_topic(self.simulation_id), json.dumps(command))
+        self._running_or_paused = True
 
     def add_onmesurement_callback(self, callback, device_filter=()):
         """ registers an onmeasurment callback to be called when measurements have come through.
@@ -160,10 +190,9 @@ class Simulation(object):
     def __on_platformlog(self, headers, message):
         try:
             if self.simulation_id == message['processId']:
-                _log.debug("__on_platformlog: {}".format(message))
-        except KeyError:
-            _log.warning('__on_platformlog: Incoming message is missing the '
-                         'processId field! Message: {}'.format(message))
+                _log.debug(f"__on_platform_log: message: {message}")
+        except KeyError as e:
+            _log.error(f"__on_platformlog keyerror({e}): {message}")
 
         if 'command' in message:
             _log.debug("Command was: {}".format(message))
@@ -174,9 +203,10 @@ class Simulation(object):
             log_message = message['logMessage']
             # if this is the last timestamp then call the finished callbacks
             if log_message == "Simulation {} has finished.".format(self.simulation_id):
-                #incrementing to {}".format(self._num_timesteps):
                 for p in self.__on_simulation_complete_callbacks:
                     p(self)
+                self._running_or_paused = False
+                _log.debug("Simulation completed")
             elif log_message.startswith("incrementing to "):
                 timestep = log_message[len("incrementing to "):]
                 for p in self.__on_next_timestep_callbacks:

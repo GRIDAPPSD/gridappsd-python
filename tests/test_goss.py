@@ -1,48 +1,8 @@
 import json
 import logging
-import random
-import subprocess
 from time import sleep
 import threading
-try:
-    from queue import Queue
-except ImportError:
-    from Queue import Queue
-
-from mock import Mock
-import pytest
-
-from gridappsd import GOSS
-
-
-@pytest.fixture(scope="module")
-def assigned_stomp_port():
-    """ Create a coilmq server for testing against.
-
-    The coilmq server uses a random port (outside normal stomp protocol)
-    for connecting to the bus.
-    """
-
-#     random_port = random.randint(61618, 61700)
-#     args = ['coilmq', '--port',  str(random_port)]
-#     proc = subprocess.Popen(args)
-
-    # Use random port that was setup for testing
-    # yield random_port
-
-    # Use gridappsd normal port
-    yield 61613
-
-#     proc.kill()
-
-
-@pytest.fixture
-def goss_client(assigned_stomp_port):
-    goss = GOSS(stomp_port=assigned_stomp_port)
-
-    yield goss
-
-    goss.disconnect()
+from queue import Queue
 
 
 def test_get_response(caplog, goss_client):
@@ -96,18 +56,7 @@ def test_get_response(caplog, goss_client):
     assert result['result'] == 11
 
 
-def test_connect(assigned_stomp_port):
-    goss = GOSS(stomp_port=assigned_stomp_port)
-
-    assert goss.connected
-    goss.disconnect()
-    assert not goss.connected
-    goss.connect()
-    assert goss.connected
-
-
 def test_send_receive(goss_client):
-
     message_queue = Queue()
 
     class MyListener(object):
@@ -117,14 +66,13 @@ def test_send_receive(goss_client):
     listener = MyListener()
     goss_client.subscribe('doah', listener)
     goss_client.send('doah', "I am a foo")
-    sleep(0.1)
+    sleep(0.5)
     assert message_queue.qsize() == 1
     header, message = message_queue.get()
     assert message == "I am a foo"
 
 
 def test_callback_function(goss_client):
-
     message_queue1 = Queue()
 
     def callback1(headers, message):
@@ -132,14 +80,13 @@ def test_callback_function(goss_client):
 
     goss_client.subscribe('foo', callback1)
     goss_client.send('foo', "I am a foo")
-    sleep(0.1)
+    sleep(0.5)
     assert message_queue1.qsize() == 1
     header, message = message_queue1.get()
     assert message == "I am a foo"
 
 
 def test_multi_subscriptions(goss_client):
-
     message_queue1 = Queue()
     message_queue2 = Queue()
 
@@ -198,7 +145,6 @@ def test_multi_subscriptions_same_topic(goss_client):
 
 
 def test_response_class(goss_client):
-
     message_queue = Queue()
 
     class SubListener:
@@ -234,5 +180,3 @@ def test_replace_subscription(caplog, goss_client):
     sleep(0.5)
 
     assert original_queue.qsize() == 1
-
-

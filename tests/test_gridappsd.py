@@ -1,27 +1,15 @@
-from pprint import pprint
 from time import sleep
 
-import pytest
-
-from gridappsd import GridAPPSD
-
-from gridappsd import GridAPPSD, topics
+from gridappsd import topics
 
 
-@pytest.fixture
-def gappsd():
-
-    gappsd = GridAPPSD()
-    yield gappsd
-    gappsd.disconnect()
-    gappsd = None
-
-
-def test_get_model_info(gappsd):
+def test_get_model_info(gridappsd_client):
     """ The expecation is that we will have multiple models that we can retrieve from the
     database.  Two of which should have the model name of ieee8500 and ieee123.  The models
     should have the correct entry keys.
     """
+    gappsd = gridappsd_client
+
     info = gappsd.query_model_info()
 
     node_8500 = None
@@ -55,9 +43,10 @@ def test_get_model_info(gappsd):
     assert len(correct_keys) == 0
 
 
-def test_listener_multi_topic(gappsd):
+def test_listener_multi_topic(gridappsd_client):
+    gappsd = gridappsd_client
 
-    class Listener():
+    class Listener:
         def __init__(self):
             self.call_count = 0
 
