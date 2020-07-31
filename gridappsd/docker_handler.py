@@ -212,6 +212,17 @@ if HAS_DOCKER:
                     self._container_def[service]['containerid'] = container.id
             print([x.name for x in client.containers.list()])
 
+        def wait_for_log_pattern(self, container, pattern):
+            assert self._container_def.get(container), f"Container {container} is not in definition."
+            client = docker.from_env()
+            container = client.containers.get(self._container_def.get(container)['containerid'])
+            for p in container.logs(stream=True):
+                print(p)
+                if pattern in p.decode('utf-8'):
+                    break
+
+            print(f"Found pattern {pattern}")
+
         def stop(self):
             client = docker.from_env()
             for service, value in self._container_def.items():
@@ -257,6 +268,7 @@ if HAS_DOCKER:
 
         containers.start()
         try:
+            containers.wait_for_log_pattern("gridappsd", "MYSQL")
             yield containers
         finally:
             if stop_after:
