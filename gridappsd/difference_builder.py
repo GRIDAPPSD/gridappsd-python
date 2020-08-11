@@ -70,8 +70,7 @@ class DifferenceBuilder(object):
         self._forward = []
         self._reverse = []
 
-    def get_message(self):
-        epoch = calendar.timegm(time.gmtime())
+    def get_message(self, epoch = calendar.timegm(time.gmtime())):
         msg = dict(command="update",
                    input=dict(simulation_id=self._simulation_id,
                               message=dict(timestamp=epoch,
