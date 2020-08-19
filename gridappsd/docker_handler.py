@@ -4,9 +4,11 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 import logging
 import os
+import pkg_resources
 from pathlib import Path
 import re
 import shutil
+import sys
 import time
 import urllib.request
 import contextlib
@@ -25,23 +27,23 @@ if HAS_DOCKER:
     def expand_all(user_path):
         return os.path.expandvars(os.path.expanduser(user_path))
 
-
     # This path needs to be the path to the repo where the data is done.
-    GRIDAPPSD_TEST_REPO = expand_all(os.environ.get("GRIDAPPSD_TEST_REPO", Path(__file__).parent.parent))
+    GRIDAPPSD_CONF_DIR = expand_all(os.environ.get("GRIDAPPSD_CONF_DIR",
+                                                   pkg_resources.resource_filename('gridappsd', 'conf')))
     GRIDAPPSD_DATA_REPO = expand_all(os.environ.get("GRIDAPPSD_DATA_REPO", "/tmp/gridappsd_temp_data"))
 
-    if not Path(GRIDAPPSD_TEST_REPO).is_dir():
-        raise AttributeError(f"Invalid GRIDAPPSD_TEST_REPO {GRIDAPPSD_TEST_REPO}")
+    if not Path(GRIDAPPSD_CONF_DIR).is_dir():
+        raise AttributeError(f"Invalid GRIDAPPSD_CONF_REPO {GRIDAPPSD_CONF_DIR}")
 
-    if not Path(GRIDAPPSD_TEST_REPO).joinpath("conf").is_dir():
-        raise AttributeError(f"Invalid conf directory must be located {Path(GRIDAPPSD_TEST_REPO).joinpath('conf')}")
     os.makedirs(GRIDAPPSD_DATA_REPO, exist_ok=True)
+    if not Path(GRIDAPPSD_DATA_REPO).exists():
+        raise AttributeError(f"Invalid GRIDAPPSD_DATA_REPO couldn't make or doesn't exist {GRIDAPPSD_DATA_REPO}")
 
-    repo_dir = GRIDAPPSD_TEST_REPO
     data_dir = GRIDAPPSD_DATA_REPO
 
-    assert os.path.exists(repo_dir + "/conf/entrypoint.sh")
-    assert os.path.exists(repo_dir + "/conf/run-gridappsd.sh")
+    assert Path(GRIDAPPSD_CONF_DIR).joinpath("entrypoint.sh").exists()
+    assert Path(GRIDAPPSD_CONF_DIR).joinpath("run-gridappsd.sh").exists()
+
 
     def mysql_setup():
         # Downlaod mysql file
@@ -63,7 +65,7 @@ if HAS_DOCKER:
                 sources.write(re.sub(r'localhost', '%', line))
 
 
-    default_docker_dependencies = {
+    DEFAULT_DOCKER_DEPENDENCY_CONFIG = {
         "influxdb": {
             "start": True,
             "image": "gridappsd/influxdb:develop",
@@ -132,7 +134,7 @@ if HAS_DOCKER:
         }
     }
 
-    default_gridappsd_docker = {
+    DEFAULT_GRIDAPPSD_DOCKER_CONFIG = {
         "gridappsd": {
             "start": True,
             "image": "gridappsd/gridappsd:develop",
@@ -146,8 +148,10 @@ if HAS_DOCKER:
             "links": {"mysql": "mysql", "influxdb": "influxdb", "blazegraph": "blazegraph", "proven": "proven",
                       "redis": "redis"},
             "volumes": {
-                repo_dir + "/conf/entrypoint.sh": {"bind": "/gridappsd/entrypoint.sh", "mode": "rw"},
-                repo_dir + "/conf/run-gridappsd.sh": {"bind": "/gridappsd/run-gridappsd.sh", "mode": "rw"}
+                str(Path(GRIDAPPSD_CONF_DIR).joinpath("entrypoint.sh")):
+                    {"bind": "/gridappsd/entrypoint.sh", "mode": "rw"},
+                str(Path(GRIDAPPSD_CONF_DIR).joinpath("run-gridappsd.sh")):
+                    {"bind": "/gridappsd/run-gridappsd.sh", "mode": "rw"}
             },
             "entrypoint": "",
         }
@@ -252,7 +256,7 @@ if HAS_DOCKER:
     @contextlib.contextmanager
     def run_dependency_containers(stop_after=False):
 
-        containers = Containers(default_docker_dependencies)
+        containers = Containers(DEFAULT_DOCKER_DEPENDENCY_CONFIG)
 
         containers.start()
         try:
@@ -266,7 +270,7 @@ if HAS_DOCKER:
     def run_gridappsd_container(stop_after=True):
         """ A contextmanager that uses """
 
-        containers = Containers(default_gridappsd_docker)
+        containers = Containers(DEFAULT_GRIDAPPSD_DOCKER_CONFIG)
 
         containers.start()
         try:

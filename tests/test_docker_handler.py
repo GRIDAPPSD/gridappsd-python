@@ -8,7 +8,7 @@ import docker
 
 from gridappsd import GridAPPSD
 from gridappsd.docker_handler import (run_dependency_containers, Containers, run_gridappsd_container, run_containers,
-                                      default_docker_dependencies, default_gridappsd_docker)
+                                      DEFAULT_DOCKER_DEPENDENCY_CONFIG, DEFAULT_GRIDAPPSD_DOCKER_CONFIG)
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 _log = logging.getLogger(inspect.getmodulename(__file__))
@@ -35,7 +35,7 @@ def test_can_reset_all_containers():
     cont = Containers(config)
     cont.start()
     assert len(client.containers.list()) == 1
-    time.sleep(30)
+    time.sleep(5)
     Containers.reset_all_containers()
     assert not client.containers.list()
     cont.stop()
@@ -67,7 +67,7 @@ def test_multiple_runs_in_a_row_with_dependency_context_manager():
     with run_gridappsd_container():
         timeout = 0
         gapps = None
-        time.sleep(10)
+
         while timeout < 30:
             try:
                 gapps = GridAPPSD()
