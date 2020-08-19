@@ -1,2 +1,5 @@
 pytest
+pytest-html
+pytest-bdd
 mock
+docker
