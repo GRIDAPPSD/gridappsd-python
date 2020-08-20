@@ -1,6 +1,10 @@
 from time import sleep
+import unittest.mock
+from unittest.mock import call, patch, PropertyMock
 
-from gridappsd import topics
+from goss import GOSS
+from gridappsd import GridAPPSD, topics
+import pytest
 
 
 def test_get_model_info(gridappsd_client):
@@ -72,3 +76,51 @@ def test_listener_multi_topic(gridappsd_client):
     gappsd.send(output_topic, "No big deal")
     sleep(1)
     assert 1 == listener.call_count
+    
+
+@patch.object(GOSS,"__init__", return_value=None)
+@unittest.mock.patch('gridappsd.datetime')
+@patch.object(GOSS,"send")   
+def test_build_message_json(mock_datetime,mock_goss_send,mock_goss_init):
+    mock_datetime.utcnow.return_value = datetime(2017,8,25,10,33,6,150642)
+    t_now = mock_datetime.utcnow()
+    gad = GridAPPSD(simulation_id="1234")
+    gad.send_simulation_status("helics_goss_bridge.py", "RUNNING",
+        "testing build_message_json().", 
+        "INFO")
+    log_msg_dict = {
+        "source": "helics_goss_bridge.py",
+        "processId": str(gad.get_simulation_id()),
+        "timestamp": int(time.mktime(t_now.timetuple()))*1000,
+        "processStatus": "RUNNING",
+        "logMessage": "testing build_message_json().",
+        "logLevel": "INFO",
+        "storeToDb": True
+    }
+    log_topic = topics.simulation_log_topic(gappds.get_simulation_id())
+    mock_goss_send.assert_called_once_with(log_topic, json.dumps(log_msg_dict))
+    
+        
+def test_send_simulation_status_integration(gridappsd_client):
+    gappsd = gridappsd_client
+    
+    class Listener:
+        def __init__(self):
+            self.call_count = 0
+
+        def reset(self):
+            self.call_count = 0
+
+        def on_message(self, headers, message):
+            print("Message was: {}".format(message))
+            self.call_count += 1
+
+    listener = Listener()
+    
+    log_topic = topics.simulation_log_topic(gappds.get_simulation_id())
+    gappds.subscribe(log_topic, listener)
+    gappsd.send_simulation_status("helics_goss_bridge.py", "RUNNING",
+        "testing the sending and recieving of send_simulation_status().", 
+        "INFO")
+    sleep(1)
+    assert 1 = listener.call_count
