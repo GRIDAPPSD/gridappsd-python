@@ -123,7 +123,7 @@ class GOSS(object):
         _log.debug("Sending topic: {} body: {}".format(topic, message))
         self._conn.send(body=message, destination=topic,
                         headers={'GOSS_HAS_SUBJECT': True,
-                                  'GOSS_SUBJECT': self.__user})
+                                  'GOSS_SUBJECT': self.__token})
                                  
     def get_response(self, topic, message, timeout=5):
         id = datetime.now().strftime("%Y%m%d%h%M%S")
@@ -165,7 +165,7 @@ class GOSS(object):
 
         self._conn.send(body=message, destination=topic,
                         headers={'reply-to': reply_to, 'GOSS_HAS_SUBJECT': True,
-                                 'GOSS_SUBJECT': self.__user})
+                                 'GOSS_SUBJECT': self.__token})
         count = 0
 
         while count < timeout:
