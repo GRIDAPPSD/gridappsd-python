@@ -3,7 +3,7 @@ from time import sleep
 import unittest.mock
 from unittest.mock import call, patch, PropertyMock
 
-from goss import GOSS
+from gridappsd.goss import GOSS
 from gridappsd import GridAPPSD, topics
 import pytest
 
