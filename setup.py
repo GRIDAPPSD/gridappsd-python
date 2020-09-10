@@ -41,7 +41,7 @@
 from os import path
 from setuptools import setup, find_packages
 
-__version__ = '2020.01.0-dev'
+__version__ = '2020.07.2'
 
 # The directory containing this file
 HERE = path.dirname(__file__)
@@ -78,9 +78,11 @@ setup(
     license="BSD",
     classifiers=[
         "License :: OSI Approved :: BSD License",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7"
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8"
     ],
-    include_package_data=True
+    include_package_data=True,
+    python_requires='>=3.6'
+
 )

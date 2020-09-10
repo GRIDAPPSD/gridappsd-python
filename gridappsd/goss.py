@@ -49,16 +49,11 @@ from collections import defaultdict
 import inspect
 import json
 import logging
-import sys
 import random
 import base64
+from logging import Logger
 from time import sleep
-
-try:
-    from queue import Queue
-except ImportError:
-    from Queue import Queue
-
+from queue import Queue
 import threading
 
 
@@ -66,7 +61,8 @@ from .utils import get_gridappsd_user, get_gridappsd_pass
 from stomp import Connection12 as Connection
 from stomp.exception import NotConnectedException
 
-_log = logging.getLogger(inspect.getmodulename(__file__))
+
+_log: Logger = logging.getLogger(inspect.getmodulename(__file__))
 
 
 class TimeoutError(Exception):
