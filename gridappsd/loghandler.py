@@ -10,8 +10,12 @@ class Logger:
     """
     The `Logger` class handles logging to the main gridappsd server.
     """
-    def __init__(self, gaps):
+    def __init__(self, gaps, level=logging.INFO):
         self._gaps = gaps
+        self._level = level
+
+    def setLevel(self, level):
+        self._level = level
 
     def debug(self, message):
         self.log(message)
@@ -25,7 +29,12 @@ class Logger:
     def warning(self, message):
         self.log(message, logging.WARNING)
 
-    def log(self, message, level=logging.DEBUG):
+    def log(self, message, level=None):
+        if level is None:
+            level = logging.INFO
+
+        if level <= self._level:
+            return
         status = os.environ.get("GRIDAPPSD_APPLICATION_STATUS")
         if not status:
             raise AttributeError("Invalid GRIDAPPSD_APPLICATION_STATUS environmental variable.")
