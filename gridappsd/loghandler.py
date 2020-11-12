@@ -10,8 +10,12 @@ class Logger:
     """
     The `Logger` class handles logging to the main gridappsd server.
     """
-    def __init__(self, gaps):
+    def __init__(self, gaps, level=logging.INFO):
         self._gaps = gaps
+        self._level = level
+
+    def setLevel(self, level):
+        self._level = level
 
     def debug(self, message):
         self.log(message)
@@ -28,6 +32,7 @@ class Logger:
     def log(self, message, level=logging.DEBUG):
         status = self._gaps.get_application_status()
         sim_id = self._gaps.get_simulation_id()
+
         if sim_id is not None:
             topic = t.simulation_log_topic(sim_id)
         else:
