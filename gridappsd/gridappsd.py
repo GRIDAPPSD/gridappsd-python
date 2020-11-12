@@ -43,9 +43,11 @@ import json
 import logging
 from datetime import datetime
 from logging import DEBUG, INFO, WARNING, FATAL, WARN
+import time
 
 from . import GOSS
 from . import topics as t
+from . import utils
 from .houses import Houses
 from .loghandler import Logger
 
@@ -54,6 +56,7 @@ from .loghandler import Logger
 _log = logging.getLogger(inspect.getmodulename(__file__))
 
 valid_log_levels = [DEBUG, INFO, WARNING, WARN, FATAL]
+valid_process_status = ['STARTING','STARTED','RUNNING','ERROR','CLOSED','COMPLETE','PAUSED']
 
 POWERGRID_MODEL = "powergridmodel"
 
@@ -67,7 +70,7 @@ class GridAPPSD(GOSS):
     """
     # TODO Get the caller from the traceback/inspect module.
     def __init__(self, simulation_id=None,
-                 base_simulation_status_topic=t.BASE_SIMULATION_STATUS_TOPIC,
+                 base_simulation_log_topic=t.BASE_SIMULATION_LOG_TOPIC,
                  address=('localhost', 61613), **kwargs):
         if 'stomp_address' in kwargs and 'stomp_port' in kwargs:
             address = (kwargs.pop('stomp_address'), kwargs.pop('stomp_port'))
@@ -79,18 +82,19 @@ class GridAPPSD(GOSS):
             stomp_port=address[1],
             **kwargs)
         self._houses = Houses(self)
-        self._simulation_status_topic = None
+        self._simulation_log_topic = None
         self._simulation_id = str(simulation_id)
-        self._base_status_topic = base_simulation_status_topic
+        self._base_log_topic = base_simulation_log_topic
+        self._process_status = "STARTING"
         if simulation_id:
-            if not base_simulation_status_topic:
-                err = "If simulation id is specified a base simulation status topic must be specified."
+            if not base_simulation_log_topic:
+                err = "If simulation id is specified a base simulation log topic must be specified."
                 _log.error(err)
-                raise AttributeError("Invalid base simulation status topic")
-            if not self._base_status_topic.endswith('.'):
-                self._base_status_topic += "."
+                raise AttributeError("Invalid base simulation log topic")
+            if not self._base_log_topic.endswith('.'):
+                self._base_log_topic += "."
 
-            self._simulation_status_topic = self._base_status_topic + str(simulation_id)
+            self._simulation_log_topic = self._base_log_topic + str(simulation_id)
 
     def get_logger(self):
         """
@@ -102,7 +106,53 @@ class GridAPPSD(GOSS):
 
     def get_houses(self) -> Houses:
         return self._houses
-
+    
+    def get_simulation_id(self):
+        """ 
+        Return the simulation_id given to the GridAPPSD instance
+        
+        :return:
+        """
+        return self._simulation_id
+    
+    def set_application_status(self, status):
+        """
+        Set the application status.
+        :param status:
+        """
+        if status in valid_process_status:
+            self._process_status = status
+        else:
+            gad_log = self.get_logger()
+            gad_log.warning("Unsuccessful change of application status."
+                            + f"Valid statuses are {valid_process_status}.")
+            
+    def set_service_status(self, status):
+        """
+        Set the service status.
+        :param status:
+        """
+        if status in valid_process_status:
+            self._process_status = status
+        else:
+            gad_log = self.get_logger()
+            gad_log.warning("Unsuccessful change of service status."
+                            + f"Valid statuses are {valid_process_status}.")
+            
+    def get_application_status(self):
+        """
+        Return the application status
+        :return:
+        """
+        return self._process_status
+    
+    def get_service_status(self):
+        """
+        Return the service status
+        :return:
+        """
+        return self._process_status
+    
     def query_object_types(self, model_id=None):
         """ Allows the caller to query the different object types.
                 
@@ -168,25 +218,28 @@ class GridAPPSD(GOSS):
         return self.get_response(t.REQUEST_PLATFORM_STATUS, json.dumps(msg), timeout=30)
 
     def send_simulation_status(self, status, message, log_level=INFO):
-
         _log.debug("SEND SIM STATUS: {} message: {}".format(status, message))
-        if not self._simulation_status_topic:
+        if not self._simulation_log_topic:
             raise InvalidSimulationIdError()
-        status_json = self.build_message_json(status, message, log_level)
-        self.send(self._simulation_status_topic, status_json)
+        gad_log = self.get_logger()
+        self.set_service_status(status)
+        gad_log.log(message, log_level)
 
     def send_status(self, status, topic, log_level=INFO):
-        status_message = self.build_message_json(status, "", log_level)
+        self.set_application_status(status)
+        status_message = self.build_message_json(self.get_application_status(),
+            "", log_level)
         self.send(topic, status_message)
 
     def build_message_json(self, status, message, log_level):
         t_now = datetime.utcnow()
         status_message = {
-            "processId": "fncs_goss_bridge-{}".format(self._simulation_id),
-            "timestamp": t_now.microsecond,
+            "source": utils.get_gridappsd_application_id(),
+            "processId": f"{self._simulation_id}",
+            "timestamp": int(time.mktime(t_now.timetuple()))*1000,
             "procesStatus": status,
             "logMessage": str(message),
-            "logLevel": log_level,
+            "logLevel": logging.getLevelName(log_level),
             "storeToDb": True
         }
         data = json.dumps(status_message)

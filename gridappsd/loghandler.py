@@ -29,16 +29,10 @@ class Logger:
     def warning(self, message):
         self.log(message, logging.WARNING)
 
-    def log(self, message, level=None):
-        if level is None:
-            level = logging.INFO
+    def log(self, message, level=logging.DEBUG):
+        status = self._gaps.get_application_status()
+        sim_id = self._gaps.get_simulation_id()
 
-        if level <= self._level:
-            return
-        status = os.environ.get("GRIDAPPSD_APPLICATION_STATUS")
-        if not status:
-            raise AttributeError("Invalid GRIDAPPSD_APPLICATION_STATUS environmental variable.")
-        sim_id = utils.get_gridappsd_simulation_id()
         if sim_id is not None:
             topic = t.simulation_log_topic(sim_id)
         else:
@@ -46,7 +40,7 @@ class Logger:
 
         status_message = {
             "source": utils.get_gridappsd_application_id(),
-            "processId": "{}-{}".format(utils.get_gridappsd_application_id(), sim_id),
+            "processId": f"{sim_id}",
             "processStatus": str(status),
             "logMessage": str(message),
             "logLevel": logging.getLevelName(level),
