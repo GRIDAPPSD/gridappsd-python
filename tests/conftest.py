@@ -28,7 +28,7 @@ def goss_client(docker_dependencies):
 @pytest.fixture
 def gridappsd_client(docker_dependencies):
     with run_gridappsd_container(True):
-        gappsd = GridAPPSD(simulation_id="1234")
+        gappsd = GridAPPSD()
         gappsd.connect()
         assert gappsd.connected
 

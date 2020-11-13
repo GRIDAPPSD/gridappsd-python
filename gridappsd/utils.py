@@ -1,5 +1,6 @@
 import datetime, time
 from enum import Enum
+from typing import Optional
 
 from dateutil import parser
 import os
@@ -12,7 +13,7 @@ except ImportError:
 __GRIDAPPSD_URI__ = os.environ.get("GRIDAPPSD_URI", "localhost:61613")
 __GRIDAPPSD_USER__ = os.environ.get("GRIDAPPSD_USER", "system")
 __GRIDAPPSD_PASS__ = os.environ.get("GRIDAPPSD_PASS", "manager")
-__GRIDAPPSD_URI__
+
 if not __GRIDAPPSD_URI__.startswith("tcp://"):
     __GRIDAPPSD_URI__ = "tcp://" + __GRIDAPPSD_URI__
 __GRIDAPPSD_URI_PARSED__ = urlparse(__GRIDAPPSD_URI__)
@@ -86,14 +87,16 @@ def get_gridappsd_application_id():
     return app_id
 
 
-def get_gridappsd_simulation_id():
+def get_gridappsd_simulation_id() -> Optional[str]:
     """ Retrieve simulation_id from environment.
 
     This method will return a `None` if the GRIDAPPSD_SIMULATION_ID environmental
     variable is not set.
+
+    return: Optional[str]: simulation_id or None
     """
-    simulation_id = os.environ.get("GRIDAPPSD_SIMULATION_ID")
-    return simulation_id
+    simulation_id = os.environ.get("GRIDAPPSD_SIMULATION_ID", None)
+    return None if simulation_id is None else str(simulation_id)
 
 
 class ProcessStatusEnum(Enum):

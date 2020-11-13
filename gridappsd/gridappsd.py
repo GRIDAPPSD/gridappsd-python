@@ -69,7 +69,6 @@ class GridAPPSD(GOSS):
     """
     # TODO Get the caller from the traceback/inspect module.
     def __init__(self, simulation_id=None,
-                 base_simulation_log_topic=t.BASE_SIMULATION_LOG_TOPIC,
                  address=('localhost', 61613), **kwargs):
         if 'stomp_address' in kwargs and 'stomp_port' in kwargs:
             address = (kwargs.pop('stomp_address'), kwargs.pop('stomp_port'))
@@ -82,18 +81,15 @@ class GridAPPSD(GOSS):
             **kwargs)
         self._houses = Houses(self)
         self._simulation_log_topic = None
-        self._simulation_id = str(simulation_id)
-        self._base_log_topic = base_simulation_log_topic
+        self._simulation_id = None
+        # Transfer simulation_id from environment if its not passed
+        # through the constructor.
+        if simulation_id is None:
+            simulation_id = utils.get_gridappsd_simulation_id()
+        self._simulation_id = simulation_id
         self._process_status = ProcessStatusEnum("STARTING")
-        if simulation_id:
-            if not base_simulation_log_topic:
-                err = "If simulation id is specified a base simulation log topic must be specified."
-                _log.error(err)
-                raise AttributeError("Invalid base simulation log topic")
-            if not self._base_log_topic.endswith('.'):
-                self._base_log_topic += "."
-
-            self._simulation_log_topic = self._base_log_topic + str(simulation_id)
+        if self._simulation_id:
+            self._simulation_log_topic = t.simulation_log_topic(self._simulation_id)
 
     def get_logger(self) -> Logger:
         """
@@ -112,6 +108,10 @@ class GridAPPSD(GOSS):
         
         :return:
         """
+        if not self._simulation_id:
+            self._simulation_id = utils.get_gridappsd_simulation_id()
+            if self._simulation_id:
+                self._simulation_log_topic = t.simulation_log_topic(self._simulation_id)
         return self._simulation_id
     
     def set_application_status(self, status):
@@ -135,6 +135,14 @@ class GridAPPSD(GOSS):
         except ValueError:
             self.get_logger().warning("Unsuccessful change of service status."
                                       + f"Valid statuses are {ProcessStatusEnum.__members__}.")
+
+    def set_simulation_id(self, simulation_id):
+        if simulation_id is None:
+            self.get_logger().warning("None value for simulation_id set.")
+        else:
+            simulation_id = str(simulation_id)
+            self._simulation_id = simulation_id
+            self._simulation_log_topic = t.simulation_log_topic(self._simulation_id)
 
     def get_application_status(self):
         """

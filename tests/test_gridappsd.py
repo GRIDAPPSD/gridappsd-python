@@ -104,11 +104,11 @@ def test_build_message_json(mock_datetime,mock_goss_send,mock_goss_init):
     log_topic = topics.simulation_log_topic(gappds.get_simulation_id())
     mock_goss_send.assert_called_once_with(log_topic, json.dumps(log_msg_dict))
     
-        
-def test_send_simulation_status_integration(gridappsd_client):
-    os.envron["GRIDAPPSD_APPLICATION_ID"] = "helics_goss_bridge.py"
-    gappsd = gridappsd_client
-    
+
+@mock.patch.dict(os.environ, {"GRIDAPPSD_APPLICATION_ID": "helics_goss_bridge.py",
+                              "GRIDAPPSD_SIMULATION_ID": "1234"})
+def test_send_simulation_status_integration(gridappsd_client: GridAPPSD):
+
     class Listener:
         def __init__(self):
             self.call_count = 0
@@ -121,14 +121,25 @@ def test_send_simulation_status_integration(gridappsd_client):
             self.call_count += 1
 
     listener = Listener()
-    
-    log_topic = topics.simulation_log_topic(gappds.get_simulation_id())
-    gappds.subscribe(log_topic, listener)
+    gappsd = gridappsd_client
+    assert os.environ['GRIDAPPSD_SIMULATION_ID'] == '1234'
+    assert gappsd.get_simulation_id() == "1234"
+
+    log_topic = topics.simulation_log_topic(gappsd.get_simulation_id())
+    gappsd.subscribe(log_topic, listener)
     gappsd.send_simulation_status("RUNNING",
         "testing the sending and recieving of send_simulation_status().", 
         "INFO")
     sleep(1)
-    assert 1 == listener.call_count
+    assert listener.call_count == 1
+
+    new_log_topic = topics.simulation_log_topic("54232")
+    gappsd.set_simulation_id(54232)
+    gappsd.subscribe(new_log_topic, listener)
+    gappsd.send_simulation_status(ProcessStatusEnum.COMPLETE.value, "Complete")
+    sleep(1)
+    assert listener.call_count == 2
+
 
 
 @mock.patch.dict(os.environ, {"GRIDAPPSD_APPLICATION_ID": "helics_goss_bridge.py"})
