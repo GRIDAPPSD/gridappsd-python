@@ -1,4 +1,6 @@
 import datetime, time
+from enum import Enum
+
 from dateutil import parser
 import os
 try: # python2.7
@@ -92,3 +94,13 @@ def get_gridappsd_simulation_id():
     """
     simulation_id = os.environ.get("GRIDAPPSD_SIMULATION_ID")
     return simulation_id
+
+
+class ProcessStatusEnum(Enum):
+    STARTING = "STARTING"
+    STOPPING = "STOPPING"
+    RUNNING = "RUNNING"
+    CLOSED = "CLOSED"
+    ERROR = "ERROR"
+    COMPLETE = "COMPLETE"
+    PAUSED = "PAUSED"

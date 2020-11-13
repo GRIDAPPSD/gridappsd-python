@@ -45,9 +45,9 @@ from datetime import datetime
 from logging import DEBUG, INFO, WARNING, FATAL, WARN
 import time
 
-from . import GOSS
+from . import GOSS, utils
 from . import topics as t
-from . import utils
+from . import ProcessStatusEnum
 from .houses import Houses
 from .loghandler import Logger
 
@@ -56,7 +56,6 @@ from .loghandler import Logger
 _log = logging.getLogger(inspect.getmodulename(__file__))
 
 valid_log_levels = [DEBUG, INFO, WARNING, WARN, FATAL]
-valid_process_status = ['STARTING','STARTED','RUNNING','ERROR','CLOSED','COMPLETE','PAUSED']
 
 POWERGRID_MODEL = "powergridmodel"
 
@@ -85,7 +84,7 @@ class GridAPPSD(GOSS):
         self._simulation_log_topic = None
         self._simulation_id = str(simulation_id)
         self._base_log_topic = base_simulation_log_topic
-        self._process_status = "STARTING"
+        self._process_status = ProcessStatusEnum("STARTING")
         if simulation_id:
             if not base_simulation_log_topic:
                 err = "If simulation id is specified a base simulation log topic must be specified."
@@ -96,7 +95,7 @@ class GridAPPSD(GOSS):
 
             self._simulation_log_topic = self._base_log_topic + str(simulation_id)
 
-    def get_logger(self):
+    def get_logger(self) -> Logger:
         """
         Return a log instance for interacting with the log within the gridappsd platform
 
@@ -120,38 +119,39 @@ class GridAPPSD(GOSS):
         Set the application status.
         :param status:
         """
-        if status in valid_process_status:
-            self._process_status = status
-        else:
-            gad_log = self.get_logger()
-            gad_log.warning("Unsuccessful change of application status."
-                            + f"Valid statuses are {valid_process_status}.")
-            
+        try:
+            self._process_status = ProcessStatusEnum(status)
+        except ValueError:
+            self.get_logger().warning("Unsuccessful change of application status."
+                            + f"Valid statuses are {ProcessStatusEnum.__members__}.")
+
     def set_service_status(self, status):
         """
         Set the service status.
         :param status:
         """
-        if status in valid_process_status:
-            self._process_status = status
-        else:
-            gad_log = self.get_logger()
-            gad_log.warning("Unsuccessful change of service status."
-                            + f"Valid statuses are {valid_process_status}.")
-            
+        try:
+            self._process_status = ProcessStatusEnum(status)
+        except ValueError:
+            self.get_logger().warning("Unsuccessful change of service status."
+                                      + f"Valid statuses are {ProcessStatusEnum.__members__}.")
+
     def get_application_status(self):
         """
         Return the application status
         :return:
         """
-        return self._process_status
+        return self._process_status.value
+
+    def get_application_id(self):
+        return utils.get_gridappsd_application_id()
     
     def get_service_status(self):
         """
         Return the service status
         :return:
         """
-        return self._process_status
+        return self._process_status.value
     
     def query_object_types(self, model_id=None):
         """ Allows the caller to query the different object types.

@@ -1,10 +1,12 @@
 import os
 from time import sleep
-import unittest.mock
-from unittest.mock import call, patch, PropertyMock
+
+import mock
+
+from mock import call, patch, PropertyMock
 
 from gridappsd.goss import GOSS
-from gridappsd import GridAPPSD, topics
+from gridappsd import GridAPPSD, topics, ProcessStatusEnum
 import pytest
 
 
@@ -80,7 +82,7 @@ def test_listener_multi_topic(gridappsd_client):
     
 
 @patch.object(GOSS,"__init__", return_value=None)
-@unittest.mock.patch('gridappsd.datetime')
+@patch('gridappsd.datetime')
 @patch.object(GOSS,"send")   
 def test_build_message_json(mock_datetime,mock_goss_send,mock_goss_init):
     os.environ["GRIDAPPSD_APPLICATION_ID"] = "helics_goss_bridge.py"
@@ -127,14 +129,24 @@ def test_send_simulation_status_integration(gridappsd_client):
         "INFO")
     sleep(1)
     assert 1 == listener.call_count
-    
 
+
+@mock.patch.dict(os.environ, {"GRIDAPPSD_APPLICATION_ID": "helics_goss_bridge.py"})
 def test_gridappsd_status(gridappsd_client):
-    os.envron["GRIDAPPSD_APPLICATION_ID"] = "helics_goss_bridge.py"
     gappsd = gridappsd_client
-    assert "STARTED" == gappsd.get_application_status()
-    assert "STARTED" == gappsd.get_service_status()
+    assert "helics_goss_bridge.py" == gappsd.get_application_id()
+    assert gappsd.get_application_status() == ProcessStatusEnum.STARTING.value
+    assert gappsd.get_service_status() == ProcessStatusEnum.STARTING.value
     gappsd.set_application_status("RUNNING")
-    assert "RUNNING" == gappsd.get_appliaction_status()
+
+    assert gappsd.get_service_status() == ProcessStatusEnum.RUNNING.value
+    assert gappsd.get_application_status() == ProcessStatusEnum.RUNNING.value
+
     gappsd.set_service_status("COMPLETE")
-    assert "COMPLETE" == gappsd.get_service_status()
+    assert gappsd.get_service_status() == ProcessStatusEnum.COMPLETE.value
+    assert gappsd.get_application_status() == ProcessStatusEnum.COMPLETE.value
+
+    # Invalid
+    gappsd.set_service_status("Foo")
+    assert gappsd.get_service_status() == ProcessStatusEnum.COMPLETE.value
+    assert gappsd.get_application_status() == ProcessStatusEnum.COMPLETE.value
