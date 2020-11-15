@@ -176,7 +176,10 @@ if HAS_DOCKER:
         Update the default tag used within the dependency and gridappsd containers to be
         what is specified in the new gridappsd_tag variable
         """
+        global DEFAULT_GRIDAPPSD_TAG
+
         DEFAULT_GRIDAPPSD_TAG = new_gridappsd_tag
+        print(f"Updated to using gridappsd tag {DEFAULT_GRIDAPPSD_TAG} ")
         __replace_dict__.update({"{{DEFAULT_GRIDAPPSD_TAG}}": DEFAULT_GRIDAPPSD_TAG})
         DEFAULT_DOCKER_DEPENDENCY_CONFIG.update(__update_template_data__(__TPL_DEPENDENCY_CONFIG__, __replace_dict__))
         DEFAULT_GRIDAPPSD_DOCKER_CONFIG.update(__update_template_data__(__TPL_GRIDAPPSD_CONFIG__, __replace_dict__))
@@ -252,6 +255,19 @@ if HAS_DOCKER:
 
             print(f"Found pattern {pattern}")
 
+        threads = []
+        def stream_container_log_to_file(self, container, logfile):
+            import threading
+
+            def log_output():
+                nonlocal container
+                assert self._container_def.get(container), f"Container {container} is not in definition."
+                client = docker.from_env()
+                container = client.containers.get(self._container_def.get(container)['containerid'])
+
+            threading.Thread(target=log_output, daemon=True)
+
+
         def stop(self):
             client = docker.from_env()
             for service, value in self._container_def.items():
@@ -298,6 +314,7 @@ if HAS_DOCKER:
         containers.start()
         try:
             containers.wait_for_log_pattern("gridappsd", "MYSQL")
+            time.sleep(20)
             yield containers
         finally:
             if stop_after:
