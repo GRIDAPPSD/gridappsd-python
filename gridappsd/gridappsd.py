@@ -49,7 +49,7 @@ from . import GOSS, utils
 from . import topics as t
 from . import ProcessStatusEnum
 from .houses import Houses
-from .loghandler import Logger
+from .loghandler import Logger, VALID_LOG_LEVELS, getNameToLevel
 
 # from . configuration_types import ConfigurationType
 
@@ -225,6 +225,11 @@ class GridAPPSD(GOSS):
 
     def send_simulation_status(self, status, message, log_level=INFO):
         _log.debug("SEND SIM STATUS: {} message: {}".format(status, message))
+        # Transform log level into something for use if we can.
+        if isinstance(log_level, str):
+            log_level = getNameToLevel(log_level)
+        if log_level not in VALID_LOG_LEVELS:
+            raise InvalidSimulationIdError("Invalid log_level specified!")
         if not self._simulation_log_topic:
             raise InvalidSimulationIdError()
         gad_log = self.get_logger()

@@ -1,3 +1,4 @@
+import logging
 import os
 from time import sleep
 
@@ -128,7 +129,7 @@ def test_send_simulation_status_integration(gridappsd_client: GridAPPSD):
     gappsd.subscribe(log_topic, listener)
     gappsd.send_simulation_status("RUNNING",
         "testing the sending and recieving of send_simulation_status().", 
-        "INFO")
+        logging.DEBUG)
     sleep(1)
     assert listener.call_count == 1
 

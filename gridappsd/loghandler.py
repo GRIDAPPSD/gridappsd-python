@@ -1,18 +1,43 @@
 import json
-import logging
+from logging import CRITICAL, FATAL, ERROR, WARNING, WARN, INFO, DEBUG, NOTSET
 import os
 
 from . import topics as t
 from . import utils
 
-VALID_LOG_LEVELS = [logging.DEBUG, logging.INFO, logging.ERROR, logging.WARNING, logging.FATAL, logging.WARN]
+_nameToLevel = {
+    'CRITICAL': CRITICAL,
+    'FATAL': FATAL,
+    'ERROR': ERROR,
+    'WARN': WARNING,
+    'WARNING': WARNING,
+    'INFO': INFO,
+    'DEBUG': DEBUG,
+    'NOTSET': NOTSET,
+}
+
+_levelToName = {
+    CRITICAL: 'CRITICAL',
+    ERROR: 'ERROR',
+    WARNING: 'WARNING',
+    INFO: 'INFO',
+    DEBUG: 'DEBUG',
+    NOTSET: 'NOTSET',
+}
+
+VALID_LOG_LEVELS = set(_nameToLevel.values())
+
+
+def getNameToLevel(level: str) -> int:
+    data = level.upper()
+    return _nameToLevel(data, NOTSET)
 
 
 class Logger:
     """
     The `Logger` class handles logging to the main gridappsd server.
     """
-    def __init__(self, gaps, level=logging.INFO):
+    def __init__(self, gaps, level=INFO):
         self._gaps = gaps
         self._level = level
 
@@ -23,18 +48,18 @@ class Logger:
         self.log(message)
 
     def info(self, message):
-        self.log(message, logging.INFO)
+        self.log(message, INFO)
 
     def error(self, message):
-        self.log(message, logging.ERROR)
+        self.log(message, ERROR)
 
     def warning(self, message):
-        self.log(message, logging.WARNING)
+        self.log(message, WARNING)
 
     def fatal(self, message):
-        self.log(message, logging.FATAL)
+        self.log(message, FATAL)
 
-    def log(self, message, level=logging.DEBUG):
+    def log(self, message, level=DEBUG):
         """
         Log message to the gridappsd logging api.
 
@@ -45,7 +70,7 @@ class Logger:
         process_identifier = self._gaps.get_application_id()
 
         if not level in VALID_LOG_LEVELS:
-            raise AttributeError(f"Log level must be one of {[logging.getLevelName(x) for x in VALID_LOG_LEVELS]}")
+            raise AttributeError(f"Log level must be one of {[x for x in _levelToName.values()]}")
 
         if not process_identifier:
             raise AttributeError(f"Must have GRIDAPPSD_APPLICATION_ID or GRIDAPPSD_SERVICE_ID or GRIDAPPSD_PROCESS_ID "
@@ -63,7 +88,7 @@ class Logger:
             "processId": f"{sim_id}",
             "processStatus": str(status),
             "logMessage": str(message),
-            "logLevel": logging.getLevelName(level),
+            "logLevel": _levelToName[level],
             "storeToDb": True
         }
 
