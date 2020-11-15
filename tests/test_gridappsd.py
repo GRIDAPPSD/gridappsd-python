@@ -4,9 +4,6 @@ from time import sleep
 
 import mock
 
-from mock import call, patch, PropertyMock
-
-from gridappsd.goss import GOSS
 from gridappsd import GridAPPSD, topics as t, ProcessStatusEnum
 
 
@@ -16,7 +13,8 @@ def test_get_model_info(gridappsd_client):
     should have the correct entry keys.
     """
     gappsd = gridappsd_client
-
+    import time
+    time.sleep(10)
     info = gappsd.query_model_info()
 
     node_8500 = None
