@@ -5,6 +5,8 @@ import os
 from . import topics as t
 from . import utils
 
+VALID_LOG_LEVELS = [logging.DEBUG, logging.INFO, logging.ERROR, logging.WARNING, logging.FATAL, logging.WARN]
+
 
 class Logger:
     """
@@ -29,7 +31,25 @@ class Logger:
     def warning(self, message):
         self.log(message, logging.WARNING)
 
+    def fatal(self, message):
+        self.log(message, logging.FATAL)
+
     def log(self, message, level=logging.DEBUG):
+        """
+        Log message to the gridappsd logging api.
+
+        :raises: AttributeError
+            if the environment doesn't have GRIDAPPSD_APPLICATION_ID or GRIDAPPSD_SERVICE_ID or
+            GRIDAPPSD_PROCESS_ID in the environment
+        """
+        process_identifier = self._gaps.get_application_id()
+
+        if not level in VALID_LOG_LEVELS:
+            raise AttributeError(f"Log level must be one of {[logging.getLevelName(x) for x in VALID_LOG_LEVELS]}")
+
+        if not process_identifier:
+            raise AttributeError(f"Must have GRIDAPPSD_APPLICATION_ID or GRIDAPPSD_SERVICE_ID or GRIDAPPSD_PROCESS_ID "
+                                 "set in os environments.")
         status = self._gaps.get_application_status()
         sim_id = self._gaps.get_simulation_id()
 
@@ -39,7 +59,7 @@ class Logger:
             topic = t.platform_log_topic()
 
         status_message = {
-            "source": utils.get_gridappsd_application_id(),
+            "source": process_identifier,
             "processId": f"{sim_id}",
             "processStatus": str(status),
             "logMessage": str(message),

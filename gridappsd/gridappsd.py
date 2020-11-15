@@ -55,8 +55,6 @@ from .loghandler import Logger
 
 _log = logging.getLogger(inspect.getmodulename(__file__))
 
-valid_log_levels = [DEBUG, INFO, WARNING, WARN, FATAL]
-
 POWERGRID_MODEL = "powergridmodel"
 
 
