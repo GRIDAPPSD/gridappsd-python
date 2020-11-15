@@ -10,27 +10,20 @@ from gridappsd.simulation import Simulation
 # The directory containing this file
 HERE = os.path.dirname(__file__)
 
-@pytest.fixture
-def gappsd():
 
-    gappsd = GridAPPSD()
-    yield gappsd
-    gappsd.disconnect()
-    gappsd = None
-
-
-@pytest.fixture
 def base_config():
     with open("{HERE}/simulation_fixtures/13_node_2_min_base.json".format(HERE=HERE)) as fp:
         data = json.load(fp)
-    yield data
+    return data
 
 
-def test_simulation_no_duplicate_measurement_timestamps(gappsd, base_config):
-    sim = Simulation(gappsd, base_config)
+def test_simulation_no_duplicate_measurement_timestamps(gridappsd_client):
+
+    gapps = gridappsd_client
+
+    sim = Simulation(gapps, base_config())
     timestampset = set()
     timestampset2 = set()
-    complete = False
 
     def onmeasurement(sim, timestamp, measurements):
         nonlocal timestampset
@@ -44,20 +37,11 @@ def test_simulation_no_duplicate_measurement_timestamps(gappsd, base_config):
         assert timestamp not in timestampset2
         timestampset2.add(timestamp)
 
-    def oncomplete(sim):
-        nonlocal complete
-        complete = True
-
     sim.add_onmesurement_callback(onmeasurement)
-    sim.add_oncomplete_callback(oncomplete)
     sim.start_simulation()
-    gappsd.subscribe(t.simulation_output_topic(sim.simulation_id), onsubscribetooutput)
-    going = 0
-    while not complete:
-        going += 1
-        if going % 1000 == 0:
-            print(f"Going: {going}")
-        time.sleep(0.1)
+    gapps.subscribe(t.simulation_output_topic(sim.simulation_id), onsubscribetooutput)
+    time.sleep(5)
+    sim.run_loop()
 
 
 # from gridappsd import GridAPPSD
