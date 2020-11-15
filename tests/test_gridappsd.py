@@ -6,8 +6,7 @@ import mock
 from mock import call, patch, PropertyMock
 
 from gridappsd.goss import GOSS
-from gridappsd import GridAPPSD, topics, ProcessStatusEnum
-import pytest
+from gridappsd import GridAPPSD, topics as t, ProcessStatusEnum
 
 
 def test_get_model_info(gridappsd_client):
@@ -66,8 +65,8 @@ def test_listener_multi_topic(gridappsd_client):
 
     listener = Listener()
 
-    input_topic = topics.simulation_input_topic("5144")
-    output_topic = topics.simulation_output_topic("5144")
+    input_topic = t.simulation_input_topic("5144")
+    output_topic = t.simulation_output_topic("5144")
 
     gappsd.subscribe(input_topic, listener)
     gappsd.subscribe(output_topic, listener)
@@ -101,7 +100,7 @@ def test_build_message_json(mock_datetime,mock_goss_send,mock_goss_init):
         "logLevel": "INFO",
         "storeToDb": True
     }
-    log_topic = topics.simulation_log_topic(gappds.get_simulation_id())
+    log_topic = t.simulation_log_topic(gappds.get_simulation_id())
     mock_goss_send.assert_called_once_with(log_topic, json.dumps(log_msg_dict))
     
 
@@ -125,7 +124,7 @@ def test_send_simulation_status_integration(gridappsd_client: GridAPPSD):
     assert os.environ['GRIDAPPSD_SIMULATION_ID'] == '1234'
     assert gappsd.get_simulation_id() == "1234"
 
-    log_topic = topics.simulation_log_topic(gappsd.get_simulation_id())
+    log_topic = t.simulation_log_topic(gappsd.get_simulation_id())
     gappsd.subscribe(log_topic, listener)
     gappsd.send_simulation_status("RUNNING",
         "testing the sending and recieving of send_simulation_status().", 
@@ -133,7 +132,7 @@ def test_send_simulation_status_integration(gridappsd_client: GridAPPSD):
     sleep(1)
     assert listener.call_count == 1
 
-    new_log_topic = topics.simulation_log_topic("54232")
+    new_log_topic = t.simulation_log_topic("54232")
     gappsd.set_simulation_id(54232)
     gappsd.subscribe(new_log_topic, listener)
     gappsd.send_simulation_status(ProcessStatusEnum.COMPLETE.value, "Complete")
