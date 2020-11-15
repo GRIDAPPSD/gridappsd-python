@@ -251,9 +251,23 @@ if HAS_DOCKER:
             for p in container.logs(stream=True, until=until):
                 print(p)
                 if pattern in p.decode('utf-8'):
-                    break
+                    print(f"Found patter {pattern}")
+                    return
+            raise TimeoutError(f"Pattern {pattern} was not found in logs of container {container} within {timeout}s")
 
-            print(f"Found pattern {pattern}")
+        def wait_for_http_ok(self, url, timeout=30):
+            import requests
+            results = None
+            test_count = 0
+
+            while results is None or not results.ok:
+                test_count += 1
+                if test_count > timeout:
+                    raise TimeoutError(f"Could not reach {url} within alloted timeout {timeout}s")
+                results = requests.get(url)
+                time.sleep(1)
+
+            print(f"Found url {url} within timeout {timeout}")
 
         threads = []
         def stream_container_log_to_file(self, container, logfile):
@@ -314,7 +328,12 @@ if HAS_DOCKER:
         containers.start()
         try:
             containers.wait_for_log_pattern("gridappsd", "MYSQL")
-            time.sleep(20)
+            # Wait for blazegraph to show up.
+            containers.wait_for_http_ok("http://localhost:8889/bigdata/")
+            # Waith 30 seconds before returning from this to make sure
+            # gridappsd container is fully setup ready for simulation
+            # and querying.
+            time.sleep(30)
             yield containers
         finally:
             if stop_after:

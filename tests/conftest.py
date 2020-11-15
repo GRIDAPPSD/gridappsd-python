@@ -1,12 +1,15 @@
 import pytest
 from gridappsd import GOSS, GridAPPSD
-from gridappsd.docker_handler import run_dependency_containers, run_gridappsd_container, Containers
+from gridappsd.docker_handler import run_dependency_containers, run_gridappsd_container, Containers, \
+    update_gridappsd_tag
 
 
 @pytest.fixture(scope="module")
 def docker_dependencies():
     print("Docker dependencies")
     Containers.reset_all_containers()
+
+    update_gridappsd_tag('releases_2020.09.0')
 
     with run_dependency_containers(stop_after=True) as dep:
         yield dep
