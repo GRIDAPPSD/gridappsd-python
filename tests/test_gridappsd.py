@@ -79,31 +79,7 @@ def test_listener_multi_topic(gridappsd_client):
     gappsd.send(output_topic, "No big deal")
     sleep(1)
     assert 1 == listener.call_count
-    
 
-@patch.object(GOSS,"__init__", return_value=None)
-@patch('gridappsd.datetime')
-@patch.object(GOSS,"send")   
-def test_build_message_json(mock_datetime,mock_goss_send,mock_goss_init):
-    os.environ["GRIDAPPSD_APPLICATION_ID"] = "helics_goss_bridge.py"
-    mock_datetime.utcnow.return_value = datetime(2017,8,25,10,33,6,150642)
-    t_now = mock_datetime.utcnow()
-    gad = GridAPPSD(simulation_id="1234")
-    gad.send_simulation_status("RUNNING",
-        "testing build_message_json().", 
-        "INFO")
-    log_msg_dict = {
-        "source": "helics_goss_bridge.py",
-        "processId": str(gad.get_simulation_id()),
-        "timestamp": int(time.mktime(t_now.timetuple()))*1000,
-        "processStatus": "RUNNING",
-        "logMessage": "testing build_message_json().",
-        "logLevel": "INFO",
-        "storeToDb": True
-    }
-    log_topic = t.simulation_log_topic(gappds.get_simulation_id())
-    mock_goss_send.assert_called_once_with(log_topic, json.dumps(log_msg_dict))
-    
 
 @mock.patch.dict(os.environ, {"GRIDAPPSD_APPLICATION_ID": "helics_goss_bridge.py",
                               "GRIDAPPSD_SIMULATION_ID": "1234"})
