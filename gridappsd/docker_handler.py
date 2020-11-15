@@ -64,11 +64,12 @@ if HAS_DOCKER:
             for line in lines:
                 sources.write(re.sub(r'localhost', '%', line))
 
+    DEFAULT_GRIDAPPSD_TAG = "develop"
 
-    DEFAULT_DOCKER_DEPENDENCY_CONFIG = {
+    __TPL_DEPENDENCY_CONFIG__ = {
         "influxdb": {
             "start": True,
-            "image": "gridappsd/influxdb:develop",
+            "image": "gridappsd/influxdb:{{DEFAULT_GRIDAPPSD_TAG}}",
             "pull": True,
             "ports": {"8086/tcp": 8086},
             "environment": {"INFLUXDB_DB": "proven"},
@@ -88,7 +89,7 @@ if HAS_DOCKER:
         },
         "blazegraph": {
             "start": True,
-            "image": "gridappsd/blazegraph:develop",
+            "image": "gridappsd/blazegraph:{{DEFAULT_GRIDAPPSD_TAG}}",
             "pull": True,
             "ports": {"8080/tcp": 8889},
             "environment": [],
@@ -115,7 +116,7 @@ if HAS_DOCKER:
         },
         "proven": {
             "start": True,
-            "image": "gridappsd/proven:develop",
+            "image": "gridappsd/proven:{{DEFAULT_GRIDAPPSD_TAG}}",
             "pull": True,
             "ports": {"8080/tcp": 18080},
             "environment": {
@@ -134,10 +135,10 @@ if HAS_DOCKER:
         }
     }
 
-    DEFAULT_GRIDAPPSD_DOCKER_CONFIG = {
+    __TPL_GRIDAPPSD_CONFIG__ = {
         "gridappsd": {
             "start": True,
-            "image": "gridappsd/gridappsd:develop",
+            "image": "gridappsd/gridappsd:{{DEFAULT_GRIDAPPSD_TAG}}",
             "pull": True,
             "ports": {"61613/tcp": 61613, "61614/tcp": 61614, "61616/tcp": 61616},
             "environment": {
@@ -157,6 +158,28 @@ if HAS_DOCKER:
         }
     }
 
+    def __update_template_data__(data, update_dict):
+        data_cpy = deepcopy(data)
+        for k, v in data_cpy.items():
+            for u, p in update_dict.items():
+                v['image'] = v['image'].replace(u, p)
+
+        return data_cpy
+
+
+    __replace_dict__ = {"{{DEFAULT_GRIDAPPSD_TAG}}": DEFAULT_GRIDAPPSD_TAG}
+    DEFAULT_DOCKER_DEPENDENCY_CONFIG = __update_template_data__(__TPL_DEPENDENCY_CONFIG__, __replace_dict__)
+    DEFAULT_GRIDAPPSD_DOCKER_CONFIG = __update_template_data__(__TPL_GRIDAPPSD_CONFIG__, __replace_dict__)
+
+    def update_gridappsd_tag(new_gridappsd_tag):
+        """
+        Update the default tag used within the dependency and gridappsd containers to be
+        what is specified in the new gridappsd_tag variable
+        """
+        DEFAULT_GRIDAPPSD_TAG = new_gridappsd_tag
+        __replace_dict__.update({"{{DEFAULT_GRIDAPPSD_TAG}}": DEFAULT_GRIDAPPSD_TAG})
+        DEFAULT_DOCKER_DEPENDENCY_CONFIG.update(__update_template_data__(__TPL_DEPENDENCY_CONFIG__, __replace_dict__))
+        DEFAULT_GRIDAPPSD_DOCKER_CONFIG.update(__update_template_data__(__TPL_GRIDAPPSD_CONFIG__, __replace_dict__))
 
     class Containers:
         """
