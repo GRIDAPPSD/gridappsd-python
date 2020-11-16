@@ -13,8 +13,8 @@ def test_get_model_info(record_property, gridappsd_client):
     should have the correct entry keys.
     """
     doc_str = """
-    This function quwries the database through the gridappsd api.  Specifically checking 
-    that the specific models are available.  The results are interrogageted for the 8500 node
+    This function queries the database through the gridappsd api.  Specifically checking 
+    that the specific models are available.  The results are interrogated for the 8500 node
     model and the the iee123 model.  The return values of the query are interrogated and
     the values associated are tested
     """

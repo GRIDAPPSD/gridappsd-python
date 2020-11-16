@@ -1,8 +1,11 @@
+![Build Status](https://github.com/craig8/gridappsd-python/workflows/run-pytest/badge.svg)
+    
 # gridappsd-python
-Python connector to gridappsd
+Python library for developing applications and services against the gridappsd api
 
 ## Installation
 
+The `gridappsd-python` library requires python 3.6+ in order to work.
 - Clone repository
 - Install into your python environment `pip install . `
 

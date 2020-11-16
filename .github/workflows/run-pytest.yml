@@ -31,12 +31,13 @@ jobs:
 
       - name: Run pytest
         run: |
-          pytest -k get_model_info --junitxml=output/test-results.xml
+          pytest --junitxml=output/test-${{ matrix.python-version }}-results.xml
+
       - name: Archive code coverage results
         uses: actions/upload-artifact@v2
         with:
           name: pytest-report
-          path: output/test-results.xml
+          path: output/test-${{ matrix.python-version }}-results.xml
 
 #--cov=com --cov-report=xml --cov-report=html
 # pytest tests.py --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
