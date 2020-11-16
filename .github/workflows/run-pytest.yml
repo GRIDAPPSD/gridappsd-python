@@ -29,9 +29,6 @@ jobs:
         run: |
           pip install . --upgrade
 
-  runtests:
-    needs: build
-    steps:
       - name: Run pytest
         run: |
           pytest -k get_model_info --junitxml=output/test-results.xml
