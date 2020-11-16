@@ -12,24 +12,36 @@ jobs:
         python-version: [3.6, 3.7, 3.8]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest wheel
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        if [ -f test_requirements.txt ]; then pip install -r test_requirements.txt; fi
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest wheel pytest-cov
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f test_requirements.txt ]; then pip install -r test_requirements.txt; fi
 
-    - name: Install gridappsd
-      run: |
-        pip install . --upgrade
-        pip install pytest-cov
+      - name: Install gridappsd
+        run: |
+          pip install . --upgrade
 
+  runtests:
+    needs: build
+    steps:
+      - name: Run pytest
+        run: |
+          pytest -k get_model_info --junitxml=output/test-results.xml
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v2
+        with:
+          name: pytest-report
+          path: output/test-results.xml
+
+#--cov=com --cov-report=xml --cov-report=html
 # pytest tests.py --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
 #    - name: Lint with flake8
 #      run: |
@@ -37,6 +49,6 @@ jobs:
 #        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 #        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
 #        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
-      run: |
-        pytest --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+#    - name: Test with pytest
+#      run: |
+#        pytest --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
