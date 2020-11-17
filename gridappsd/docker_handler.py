@@ -4,6 +4,9 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 import logging
 import os
+from subprocess import PIPE
+import threading
+
 import pkg_resources
 from pathlib import Path
 import re
@@ -269,19 +272,6 @@ if HAS_DOCKER:
 
             print(f"Found url {url} within timeout {timeout}")
 
-        threads = []
-        def stream_container_log_to_file(self, container, logfile):
-            import threading
-
-            def log_output():
-                nonlocal container
-                assert self._container_def.get(container), f"Container {container} is not in definition."
-                client = docker.from_env()
-                container = client.containers.get(self._container_def.get(container)['containerid'])
-
-            threading.Thread(target=log_output, daemon=True)
-
-
         def stop(self):
             client = docker.from_env()
             for service, value in self._container_def.items():
@@ -292,6 +282,26 @@ if HAS_DOCKER:
                         # client.containers.get(value.get('containerid')).kill() # value.get('name')).kill()
                     except docker.errors.NotFound:
                         pass
+
+
+    threads = []
+
+    def stream_container_log_to_file(container_name: str, logfile: str):
+        client = docker.from_env()
+        container = client.containers.list(filters=dict(name=container_name))[0]
+
+        print(container)
+
+        def log_output():
+            nonlocal container, logfile
+            print(f"Starting to write to file {logfile}.")
+            with open(logfile, 'wb') as fp:
+                print(f"openfile")
+                for p in container.logs(stream=True, stderr=PIPE, stdout=PIPE):
+                    fp.write(p)
+                    fp.flush()
+
+        threading.Thread(target=log_output, daemon=True).start()
 
 
     @contextlib.contextmanager

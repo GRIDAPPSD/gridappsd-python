@@ -1,17 +1,27 @@
 import inspect
 import logging
+import os
 import time
-from copy import deepcopy
 import sys
 
 import docker
 
 from gridappsd import GridAPPSD
-from gridappsd.docker_handler import (run_dependency_containers, Containers, run_gridappsd_container, run_containers,
-                                      DEFAULT_DOCKER_DEPENDENCY_CONFIG, DEFAULT_GRIDAPPSD_DOCKER_CONFIG)
+from gridappsd.docker_handler import (run_dependency_containers, Containers, run_gridappsd_container,
+                                      stream_container_log_to_file)
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 _log = logging.getLogger(inspect.getmodulename(__file__))
+
+
+def test_log_container(docker_dependencies):
+    mypath = "/tmp/alphabetagamma.txt"
+    stream_container_log_to_file("influxdb", mypath)
+    time.sleep(5)
+    print("After call to stream")
+    assert os.path.exists(mypath)
+    with open(mypath, 'rb') as rf:
+        assert len(rf.readlines()) > 0
 
 
 def test_can_reset_all_containers():
@@ -40,6 +50,9 @@ def test_can_reset_all_containers():
     assert not client.containers.list()
     cont.stop()
 
+
+def test_stream_log_to_file():
+    pass
 
 def test_can_dependencies_continue_after_context_manager():
 
