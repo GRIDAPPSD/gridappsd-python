@@ -1,20 +1,27 @@
+import logging
 import os
 from time import sleep
-import unittest.mock
-from unittest.mock import call, patch, PropertyMock
 
-from gridappsd.goss import GOSS
-from gridappsd import GridAPPSD, topics
-import pytest
+import mock
+
+from gridappsd import GridAPPSD, topics as t, ProcessStatusEnum
 
 
-def test_get_model_info(gridappsd_client):
+def test_get_model_info(record_property, gridappsd_client):
     """ The expecation is that we will have multiple models that we can retrieve from the
     database.  Two of which should have the model name of ieee8500 and ieee123.  The models
     should have the correct entry keys.
     """
+    doc_str = """
+    This function queries the database through the gridappsd api.  Specifically checking 
+    that the specific models are available.  The results are interrogated for the 8500 node
+    model and the the iee123 model.  The return values of the query are interrogated and
+    the values associated are tested
+    """
+    record_property("gridappsd_doc", doc_str)
     gappsd = gridappsd_client
-
+    import time
+    time.sleep(10)
     info = gappsd.query_model_info()
 
     node_8500 = None
@@ -64,8 +71,8 @@ def test_listener_multi_topic(gridappsd_client):
 
     listener = Listener()
 
-    input_topic = topics.simulation_input_topic("5144")
-    output_topic = topics.simulation_output_topic("5144")
+    input_topic = t.simulation_input_topic("5144")
+    output_topic = t.simulation_output_topic("5144")
 
     gappsd.subscribe(input_topic, listener)
     gappsd.subscribe(output_topic, listener)
@@ -77,36 +84,12 @@ def test_listener_multi_topic(gridappsd_client):
     gappsd.send(output_topic, "No big deal")
     sleep(1)
     assert 1 == listener.call_count
-    
 
-@patch.object(GOSS,"__init__", return_value=None)
-@unittest.mock.patch('gridappsd.datetime')
-@patch.object(GOSS,"send")   
-def test_build_message_json(mock_datetime,mock_goss_send,mock_goss_init):
-    os.environ["GRIDAPPSD_APPLICATION_ID"] = "helics_goss_bridge.py"
-    mock_datetime.utcnow.return_value = datetime(2017,8,25,10,33,6,150642)
-    t_now = mock_datetime.utcnow()
-    gad = GridAPPSD(simulation_id="1234")
-    gad.send_simulation_status("RUNNING",
-        "testing build_message_json().", 
-        "INFO")
-    log_msg_dict = {
-        "source": "helics_goss_bridge.py",
-        "processId": str(gad.get_simulation_id()),
-        "timestamp": int(time.mktime(t_now.timetuple()))*1000,
-        "processStatus": "RUNNING",
-        "logMessage": "testing build_message_json().",
-        "logLevel": "INFO",
-        "storeToDb": True
-    }
-    log_topic = topics.simulation_log_topic(gappds.get_simulation_id())
-    mock_goss_send.assert_called_once_with(log_topic, json.dumps(log_msg_dict))
-    
-        
-def test_send_simulation_status_integration(gridappsd_client):
-    os.envron["GRIDAPPSD_APPLICATION_ID"] = "helics_goss_bridge.py"
-    gappsd = gridappsd_client
-    
+
+@mock.patch.dict(os.environ, {"GRIDAPPSD_APPLICATION_ID": "helics_goss_bridge.py",
+                              "GRIDAPPSD_SIMULATION_ID": "1234"})
+def test_send_simulation_status_integration(gridappsd_client: GridAPPSD):
+
     class Listener:
         def __init__(self):
             self.call_count = 0
@@ -119,22 +102,43 @@ def test_send_simulation_status_integration(gridappsd_client):
             self.call_count += 1
 
     listener = Listener()
-    
-    log_topic = topics.simulation_log_topic(gappds.get_simulation_id())
-    gappds.subscribe(log_topic, listener)
+    gappsd = gridappsd_client
+    assert os.environ['GRIDAPPSD_SIMULATION_ID'] == '1234'
+    assert gappsd.get_simulation_id() == "1234"
+
+    log_topic = t.simulation_log_topic(gappsd.get_simulation_id())
+    gappsd.subscribe(log_topic, listener)
     gappsd.send_simulation_status("RUNNING",
         "testing the sending and recieving of send_simulation_status().", 
-        "INFO")
+        logging.DEBUG)
     sleep(1)
-    assert 1 == listener.call_count
-    
+    assert listener.call_count == 1
 
+    new_log_topic = t.simulation_log_topic("54232")
+    gappsd.set_simulation_id(54232)
+    gappsd.subscribe(new_log_topic, listener)
+    gappsd.send_simulation_status(ProcessStatusEnum.COMPLETE.value, "Complete")
+    sleep(1)
+    assert listener.call_count == 2
+
+
+
+@mock.patch.dict(os.environ, {"GRIDAPPSD_APPLICATION_ID": "helics_goss_bridge.py"})
 def test_gridappsd_status(gridappsd_client):
-    os.envron["GRIDAPPSD_APPLICATION_ID"] = "helics_goss_bridge.py"
     gappsd = gridappsd_client
-    assert "STARTED" == gappsd.get_application_status()
-    assert "STARTED" == gappsd.get_service_status()
+    assert "helics_goss_bridge.py" == gappsd.get_application_id()
+    assert gappsd.get_application_status() == ProcessStatusEnum.STARTING.value
+    assert gappsd.get_service_status() == ProcessStatusEnum.STARTING.value
     gappsd.set_application_status("RUNNING")
-    assert "RUNNING" == gappsd.get_appliaction_status()
+
+    assert gappsd.get_service_status() == ProcessStatusEnum.RUNNING.value
+    assert gappsd.get_application_status() == ProcessStatusEnum.RUNNING.value
+
     gappsd.set_service_status("COMPLETE")
-    assert "COMPLETE" == gappsd.get_service_status()
+    assert gappsd.get_service_status() == ProcessStatusEnum.COMPLETE.value
+    assert gappsd.get_application_status() == ProcessStatusEnum.COMPLETE.value
+
+    # Invalid
+    gappsd.set_service_status("Foo")
+    assert gappsd.get_service_status() == ProcessStatusEnum.COMPLETE.value
+    assert gappsd.get_application_status() == ProcessStatusEnum.COMPLETE.value
