@@ -67,7 +67,8 @@ if HAS_DOCKER:
             for line in lines:
                 sources.write(re.sub(r'localhost', '%', line))
 
-    DEFAULT_GRIDAPPSD_TAG = "develop"
+    # Use the environmental variable if specified otherwise use the develop tag.
+    DEFAULT_GRIDAPPSD_TAG = os.environ.get('GRIDAPPSD_TAG_ENV', 'develop')
 
     __TPL_DEPENDENCY_CONFIG__ = {
         "influxdb": {
