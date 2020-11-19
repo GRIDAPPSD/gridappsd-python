@@ -31,7 +31,7 @@ jobs:
 
       - name: Run pytest
         run: |
-          pytest -k model_info -o junit_family=xunit2 --junitxml=output/test-${{ matrix.python-version }}-results.xml
+          pytest -o junit_family=xunit2 --junitxml=output/test-${{ matrix.python-version }}-results.xml
 
       - name: Archive code coverage results
         uses: actions/upload-artifact@v2
