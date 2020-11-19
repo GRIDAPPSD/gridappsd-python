@@ -30,7 +30,7 @@ VALID_LOG_LEVELS = set(_nameToLevel.values())
 
 def getNameToLevel(level: str) -> int:
     data = level.upper()
-    return _nameToLevel(data, NOTSET)
+    return _nameToLevel.get(data, NOTSET)
 
 
 class Logger:
