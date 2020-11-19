@@ -107,3 +107,4 @@ class ProcessStatusEnum(Enum):
     ERROR = "ERROR"
     COMPLETE = "COMPLETE"
     PAUSED = "PAUSED"
+    STARTED = "STARTED"
