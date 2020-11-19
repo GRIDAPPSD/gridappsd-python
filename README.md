@@ -1,5 +1,5 @@
-![Build Status](https://github.com/GRIDAPPSD/gridappsd-python/workflows/run-pytest/badge.svg)
-    
+![Build status](https://github.com/GRIDAPPSD/gridappsd-python/workflows/Python%20package/badge.svg)
+
 # gridappsd-python
 Python library for developing applications and services against the gridappsd api
 
