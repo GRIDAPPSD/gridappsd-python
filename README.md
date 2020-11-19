@@ -18,8 +18,8 @@ from gridappsd import GridAPPSD
 def on_message_callback(header, message):
     print(f"header: {header} message: {message}")
 
-# Note: there are other parameters for connecting to other
-# systems thatn localhost
+# Note: there are other parameters for connecting to 
+# systems other than localhost
 gapps = GridAPPSD(username="user", password="pass")
 
 assert gapps.connected
@@ -27,7 +27,7 @@ assert gapps.connected
 gapps.send('send.topic', {"foo": "bar"})
 
 # Note we are sending the function not executing the function in the second parameter
-gapps.subscribe('subscrbe.topic', on_message_callback)
+gapps.subscribe('subscribe.topic', on_message_callback)
 
 gapps.send('subcribe.topic', 'A message about subscription')
 
@@ -55,7 +55,7 @@ pip install -r test_requirements.txt
 ```
 
 During the testing phase the docker containers required for the tests are downloaded from
-dockerhub and started.  By default the `develop` tag is used to test the libaray using pytest.  
+dockerhub and started.  By default the `develop` tag is used to test the library using pytest.  
 One can customize the docker image tag by setting the environmental
 variable `GRIDAPPSD_TAG_ENV` either by `export GRIDAPPSD_TAG_ENV=other_tag` or by executing 
 pytest with the following:
@@ -78,7 +78,7 @@ base containers required for `gridappsd` to run.
 ```python
 
 # conftest.py
-# Plase the following in the tests directory to enable usage throughout the tests directory and below. 
+# Create a conftest.py file in the root of the tests directory to enable usage throughout the tests directory and below. 
 # 
 # Tested project structure an layout
 #
