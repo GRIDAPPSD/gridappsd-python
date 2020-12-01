@@ -259,7 +259,7 @@ if HAS_DOCKER:
                     return
             raise TimeoutError(f"Pattern {pattern} was not found in logs of container {container} within {timeout}s")
 
-        def wait_for_http_ok(self, url, timeout=30):
+        def wait_for_http_ok(self, url, timeout=300):
             import requests
             results = None
             test_count = 0
