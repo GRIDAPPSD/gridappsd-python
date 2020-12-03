@@ -1,4 +1,4 @@
-name: Python package
+name: Run All Pytests
 
 on: [push, pull_request]
 
@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-18.04
     # , ubuntu-20.04]
     strategy:
+      fail-fast: false
       matrix:
         python-version: [3.6, 3.7, 3.8]
 
