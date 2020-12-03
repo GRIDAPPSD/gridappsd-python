@@ -33,7 +33,7 @@ jobs:
         run: |
           pytest -o junit_family=xunit1 --junitxml=output/test-${{ matrix.python-version }}-results.xml
 
-      - name: Archive code coverage results
+      - name: Archive test results
         uses: actions/upload-artifact@v2
         with:
           name: pytest-report
