@@ -5,7 +5,7 @@ import pytest
 from gridappsd import GridAPPSD
 from gridappsd.docker_handler import run_dependency_containers, run_gridappsd_container, Containers
 
-STOP_CONTAINER_AFTER_TEST = os.environ.get('GRIDAPPSD_STOP_CONTAINERS_AFTER_TESTS', False)
+STOP_CONTAINER_AFTER_TEST = os.environ.get('GRIDAPPSD_STOP_CONTAINERS_AFTER_TESTS', True)
 
 @pytest.fixture(scope="module")
 def docker_dependencies():
