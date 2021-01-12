@@ -43,7 +43,10 @@ The :mod:`gridappsd` contains a connection class :class:`gridappsd.GridAPPSD` fo
 main GridAPPSD executable.
 
 """
+from enum import Enum
+
 from . goss import GOSS
+from . utils import ProcessStatusEnum
 from . gridappsd import GridAPPSD
 from . difference_builder import DifferenceBuilder
 from . app_registration import ApplicationController

@@ -4,6 +4,9 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 import logging
 import os
+from subprocess import PIPE
+import threading
+
 import pkg_resources
 from pathlib import Path
 import re
@@ -64,11 +67,13 @@ if HAS_DOCKER:
             for line in lines:
                 sources.write(re.sub(r'localhost', '%', line))
 
+    # Use the environmental variable if specified otherwise use the develop tag.
+    DEFAULT_GRIDAPPSD_TAG = os.environ.get('GRIDAPPSD_TAG_ENV', 'develop')
 
-    DEFAULT_DOCKER_DEPENDENCY_CONFIG = {
+    __TPL_DEPENDENCY_CONFIG__ = {
         "influxdb": {
             "start": True,
-            "image": "gridappsd/influxdb:develop",
+            "image": "gridappsd/influxdb:{{DEFAULT_GRIDAPPSD_TAG}}",
             "pull": True,
             "ports": {"8086/tcp": 8086},
             "environment": {"INFLUXDB_DB": "proven"},
@@ -88,7 +93,7 @@ if HAS_DOCKER:
         },
         "blazegraph": {
             "start": True,
-            "image": "gridappsd/blazegraph:develop",
+            "image": "gridappsd/blazegraph:{{DEFAULT_GRIDAPPSD_TAG}}",
             "pull": True,
             "ports": {"8080/tcp": 8889},
             "environment": [],
@@ -115,7 +120,7 @@ if HAS_DOCKER:
         },
         "proven": {
             "start": True,
-            "image": "gridappsd/proven:develop",
+            "image": "gridappsd/proven:{{DEFAULT_GRIDAPPSD_TAG}}",
             "pull": True,
             "ports": {"8080/tcp": 18080},
             "environment": {
@@ -134,10 +139,10 @@ if HAS_DOCKER:
         }
     }
 
-    DEFAULT_GRIDAPPSD_DOCKER_CONFIG = {
+    __TPL_GRIDAPPSD_CONFIG__ = {
         "gridappsd": {
             "start": True,
-            "image": "gridappsd/gridappsd:develop",
+            "image": "gridappsd/gridappsd:{{DEFAULT_GRIDAPPSD_TAG}}",
             "pull": True,
             "ports": {"61613/tcp": 61613, "61614/tcp": 61614, "61616/tcp": 61616},
             "environment": {
@@ -157,6 +162,31 @@ if HAS_DOCKER:
         }
     }
 
+    def __update_template_data__(data, update_dict):
+        data_cpy = deepcopy(data)
+        for k, v in data_cpy.items():
+            for u, p in update_dict.items():
+                v['image'] = v['image'].replace(u, p)
+
+        return data_cpy
+
+
+    __replace_dict__ = {"{{DEFAULT_GRIDAPPSD_TAG}}": DEFAULT_GRIDAPPSD_TAG}
+    DEFAULT_DOCKER_DEPENDENCY_CONFIG = __update_template_data__(__TPL_DEPENDENCY_CONFIG__, __replace_dict__)
+    DEFAULT_GRIDAPPSD_DOCKER_CONFIG = __update_template_data__(__TPL_GRIDAPPSD_CONFIG__, __replace_dict__)
+
+    def update_gridappsd_tag(new_gridappsd_tag):
+        """
+        Update the default tag used within the dependency and gridappsd containers to be
+        what is specified in the new gridappsd_tag variable
+        """
+        global DEFAULT_GRIDAPPSD_TAG
+
+        DEFAULT_GRIDAPPSD_TAG = new_gridappsd_tag
+        print(f"Updated to using gridappsd tag {DEFAULT_GRIDAPPSD_TAG} ")
+        __replace_dict__.update({"{{DEFAULT_GRIDAPPSD_TAG}}": DEFAULT_GRIDAPPSD_TAG})
+        DEFAULT_DOCKER_DEPENDENCY_CONFIG.update(__update_template_data__(__TPL_DEPENDENCY_CONFIG__, __replace_dict__))
+        DEFAULT_GRIDAPPSD_DOCKER_CONFIG.update(__update_template_data__(__TPL_GRIDAPPSD_CONFIG__, __replace_dict__))
 
     class Containers:
         """
@@ -225,9 +255,23 @@ if HAS_DOCKER:
             for p in container.logs(stream=True, until=until):
                 print(p)
                 if pattern in p.decode('utf-8'):
-                    break
+                    print(f"Found patter {pattern}")
+                    return
+            raise TimeoutError(f"Pattern {pattern} was not found in logs of container {container} within {timeout}s")
 
-            print(f"Found pattern {pattern}")
+        def wait_for_http_ok(self, url, timeout=30):
+            import requests
+            results = None
+            test_count = 0
+
+            while results is None or not results.ok:
+                test_count += 1
+                if test_count > timeout:
+                    raise TimeoutError(f"Could not reach {url} within alloted timeout {timeout}s")
+                results = requests.get(url)
+                time.sleep(1)
+
+            print(f"Found url {url} within timeout {timeout}")
 
         def stop(self):
             client = docker.from_env()
@@ -239,6 +283,26 @@ if HAS_DOCKER:
                         # client.containers.get(value.get('containerid')).kill() # value.get('name')).kill()
                     except docker.errors.NotFound:
                         pass
+
+
+    threads = []
+
+    def stream_container_log_to_file(container_name: str, logfile: str):
+        client = docker.from_env()
+        container = client.containers.list(filters=dict(name=container_name))[0]
+
+        print(container)
+
+        def log_output():
+            nonlocal container, logfile
+            print(f"Starting to write to file {logfile}.")
+            with open(logfile, 'wb') as fp:
+                print(f"openfile")
+                for p in container.logs(stream=True, stderr=PIPE, stdout=PIPE):
+                    fp.write(p)
+                    fp.flush()
+
+        threading.Thread(target=log_output, daemon=True).start()
 
 
     @contextlib.contextmanager
@@ -275,6 +339,12 @@ if HAS_DOCKER:
         containers.start()
         try:
             containers.wait_for_log_pattern("gridappsd", "MYSQL")
+            # Wait for blazegraph to show up.
+            containers.wait_for_http_ok("http://localhost:8889/bigdata/", timeout=300)
+            # Waith 30 seconds before returning from this to make sure
+            # gridappsd container is fully setup ready for simulation
+            # and querying.
+            time.sleep(30)
             yield containers
         finally:
             if stop_after:

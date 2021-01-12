@@ -53,7 +53,7 @@ class Simulation(object):
     def start_simulation(self):
         """ Start the configured simulation by calling the REQUEST_SIMULATION endpoint.
         """
-        resp = self._gapps.get_response(t.REQUEST_SIMULATION, json.dumps(self._run_config))
+        resp = self._gapps.get_response(t.REQUEST_SIMULATION, json.dumps(self._run_config), timeout=30)
 
         if 'simulationId' not in resp:
             message = "Simulation was not able to run\n" + str(resp)
