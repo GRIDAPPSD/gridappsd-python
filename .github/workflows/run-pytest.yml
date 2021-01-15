@@ -1,6 +1,6 @@
-name: Python package
+name: Run All Pytests
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-18.04
     # , ubuntu-20.04]
     strategy:
+      fail-fast: false
       matrix:
         python-version: [3.6, 3.7, 3.8]
 
@@ -31,9 +32,9 @@ jobs:
 
       - name: Run pytest
         run: |
-          pytest -o junit_family=xunit2 --junitxml=output/test-${{ matrix.python-version }}-results.xml
+          pytest -o junit_family=xunit1 --junitxml=output/test-${{ matrix.python-version }}-results.xml
 
-      - name: Archive code coverage results
+      - name: Archive test results
         uses: actions/upload-artifact@v2
         with:
           name: pytest-report

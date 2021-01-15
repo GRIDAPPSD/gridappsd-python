@@ -339,12 +339,12 @@ if HAS_DOCKER:
         containers.start()
         try:
             containers.wait_for_log_pattern("gridappsd", "MYSQL")
-            # Wait for blazegraph to show up.
+            # Wait for blazegraph to show up
+            time.sleep(30)
             containers.wait_for_http_ok("http://localhost:8889/bigdata/", timeout=300)
             # Waith 30 seconds before returning from this to make sure
             # gridappsd container is fully setup ready for simulation
             # and querying.
-            time.sleep(30)
             yield containers
         finally:
             if stop_after:
