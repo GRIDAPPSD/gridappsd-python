@@ -6,6 +6,7 @@ import logging
 import os
 from subprocess import PIPE
 import threading
+from typing import Optional, Union
 
 import pkg_resources
 from pathlib import Path
@@ -197,11 +198,53 @@ if HAS_DOCKER:
             self._container_def = container_def
 
         @staticmethod
-        def reset_all_containers():
+        def container_list(ignore_list: Optional[Union[str, list]] = "gridappsd_dev"):
+            """
+            Provides a wrapper around the listing of docker containers.  This function was
+            brought about when running from within a docker container.
+
+            Currently the docker container that is run using docker-compose up from the
+            gridappsd-dev-environment is specified as gridappsd_dev, however this can change
+            and could potentially be extended to multiple named containers.
+
+            @param: ignore_list:
+                optional container names to not stop :: A string or list of strings
+            """
             client = docker.from_env()
 
+            if ignore_list is None:
+                ignore_list = []
+            elif isinstance(ignore_list, str):
+                ignore_list = [ignore_list]
+            containers = []
             for container in client.containers.list():
-                container.kill()
+                if container.name not in ignore_list:
+                    containers.append(container)
+            return containers
+
+        @staticmethod
+        def reset_all_containers(ignore_list: Optional[Union[str, list]] = "gridappsd_dev"):
+            """
+            Provides a wrapper around the resetting of all docker containers.  This function was
+            brought about when running from within a docker container.
+
+            Currently the docker container that is run using docker-compose up from the
+            gridappsd-dev-environment is specified as gridappsd_dev, however this can change
+            and could potentially be extended to multiple named containers.
+
+            @param: ignore_list:
+                optional container names to not stop :: A string or list of strings
+            """
+            client = docker.from_env()
+
+            if ignore_list is None:
+                ignore_list = []
+            elif isinstance(ignore_list, str):
+                ignore_list = [ignore_list]
+
+            for container in client.containers.list():
+                if container.name not in ignore_list:
+                    container.kill()
 
         def check_required_running(self, config):
             my_config = deepcopy(config)
