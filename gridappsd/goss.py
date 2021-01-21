@@ -57,7 +57,6 @@ from queue import Queue
 import threading
 
 
-from .utils import get_gridappsd_user, get_gridappsd_pass
 from stomp import Connection12 as Connection
 from stomp.exception import NotConnectedException
 
@@ -82,8 +81,8 @@ class GOSS(object):
         logging.getLogger('stomp.py').setLevel(stomp_log_level)
         logging.getLogger('goss').setLevel(goss_log_level)
 
-        self.__user = username if username is not None else get_gridappsd_user()
-        self.__pass = password if password is not None else get_gridappsd_pass()
+        self.__user = username 
+        self.__pass = password 
         self.stomp_address = stomp_address
         self.stomp_port = stomp_port
         self._conn = None
