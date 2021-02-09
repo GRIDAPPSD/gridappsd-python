@@ -145,3 +145,11 @@ def test_can_start_gridappsd_within_dependency_context_manager_all_cleanup():
     # There shouldn't be any containers now because both contexts were cleaned up.
     assert not len(Containers.container_list())
 
+
+def test_can_start_gridapps():
+    Containers.reset_all_containers()
+    with run_dependency_containers(False) as cont:
+        with run_gridappsd_container(False) as cont2:
+            g = GridAPPSD()
+            assert g.connected
+

@@ -1,8 +1,25 @@
 import json
 import logging
 from time import sleep
+import os
 import threading
 from queue import Queue
+from gridappsd import GOSS
+import pytest
+import mock
+
+
+def test_auth_raises_error_no_username_password(docker_dependencies):
+
+    with mock.patch.dict(os.environ, dict(GRIDAPPSD_USER='', GRIDAPPSD_PASSWORD='')):
+        with pytest.raises(ValueError) as ex:
+            goss = GOSS()
+
+        with pytest.raises(ValueError) as ex:
+            goss = GOSS(username="foo")
+
+        with pytest.raises(ValueError) as ex:
+            goss = GOSS(password="bar")
 
 
 def test_get_response(caplog, goss_client):

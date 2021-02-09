@@ -43,7 +43,7 @@ Created on March 1, 2018
 
 @author: Craig Allwardt
 """
-
+import os
 from datetime import datetime
 from collections import defaultdict
 import inspect
@@ -82,7 +82,16 @@ class GOSS(object):
         logging.getLogger('goss').setLevel(goss_log_level)
 
         self.__user = username 
-        self.__pass = password 
+        self.__pass = password
+        if not self.__user:
+            self.__user = os.environ.get("GRIDAPPSD_USER")
+            if not self.__user:
+                raise ValueError("passed username or environmental variable GRIDAPPSD_USER not set.")
+        if not self.__pass:
+            self.__pass = os.environ.get("GRIDAPPSD_PASSWORD")
+            if not self.__pass:
+                raise ValueError("pass password or environmental variable GRIDAPPSD_PASSWORD not set.")
+
         self.stomp_address = stomp_address
         self.stomp_port = stomp_port
         self._conn = None
@@ -238,19 +247,19 @@ class GOSS(object):
     def _make_connection(self):
         if self._conn is None or not self._conn.is_connected():
             _log.debug("Creating connection")
-            if(self.__token is None):
+            if not self.__token:
 
-                #get token
-                #get initial connection
+                # get token
+                # get initial connection
                 replyDest = "temp.token_resp."+self.__user
-                #self._conn2.connect(self.__user, self.__pass, wait=True)
+                # self._conn2.connect(self.__user, self.__pass, wait=True)
 
-                #create token request string
+                # create token request string
                 userAuthStr = self.__user+":"+self.__pass
                 base64Str = base64.b64encode(userAuthStr.encode())
 
-                #set up token callback
-                #send request to token topic
+                # set up token callback
+                # send request to token topic
                 tokenTopic = "/topic/pnnl.goss.token.topic"
 
                 tmpConn = Connection([(self.stomp_address, self.stomp_port)])
@@ -269,29 +278,30 @@ class GOSS(object):
                         _log.debug("Internal on message is: {} {}".format(header, message))
                         
                         self.__token = str(message)
-                    def on_error(self, headers, message): 
+
+                    def on_error(self, headers, message):
                         _log.error("ERR: {}".format(headers))
                         _log.error("OUR ERROR: {}".format(message))
 
                     def on_disconnect(self, header, message):
                         _log.debug("Disconnected")
-                #receive token and set token variable
-                #set callback
+
+                # receive token and set token variable
+                # set callback
                 listener = TokenResponseListener()
-                #self.subscribe(replyDest, listener)
+
+                # self.subscribe(replyDest, listener)
                 tmpConn.subscribe('/queue/'+replyDest, 123)
                 tmpConn.set_listener('token_resp', listener)
                 tmpConn.send(body=base64Str, destination=tokenTopic,
-                        headers={'reply-to': replyDest})
-                #while token is null or for x iterations
-                iter=0
-                while((self.__token is None) and (iter<10)):
-                    #wait
+                             headers={'reply-to': replyDest})
+                # while token is null or for x iterations
+                iter = 0
+                while not self.__token and iter < 10:
+                    # wait
                     self.__token = listener.get_token()
                     sleep(1)
-                    iter+=1
-
-                
+                    iter += 1
 
             self._conn = Connection([(self.stomp_address, self.stomp_port)])
             if self._override_thread_fc is not None:
