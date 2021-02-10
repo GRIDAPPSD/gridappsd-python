@@ -25,16 +25,16 @@ args = {
             'ports': {'61613/tcp': 61613,
                       '61614/tcp': 61614,
                       '61616/tcp': 61616},
-            # 'pull': True,
-            # 'start': True,
-            # 'volumes': {
-            #     # '/home/gridappsd/repos/gridappsd-python/gridappsd/conf/entrypoint.sh': {
-            #     #     'bind': '/gridappsd/entrypoint.sh',
-            #     #     'mode': 'rw'},
-            #     '/home/gridappsd/repos/gridappsd-python/gridappsd/conf/run-gridappsd.sh': {
-            #         'bind': '/gridappsd/run-gridappsd.sh',
-            #         'mode': 'rw'}
-            # }
+            'pull': True,
+            'start': True,
+            'volumes': {
+                '/home/gridappsd/repos/gridappsd-python/gridappsd/conf/entrypoint.sh': {
+                    'bind': '/gridappsd/entrypoint.sh',
+                    'mode': 'rw'},
+                '/home/gridappsd/repos/gridappsd-python/gridappsd/conf/run-gridappsd.sh': {
+                    'bind': '/gridappsd/run-gridappsd.sh',
+                    'mode': 'rw'}
+            }
         }
 }
 
