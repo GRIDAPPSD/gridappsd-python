@@ -35,8 +35,7 @@ jobs:
           GRIDAPPSD_USER: ${{ secrets.GRIDAPPSD_USER }}
           GRIDAPPSD_PASSWORD: ${{ secrets.GRIDAPPSD_PASSWORD }}
         run: |
-          echo "Secret GRIDAPPSD_USER $GRIDAPPSD_USER"
-        #  pytest -o junit_family=xunit1 --junitxml=output/test-${{ matrix.python-version }}-results.xml
+          pytest -o junit_family=xunit1 --junitxml=output/test-${{ matrix.python-version }}-results.xml
 
       - name: Archive test results
         uses: actions/upload-artifact@v2
