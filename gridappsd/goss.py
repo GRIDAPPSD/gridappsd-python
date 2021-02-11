@@ -89,6 +89,7 @@ class GOSS(object):
         self._topic_set = set()
         self._override_thread_fc = override_threading
         self._router_callback = CallbackRouter()
+        self.result_format = None
 
         if attempt_connection:
             self._make_connection()
@@ -121,26 +122,35 @@ class GOSS(object):
     def get_response(self, topic, message, timeout=5):
         id = datetime.now().strftime("%Y%m%d%h%M%S")
         reply_to = "/temp-queue/response.{}".format(id)
+        
+        if 'resultFormat' in message:
+            self.result_format = message['resultFormat'] 
 
         # Change message to string if we have a dictionary.
         if isinstance(message, dict):
             message = json.dumps(message)
         elif isinstance(message, list):
             message = json.dumps(message)
+            
+         
 
         class ResponseListener(object):
-            def __init__(self, topic):
+            def __init__(self, topic, result_format):
                 self.response = None
                 self._topic = topic
+                self.result_format = result_format
 
             def on_message(self, header, message):
 
                 _log.debug("Internal on message is: {} {}".format(header, message))
                 try:
-                    if isinstance(message, dict):
+                    if self.result_format == 'JSON':
+                        if isinstance(message, dict):
+                            self.response = message
+                        else:
+                            self.response = json.loads(message)
+                    else:   
                         self.response = message
-                    else:
-                        self.response = json.loads(message)
                 except ValueError:
                     self.response = dict(error="Invalid json returned",
                                          header=header,
@@ -153,7 +163,7 @@ class GOSS(object):
             def on_disconnect(self, header, message):
                 _log.debug("Disconnected")
 
-        listener = ResponseListener(reply_to)
+        listener = ResponseListener(reply_to, self.result_format)
         self.subscribe(reply_to, listener)
 
         self._conn.send(body=message, destination=topic,
