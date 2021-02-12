@@ -4,6 +4,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 import logging
 import os
+from pprint import pprint
 from subprocess import PIPE
 import threading
 from typing import Optional, Union
@@ -77,10 +78,7 @@ if HAS_DOCKER:
             "image": "gridappsd/influxdb:{{DEFAULT_GRIDAPPSD_TAG}}",
             "pull": True,
             "ports": {"8086/tcp": 8086},
-            "environment": {"INFLUXDB_DB": "proven"},
-            "links": "",
-            "volumes": "",
-            "entrypoint": "",
+            "environment": {"INFLUXDB_DB": "proven"}
         },
         "redis": {
             "start": True,
@@ -88,8 +86,6 @@ if HAS_DOCKER:
             "pull": True,
             "ports": {"6379/tcp": 6379},
             "environment": [],
-            "links": "",
-            "volumes": "",
             "entrypoint": "redis-server --appendonly yes",
         },
         "blazegraph": {
@@ -97,10 +93,7 @@ if HAS_DOCKER:
             "image": "gridappsd/blazegraph:{{DEFAULT_GRIDAPPSD_TAG}}",
             "pull": True,
             "ports": {"8080/tcp": 8889},
-            "environment": [],
-            "links": "",
-            "volumes": "",
-            "entrypoint": "",
+            "environment": []
         },
         "mysql": {
             "start": True,
@@ -111,12 +104,10 @@ if HAS_DOCKER:
                 "MYSQL_RANDOM_ROOT_PASSWORD": "yes",
                 "MYSQL_PORT": "3306"
             },
-            "links": "",
             "volumes": {
                 data_dir + "/dumps/gridappsd_mysql_dump.sql": {"bind": "/docker-entrypoint-initdb.d/schema.sql",
                                                                "mode": "ro"}
             },
-            "entrypoint": "",
             "onsetupfn": mysql_setup
         },
         "proven": {
@@ -134,9 +125,7 @@ if HAS_DOCKER:
                 "PROVEN_IDB_USERNAME": "root",
                 "PROVEN_IDB_PASSWORD": "root",
                 "PROVEN_T3DIR": "/proven"},
-            "links": {"influxdb": "influxdb"},
-            "volumes": "",
-            "entrypoint": "",
+            "links": {"influxdb": "influxdb"}
         }
     }
 
@@ -151,15 +140,17 @@ if HAS_DOCKER:
                 "DEBUG": 1,
                 "START": 1
             },
-            "links": {"mysql": "mysql", "influxdb": "influxdb", "blazegraph": "blazegraph", "proven": "proven",
+            "links": {"mysql": "mysql",
+                      "influxdb": "influxdb",
+                      "blazegraph": "blazegraph",
+                      "proven": "proven",
                       "redis": "redis"},
             "volumes": {
                 str(Path(GRIDAPPSD_CONF_DIR).joinpath("entrypoint.sh")):
                     {"bind": "/gridappsd/entrypoint.sh", "mode": "rw"},
                 str(Path(GRIDAPPSD_CONF_DIR).joinpath("run-gridappsd.sh")):
                     {"bind": "/gridappsd/run-gridappsd.sh", "mode": "rw"}
-            },
-            "entrypoint": "",
+            }
         }
     }
 
@@ -188,6 +179,7 @@ if HAS_DOCKER:
         __replace_dict__.update({"{{DEFAULT_GRIDAPPSD_TAG}}": DEFAULT_GRIDAPPSD_TAG})
         DEFAULT_DOCKER_DEPENDENCY_CONFIG.update(__update_template_data__(__TPL_DEPENDENCY_CONFIG__, __replace_dict__))
         DEFAULT_GRIDAPPSD_DOCKER_CONFIG.update(__update_template_data__(__TPL_GRIDAPPSD_CONFIG__, __replace_dict__))
+
 
     class Containers:
         """
@@ -256,7 +248,9 @@ if HAS_DOCKER:
             assert not my_config, f"The required containers were not satisfied missing {list(my_config.keys())}"
 
         def start(self):
+            pprint(DEFAULT_GRIDAPPSD_DOCKER_CONFIG)
             client = docker.from_env()
+            print(f"Docker client version: {client.version()}")
             for service, value in self._container_def.items():
                 if self._container_def[service]['pull']:
                     _log.debug(f"Pulling {service} : {self._container_def[service]['image']}")
@@ -275,17 +269,18 @@ if HAS_DOCKER:
                     kwargs['remove'] = True
                     kwargs['name'] = service
                     kwargs['detach'] = True
-                    if self._container_def[service]['environment']:
+                    if self._container_def[service].get('environment'):
                         kwargs['environment'] = value['environment']
-                    if self._container_def[service]['ports']:
+                    if self._container_def[service].get('ports'):
                         kwargs['ports'] = value['ports']
-                    if self._container_def[service]['volumes']:
+                    if self._container_def[service].get('volumes'):
                         kwargs['volumes'] = value['volumes']
-                    if self._container_def[service]['entrypoint']:
+                    if self._container_def[service].get('entrypoint'):
                         kwargs['entrypoint'] = value['entrypoint']
-                    if self._container_def[service]['links']:
+                    if self._container_def[service].get('links'):
                         kwargs['links'] = value['links']
-                    # print (kwargs)
+                    for k, v in kwargs.items():
+                        print(f"k->{k}, v->{v}")
                     container = client.containers.run(**kwargs)
                     self._container_def[service]['containerid'] = container.id
             print([x.name for x in client.containers.list()])
