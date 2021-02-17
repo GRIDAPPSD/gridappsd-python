@@ -3,8 +3,8 @@ FROM python:3.7-slim
 
 ENV GRIDAPPSD_PORT="61613"
 ENV GRIDAPPSD_URI="tcp://gridappsd:${GRIDAPPSD_PORT}"
-ENV GRIDAPPSD_USER="system"
-ENV GRIDAPPSD_PASS="manager"
+ENV GRIDAPPSD_USER=""
+ENV GRIDAPPSD_PASSWORD=""
 
 RUN pip install --upgrade pip
 
