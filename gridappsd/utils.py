@@ -17,6 +17,29 @@ if not __GRIDAPPSD_URI__.startswith("tcp://"):
 __GRIDAPPSD_URI_PARSED__ = urlparse(__GRIDAPPSD_URI__)
 
 
+def get_gridappsd_user() -> str:
+    """
+    Retrieves the GRIDAPPSD_USER environmental password from the environment.
+
+    Raises ValueError if environmental variable is not in the environment.
+    """
+    print(os.environ.get("GRIDAPPSD_USER"))
+    if not os.environ.get("GRIDAPPSD_USER"):
+        raise ValueError("GRIDAPPSD_USER environmental variable not set!")
+    return os.environ.get("GRIDAPPSD_USER")
+
+
+def get_gridappsd_pass() -> str:
+    """
+    Retrieves the GRIDAPPSD_PASSWORD environmental password from the environment.
+
+    Raises ValueError if environmental variable is not in the environment.
+    """
+    if not os.environ.get("GRIDAPPSD_PASSWORD"):
+        raise ValueError("GRIDAPPSD_PASSWORD environmental variable not set!")
+    return os.environ.get("GRIDAPPSD_PASSWORD")
+
+
 def datetime_to_epoche(dt):
     return int(time.mktime(dt.timetuple()) * 1000)
 

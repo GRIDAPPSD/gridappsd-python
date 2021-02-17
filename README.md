@@ -151,7 +151,7 @@ def test_gridappsd_status(gridappsd_client):
     gappsd = gridappsd_client
     assert "helics_goss_bridge.py" == gappsd.get_application_id()
     assert gappsd.get_application_status() == ProcessStatusEnum.STARTING.value
-    assert gappsd.get_service_status() == ProcessStatusEnum.STARTING.value
+    assert gappsd.get_service_status() == Pro20cessStatusEnum.STARTING.value
     gappsd.set_application_status("RUNNING")
 
     assert gappsd.get_service_status() == ProcessStatusEnum.RUNNING.value
@@ -168,3 +168,9 @@ def test_gridappsd_status(gridappsd_client):
 
 ```
 
+# Version History
+
+ - 2021.2.1
+   - Added utils.get_gridappsd_user and utils.get_gridappsd_pass back to the API.  The only caveat is now the
+     environmental variables GRIDAPPSD_USER and GRIDAPPSD_PASSWORD must be set.  Whereas before they were hard-coded
+     in the library.
