@@ -17,6 +17,16 @@ if not __GRIDAPPSD_URI__.startswith("tcp://"):
 __GRIDAPPSD_URI_PARSED__ = urlparse(__GRIDAPPSD_URI__)
 
 
+def get_gridappsd_address():
+    """
+    Returns the address in such a way that the response will be
+    able to be passed directly to a socket and/or the stomp libraray.
+    :return: tuple(adddress, port)
+    """
+    return (__GRIDAPPSD_URI_PARSED__.hostname,
+            __GRIDAPPSD_URI_PARSED__.port)
+
+
 def get_gridappsd_user() -> str:
     """
     Retrieves the GRIDAPPSD_USER environmental password from the environment.
