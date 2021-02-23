@@ -259,7 +259,8 @@ class GOSS(object):
 
                 # get token
                 # get initial connection
-                replyDest = "temp.token_resp."+self.__user
+                dt=datetime.now()
+                replyDest = "temp.token_resp."+self.__user+"-"+str(dt)
                 # self._conn2.connect(self.__user, self.__pass, wait=True)
 
                 # create token request string
