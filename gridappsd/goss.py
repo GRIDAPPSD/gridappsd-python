@@ -134,6 +134,9 @@ class GOSS(object):
         id = datetime.now().strftime("%Y%m%d%h%M%S")
         reply_to = "/temp-queue/response.{}".format(id)
         
+        if isinstance(message, str):
+            message = json.loads(message)
+        
         if 'resultFormat' in message:
             self.result_format = message['resultFormat'] 
 
