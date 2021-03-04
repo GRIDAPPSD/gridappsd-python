@@ -21,10 +21,6 @@ if problems:
         _log.error(p)
     sys.exit(1)
 
-gridapspd_address = utils.get_gridappsd_address()
-gridapspd_user = utils.get_gridappsd_user()
-gridappsd_pass = utils.get_gridappsd_pass()
-
 if not os.path.isfile("/appconfig"):
     _log.error("Invalid /appconfig reference...map the /appconfig to your container")
     sys.exit(1)
@@ -43,8 +39,7 @@ while True:
 
     try:
         if gap is None:
-            gap = GridAPPSD(username=gridapspd_user, password=gridappsd_pass,
-                            address=utils.get_gridappsd_address())
+            gap = GridAPPSD()
 
     except ConnectionRefusedError:  # Python 3 specific error code
         _log.debug("Retry in 10 seconds")
