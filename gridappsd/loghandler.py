@@ -9,8 +9,7 @@ _nameToLevel = {
     'CRITICAL': CRITICAL,
     'FATAL': FATAL,
     'ERROR': ERROR,
-    'WARN': WARNING,
-    'WARNING': WARNING,
+    'WARN': WARN,
     'INFO': INFO,
     'DEBUG': DEBUG,
     'NOTSET': NOTSET,
@@ -19,7 +18,7 @@ _nameToLevel = {
 _levelToName = {
     CRITICAL: 'CRITICAL',
     ERROR: 'ERROR',
-    WARNING: 'WARNING',
+    WARN: 'WARN',
     INFO: 'INFO',
     DEBUG: 'DEBUG',
     NOTSET: 'NOTSET',
