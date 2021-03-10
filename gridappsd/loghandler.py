@@ -1,5 +1,5 @@
 import json
-from logging import CRITICAL, FATAL, ERROR, WARNING, WARN, INFO, DEBUG, NOTSET
+from logging import CRITICAL, FATAL, ERROR, WARN, INFO, DEBUG, NOTSET
 import os
 
 from . import topics as t
@@ -53,7 +53,7 @@ class Logger:
         self.log(message, ERROR)
 
     def warning(self, message):
-        self.log(message, WARNING)
+        self.log(message, WARN)
 
     def fatal(self, message):
         self.log(message, FATAL)
