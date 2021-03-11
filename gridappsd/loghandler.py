@@ -1,4 +1,4 @@
-from logging import FATAL, ERROR, WARN, INFO, DEBUG, NOTSET
+from logging import FATAL, ERROR, WARNING, INFO, DEBUG, NOTSET
 import os
 
 from . import topics as t
@@ -6,7 +6,7 @@ from . import topics as t
 _nameToLevel = {
     'FATAL': FATAL,
     'ERROR': ERROR,
-    'WARN': WARN,
+    'WARN': WARNING,
     'INFO': INFO,
     'DEBUG': DEBUG,
     'NOTSET': NOTSET,
@@ -15,7 +15,7 @@ _nameToLevel = {
 _levelToName = {
     FATAL: 'FATAL',
     ERROR: 'ERROR',
-    WARN: 'WARN',
+    WARNING: 'WARN',
     INFO: 'INFO',
     DEBUG: 'DEBUG',
     NOTSET: 'NOTSET',
@@ -50,7 +50,7 @@ class Logger:
         self.log(message, ERROR)
 
     def warning(self, message):
-        self.log(message, WARN)
+        self.log(message, WARNING)
 
     def fatal(self, message):
         self.log(message, FATAL)
