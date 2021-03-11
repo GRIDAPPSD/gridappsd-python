@@ -84,6 +84,15 @@ def validate_gridappsd_uri():
 
     return problems
 
+def get_gridappsd_address():
+    """
+    Returns the address in such a way that the response will be
+    able to be passed directly to a socket and/or the stomp libraray.
+    :return: tuple(adddress, port)
+    """
+    return (__GRIDAPPSD_URI_PARSED__.hostname,
+            __GRIDAPPSD_URI_PARSED__.port)
+
 
 def get_gridappsd_application_id():
     """ Retrieve the application_id from the environment.
