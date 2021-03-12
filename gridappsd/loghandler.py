@@ -1,4 +1,4 @@
-from logging import FATAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+from logging import FATAL, ERROR, WARN, WARNING, INFO, DEBUG, NOTSET
 import os
 
 from . import topics as t
@@ -6,7 +6,8 @@ from . import topics as t
 _nameToLevel = {
     'FATAL': FATAL,
     'ERROR': ERROR,
-    'WARN': WARNING,
+    'WARN': WARN,
+    'WARNING': WARNING,
     'INFO': INFO,
     'DEBUG': DEBUG,
     'NOTSET': NOTSET,
@@ -16,6 +17,7 @@ _levelToName = {
     FATAL: 'FATAL',
     ERROR: 'ERROR',
     WARNING: 'WARN',
+    WARN: 'WARN',
     INFO: 'INFO',
     DEBUG: 'DEBUG',
     NOTSET: 'NOTSET',
