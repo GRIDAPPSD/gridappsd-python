@@ -7,7 +7,7 @@ _nameToLevel = {
     'FATAL': FATAL,
     'ERROR': ERROR,
     'WARN': WARN,
-    'WARNING': WARNING,
+    'WARNING': WARN,
     'INFO': INFO,
     'DEBUG': DEBUG,
     'NOTSET': NOTSET,
