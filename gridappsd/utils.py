@@ -11,8 +11,6 @@ except ImportError:
 
 
 __GRIDAPPSD_URI__ = os.environ.get("GRIDAPPSD_URI", "localhost:61613")
-__GRIDAPPSD_USER__ = os.environ.get("GRIDAPPSD_USER", "system")
-__GRIDAPPSD_PASS__ = os.environ.get("GRIDAPPSD_PASS", "manager")
 
 if not __GRIDAPPSD_URI__.startswith("tcp://"):
     __GRIDAPPSD_URI__ = "tcp://" + __GRIDAPPSD_URI__
@@ -53,24 +51,14 @@ def validate_gridappsd_uri():
 
     return problems
 
-
 def get_gridappsd_address():
     """
     Returns the address in such a way that the response will be
     able to be passed directly to a socket and/or the stomp libraray.
-
     :return: tuple(adddress, port)
     """
     return (__GRIDAPPSD_URI_PARSED__.hostname,
             __GRIDAPPSD_URI_PARSED__.port)
-
-
-def get_gridappsd_user():
-    return __GRIDAPPSD_USER__
-
-
-def get_gridappsd_pass():
-    return __GRIDAPPSD_PASS__
 
 
 def get_gridappsd_application_id():

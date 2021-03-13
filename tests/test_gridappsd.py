@@ -1,5 +1,6 @@
 import logging
 import os
+import xml.etree.ElementTree as ET
 from time import sleep
 
 import mock
@@ -142,3 +143,24 @@ def test_gridappsd_status(gridappsd_client):
     gappsd.set_service_status("Foo")
     assert gappsd.get_service_status() == ProcessStatusEnum.COMPLETE.value
     assert gappsd.get_application_status() == ProcessStatusEnum.COMPLETE.value
+    
+def test_response_format(record_property, gridappsd_client):
+    doc_str = """
+    This function sends requests with different response format through the gridappsd query_model api.  
+    Specifically checking that the response it receives is in the format expected by the request.
+    """
+    record_property("gridappsd_doc", doc_str)
+    gappsd = gridappsd_client
+    
+    response = gappsd.query_model(model_id='_49AD8E07-3BF9-A4E2-CB8F-C3722F837B62', response_format='JSON')
+    assert isinstance(response, dict), "Response did not return valid JSON"
+    
+    response = gappsd.query_model(model_id='_49AD8E07-3BF9-A4E2-CB8F-C3722F837B62')
+    assert isinstance(response, dict), "Response did not return valid JSON"
+    
+    response = gappsd.query_model(model_id='_49AD8E07-3BF9-A4E2-CB8F-C3722F837B62', response_format='XML')
+    try:
+        ET.fromstring(response)
+    except:
+        assert False, "Response did not return valid XML"
+    assert True 

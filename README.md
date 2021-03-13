@@ -64,6 +64,13 @@ pytest with the following:
 
 # All tests run will use the same tag (other_tag) to pull from docker hub.
 GRIDAPPSD_TAG_ENV=other_tag pytest
+
+# Tests also require the username and password to be avaialable as environmental variables 
+# in order for them to properly run these tests
+GRIDAPPSD_USER=user
+GRIDAPPSD_PASSWORD=pass
+
+pytest
 ```
 
  __NOTE: the first running the tests will download all of the docker images associated with the [GOSS-GridAPPS-D](http://github.com/GRIDAPPSD/GOSS-GridAPPS-D) repository.  

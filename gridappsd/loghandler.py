@@ -1,25 +1,23 @@
-import json
-from logging import CRITICAL, FATAL, ERROR, WARNING, WARN, INFO, DEBUG, NOTSET
+from logging import FATAL, ERROR, WARN, WARNING, INFO, DEBUG, NOTSET
 import os
 
 from . import topics as t
-from . import utils
 
 _nameToLevel = {
-    'CRITICAL': CRITICAL,
     'FATAL': FATAL,
     'ERROR': ERROR,
-    'WARN': WARNING,
-    'WARNING': WARNING,
+    'WARN': WARN,
+    'WARNING': WARN,
     'INFO': INFO,
     'DEBUG': DEBUG,
     'NOTSET': NOTSET,
 }
 
 _levelToName = {
-    CRITICAL: 'CRITICAL',
+    FATAL: 'FATAL',
     ERROR: 'ERROR',
-    WARNING: 'WARNING',
+    WARNING: 'WARN',
+    WARN: 'WARN',
     INFO: 'INFO',
     DEBUG: 'DEBUG',
     NOTSET: 'NOTSET',
@@ -91,5 +89,13 @@ class Logger:
             "logLevel": _levelToName[level],
             "storeToDb": True
         }
+        
+        gridappsd_log_level = os.getenv('GRIDAPPSD_LOG_LEVEL')
+        if gridappsd_log_level == None:
+            gridappsd_log_level = level
+        else:
+            gridappsd_log_level = _nameToLevel[gridappsd_log_level]
+            
+        if level >= gridappsd_log_level:
+            self._gaps.send(topic, status_message)
 
-        self._gaps.send(topic, status_message)
