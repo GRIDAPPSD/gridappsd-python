@@ -41,7 +41,7 @@
 from os import path
 from setuptools import setup, find_packages
 
-__version__ = '2021.1.1'
+__version__ = '2021.2.1'
 
 # The directory containing this file
 HERE = path.dirname(__file__)

@@ -84,7 +84,7 @@ def test_platform_log():
     # send should have been passed a topic and a message
     topic, message = gapps_mock.send.call_args.args
     assert application_id == message['source']
-    assert 'WARNING' == message['logLevel']
+    assert 'WARN' == message['logLevel']
     assert 'baf' == message['logMessage']
 
 
