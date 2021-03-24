@@ -384,8 +384,7 @@ if HAS_DOCKER:
                             _log.debug(f"contents of local path({vr.get('local_path')}):\n\t{os.listdir(vr.get('local_path'))}")
                             _log.info(f"Copy to mounted volume for {service}: "
                                       f"local_path={vr['local_path']}, container_path={vr['container_path']}")
-                            resp = Containers.copy_to(vr["local_path"], f'{vr["name"]}:{vr["container_path"]}')
-                            _log.info(f"Response from copy_to: {resp} ")
+                            Containers.copy_to(vr["local_path"], f'{vr["name"]}:{vr["container_path"]}')
 
             for service, value in self._container_def.items():
                 if self._container_def[service]['start']:
