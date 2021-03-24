@@ -1,9 +1,34 @@
+import logging
 import os
+import sys
 
 import pytest
 
 from gridappsd import GridAPPSD, GOSS
 from gridappsd.docker_handler import run_dependency_containers, run_gridappsd_container, Containers
+
+levels = dict(
+    CRITICAL=50,
+    FATAL=50,
+    ERROR=40,
+    WARNING=30,
+    WARN=30,
+    INFO=20,
+    DEBUG=10,
+    NOTSET=0
+)
+
+# Get string representation of the log level passed
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "DEBUG")
+
+# Make sure the level passed is one of the valid levels.
+if LOG_LEVEL not in levels.keys():
+    raise AttributeError("Invalid LOG_LEVEL environmental variable set.")
+
+# Set the numeric version of log level to pass to the basicConfig function
+LOG_LEVEL = levels[LOG_LEVEL]
+
+logging.basicConfig(stream=sys.stdout, level=LOG_LEVEL)
 
 STOP_CONTAINER_AFTER_TEST = os.environ.get('GRIDAPPSD_STOP_CONTAINERS_AFTER_TESTS', True)
 
@@ -19,15 +44,17 @@ def docker_dependencies():
 
 
 @pytest.fixture
-def gridappsd_client(docker_dependencies):
+def gridappsd_client(request, docker_dependencies):
     with run_gridappsd_container(stop_after=STOP_CONTAINER_AFTER_TEST):
         gappsd = GridAPPSD()
         gappsd.connect()
         assert gappsd.connected
 
+        request.cls.gridappsd_client = gappsd
         yield gappsd
 
         gappsd.disconnect()
+
 
 @pytest.fixture
 def goss_client(docker_dependencies):
@@ -38,4 +65,8 @@ def goss_client(docker_dependencies):
 
         yield goss
 
-        goss.disconnect()
+
+@pytest.fixture
+def foo(request):
+    request.cls.gridappsd_client = ["alpha", "beta", "gamma"]
+
