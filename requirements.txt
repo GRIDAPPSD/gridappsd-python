@@ -1,5 +1,5 @@
 stomp.py==6.0.0
-PyYAML==5.3
+PyYAML==5.4
 pytz==2019.3
 # psutil==5.4.7
 dateutils==0.6.7
