@@ -40,6 +40,7 @@ class ContainersTestCase(TestCase):
         self.cname = "test_container"
         self.vname = "test_volume"
         self.in_container_path = "/foo/bar/bim"
+        self.network_name = "foo"
         self.client = docker.from_env()
 
     def test_can_create_volume(self):
@@ -69,11 +70,29 @@ class ContainersTestCase(TestCase):
         assert exit_code == 0
         assert b"woot.txt" in result
 
+    def test_network_creation(self):
+        network = Containers.create_get_network("foo")
+        assert network is not None
+        assert self.network_name == network.name
+
     def tearDown(self) -> None:
-        container = self.client.containers.get(self.cname)
-        container.stop()
-        volume = self.client.volumes.get(self.vname)
-        volume.remove()
+        try:
+            container = self.client.containers.get(self.cname)
+            container.stop()
+        except docker.errors.NotFound:
+            pass
+
+        try:
+            volume = self.client.volumes.get(self.vname)
+            volume.remove()
+        except docker.errors.NotFound:
+            pass
+
+        try:
+            network = self.client.networks.get(self.network_name)
+            network.remove()
+        except docker.errors.NotFound:
+            pass
         self.log.debug("tearDown")
 
     @classmethod
