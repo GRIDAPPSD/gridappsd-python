@@ -19,16 +19,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
+      - name: Install gridappsd-python
         run: |
-          python -m pip install --upgrade pip
-          pip install flake8 pytest wheel pytest-cov
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f test_requirements.txt ]; then pip install -r test_requirements.txt; fi
-
-      - name: Install gridappsd
-        run: |
-          pip install . --upgrade
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
+          source $HOME/.poetry/env
+          poetry build
+          poetry install
 
       - name: Run pytest
         env:
