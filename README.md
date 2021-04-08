@@ -103,11 +103,10 @@ export GRIDAPPSD_USER=app_user
 export GRIDAPPSD_PASS=1234App
 
 # Note these should be changed on the server in a cyber secure environment!
-username = "app_user"
-password = "1234App"
 ```
 
-The following is the same tester code as above, but without the parameters to the `GridAPPSD` constructor.
+The following is the same tester code as above, but with the environment variables set.  The environment variables
+should be set in your environment when running the application inside our docker container.
 
 ```python
 
@@ -133,7 +132,6 @@ time.sleep(5)
 gapps.close()
 
 ```
-
 
 ## Developers
 
