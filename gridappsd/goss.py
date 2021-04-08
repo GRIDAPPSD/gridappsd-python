@@ -81,15 +81,15 @@ class GOSS(object):
         logging.getLogger('stomp.py').setLevel(stomp_log_level)
         logging.getLogger('goss').setLevel(goss_log_level)
 
-        self.__user = username 
-        self.__pass = password
-        if not self.__user:
-            self.__user = os.environ.get("GRIDAPPSD_USER")
-            if not self.__user:
+        self.__user__ = username
+        self.__pass__ = password
+        if not self.__user__:
+            self.__user__= os.environ.get("GRIDAPPSD_USER")
+            if not self.__user__:
                 raise ValueError("passed username or environmental variable GRIDAPPSD_USER not set.")
-        if not self.__pass:
-            self.__pass = os.environ.get("GRIDAPPSD_PASSWORD")
-            if not self.__pass:
+        if not self.__pass__:
+            self.__pass__ = os.environ.get("GRIDAPPSD_PASSWORD")
+            if not self.__pass__:
                 raise ValueError("pass password or environmental variable GRIDAPPSD_PASSWORD not set.")
 
         self.stomp_address = stomp_address
@@ -263,11 +263,10 @@ class GOSS(object):
                 # get token
                 # get initial connection
                 dt=datetime.now()
-                replyDest = "temp.token_resp."+self.__user+"-"+str(dt)
-                # self._conn2.connect(self.__user, self.__pass, wait=True)
+                replyDest = f"temp.token_resp.{self.__user__}-{dt}"
 
                 # create token request string
-                userAuthStr = self.__user+":"+self.__pass
+                userAuthStr = f"{self.__user__}:{self.__pass__}"
                 base64Str = base64.b64encode(userAuthStr.encode())
 
                 # set up token callback
@@ -277,7 +276,7 @@ class GOSS(object):
                 tmpConn = Connection([(self.stomp_address, self.stomp_port)])
                 if self._override_thread_fc is not None:
                     tmpConn.transport.override_threading(self._override_thread_fc)
-                tmpConn.connect(self.__user, self.__pass, wait=True)
+                tmpConn.connect(self.__user__, self.__pass__, wait=True)
                 
                 class TokenResponseListener():
                     def __init__(self):
