@@ -78,6 +78,63 @@ Start up the gridappsd-docker enabled platform.  Then run the following to execu
 python tester.py
 ```
 
+## Application Developers
+
+Developing applications against gridappsd using the `gridappsd-python` library should follow the same steps
+as above, however with a couple of environmental variables specified.  The following environmental variables are
+available to provide the same context that would be available from inside the application docker container.  These
+are useful to know for developing your application outside of the docker context (e.g. in a python notebook).
+
+***NOTE: you can also define these your ~./bashrc file so you don't have to specify them all the time***
+
+```shell
+# export allows all processes started by this shell to have access to the global variable
+
+# address where the gridappsd server is running - default localhost
+export GRIDAPPSD_ADDRESS=localhost
+
+# port to connect to on the gridappsd server (the stomp client port)
+export GRIDAPPSD_PORT=61613
+
+# username to connect to the gridappsd server
+export GRIDAPPSD_USER=app_user
+
+# password to connect to the gridappsd server
+export GRIDAPPSD_PASS=1234App
+
+# Note these should be changed on the server in a cyber secure environment!
+username = "app_user"
+password = "1234App"
+```
+
+The following is the same tester code as above, but without the parameters to the `GridAPPSD` constructor.
+
+```python
+
+from gridappsd import GridAPPSD
+
+def on_message_callback(header, message):
+    print(f"header: {header} message: {message}")
+
+# Create GridAPPSD object and connect to the gridappsd server.
+gapps = GridAPPSD()
+
+assert gapps.connected
+
+gapps.send('send.topic', {"foo": "bar"})
+
+# Note we are sending the function not executing the function in the second parameter
+gapps.subscribe('subscribe.topic', on_message_callback)
+
+gapps.send('subcribe.topic', 'A message about subscription')
+
+time.sleep(5)
+
+gapps.close()
+
+```
+
+
 ## Developers
 
 This project uses poetry to build the environment for execution.  Follow the instructions
