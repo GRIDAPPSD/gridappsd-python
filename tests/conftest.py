@@ -19,7 +19,7 @@ levels = dict(
 )
 
 # Get string representation of the log level passed
-LOG_LEVEL = os.environ.get("LOG_LEVEL", "DEBUG")
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
 
 # Make sure the level passed is one of the valid levels.
 if LOG_LEVEL not in levels.keys():
@@ -28,7 +28,12 @@ if LOG_LEVEL not in levels.keys():
 # Set the numeric version of log level to pass to the basicConfig function
 LOG_LEVEL = levels[LOG_LEVEL]
 
-logging.basicConfig(stream=sys.stdout, level=LOG_LEVEL)
+logging.basicConfig(stream=sys.stdout, level=LOG_LEVEL,
+                    format="%(asctime)s|%(levelname)s|%(name)s|%(message)s")
+logging.getLogger("urllib3.connectionpool").setLevel(logging.INFO)
+logging.getLogger("docker.utils.config").setLevel(logging.INFO)
+logging.getLogger("docker.auth").setLevel(logging.INFO)
+
 
 STOP_CONTAINER_AFTER_TEST = os.environ.get('GRIDAPPSD_STOP_CONTAINERS_AFTER_TESTS', True)
 
@@ -46,9 +51,11 @@ def docker_dependencies():
 @pytest.fixture
 def gridappsd_client(request, docker_dependencies):
     with run_gridappsd_container(stop_after=STOP_CONTAINER_AFTER_TEST):
-        gappsd = GridAPPSD()
+        gappsd = GridAPPSD(stop_address="gridappsd", stomp_port=61613)
         gappsd.connect()
         assert gappsd.connected
+        models = gappsd.query_model_names()
+        assert models is not None
 
         request.cls.gridappsd_client = gappsd
         yield gappsd
