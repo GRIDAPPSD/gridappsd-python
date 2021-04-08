@@ -192,8 +192,8 @@ export GRIDAPPSD_PASSWORD=pass
 pytest
 ```
 
- __NOTE: the first running the tests will download all of the docker images associated with the [GOSS-GridAPPS-D](http://github.com/GRIDAPPSD/GOSS-GridAPPS-D) repository.  
- may take a while.__
+ ***NOTE: the first running the tests will download all of the docker images associated with the
+ [GOSS-GridAPPS-D](http://github.com/GRIDAPPSD/GOSS-GridAPPS-D) repository.  This process may take some time.***
  
 ### Running tests created in a new project
 
