@@ -7,12 +7,12 @@ authors = [
     "P. Sharma <poorva.sharma@pnnl.gov",
     "A. Fisher <andrew.fisher@pnnl.gov"
 ]
-license = "BSD"
+license = "BSD-3-Clause"
 
 repository = "https://github.com/GRIDAPPSD/gridappsd-python"
 homepage = "https://gridappsd.readthedocs.io"
 
-keywords = ["gridappsd", "grid", "activmq", "powergrid", "simulation"]
+keywords = ["gridappsd", "grid", "activmq", "powergrid", "simulation", "library"]
 
 readme = "README.md"
 
