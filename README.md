@@ -3,24 +3,59 @@
 # gridappsd-python
 Python library for developing applications and services against the gridappsd api
 
+## Requirements
+
+The gridappsd-python library requires a  python version >= 3.6 and < 4 in order to work properly (Note no testing
+has been done with python 4 to date).
+
 ## Installation
 
-The `gridappsd-python` library requires python 3.6+ in order to work.
-- Clone repository
-- Install into your python environment `pip install . `
+The recommended installation of `gridappsd-python` is in a seperate virtual environment.  Executing the following
+will create an environment called `griddapps-env`.
 
-## Creating a connection to GridAPPS-D
+```shell
+python3 -m venv gridappsd-env
+```
 
-```` python
+Sourcing the gridappsd-env puts the newly created python environment in scope for use.
+
+```shell
+source gridappsd-env/bin/activate
+```
+
+Upgrade pip to the latest (some packages require 19.0+ version of pip)
+
+```shell
+python -m pip --upgrade pip
+```
+
+Install `gridappsd-python` and its dependencies in the virtual environment
+
+```shell
+pip install gridappsd-python
+```
+
+### Verifying things are working properly
+
+The following code snippet assumes you have created a gridappsd instance using the steps in
+https://github.com/GRIDAPPSD/gridappsd-docker.
+
+Create a test script (tester.py) with the following content.
+
+```python
 
 from gridappsd import GridAPPSD
 
 def on_message_callback(header, message):
     print(f"header: {header} message: {message}")
 
-# Note: there are other parameters for connecting to 
+# Note these should be changed on the server in a cyber secure environment!
+username = "app_user"
+password = "1234App"
+
+# Note: there are other parameters for connecting to
 # systems other than localhost
-gapps = GridAPPSD(username="user", password="pass")
+gapps = GridAPPSD(username=username, password=password)
 
 assert gapps.connected
 
@@ -35,24 +70,51 @@ time.sleep(5)
 
 gapps.close()
 
-````
+```
+
+Start up the gridappsd-docker enabled platform.  Then run the following to execute the tester.py script
+
+```shell
+python tester.py
+```
+
+## Developers
+
+This project uses poetry to build the environment for execution.  Follow the instructions
+https://python-poetry.org/docs/#installation to install poetry.  As a developer I prefer not to have poetry installed
+in the same virtual environment that my projects are in.
+
+Clone the github repository:
+
+```shell
+git clone https://github.com/GRIDAPPSD/gridappsd-python -b develop
+cd gridappsd-python
+```
+
+The following commands build and install a local wheel into an environment created just for this package.
+
+```shell
+# Build the project (stores in dist directory both .tar.gz and .whl file)
+poetry build
+
+# Install the wheel into the environment and the dev dependencies
+poetry install
+
+# Install only the library dependencies
+poetry install --no-dev
+```
+
+***Note:*** Poetry does not have a setup.py that you can install in editable mode like with pip install -e ., however
+you can extract the generated setup.py file from the built tar.gz file in the dist directory.  Just extract the
+.tar.gz file and copy the setup.py file from the extracted directory to the root of gridappsd-python.  Then you can
+enable editing through pip install -e. as noraml.
 
 
 ## Testing
 
-Before running the tests for `gridappsd-python` one should install the test requirements.
-
-```shell script
-
-# Install gridappsd requirements
-pip install -r requirements.txt
-
-# Install gridappsd
-pip install .
-
-# Install testing requirements
-pip install -r test_requirements.txt
-```
+Testing has become an integral part of the software lifecycle.  The `gridappsd-python` library has both unit and
+integration tests available to be run.  In order to execute these, you must have installed the gridappsd-python library
+as above with dev-dependencies.
 
 During the testing phase the docker containers required for the tests are downloaded from
 dockerhub and started.  By default the `develop` tag is used to test the library using pytest.  
@@ -62,13 +124,15 @@ pytest with the following:
 
 ```shell script
 
-# All tests run will use the same tag (other_tag) to pull from docker hub.
-GRIDAPPSD_TAG_ENV=other_tag pytest
+# Export environmental variables and all tests will use the same tag (other_tag) to pull from docker hub.
+# Default tag is develop
+export GRIDAPPSD_TAG_ENV=other_tag
+pytest
 
 # Tests also require the username and password to be avaialable as environmental variables 
 # in order for them to properly run these tests
-GRIDAPPSD_USER=user
-GRIDAPPSD_PASSWORD=pass
+export GRIDAPPSD_USER=user
+export GRIDAPPSD_PASSWORD=pass
 
 pytest
 ```
