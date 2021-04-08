@@ -1,5 +1,3 @@
-![Build status](https://github.com/GRIDAPPSD/gridappsd-python/workflows/Python%20package/badge.svg)
-
 # gridappsd-python
 Python library for developing applications and services against the gridappsd api
 
@@ -42,8 +40,8 @@ https://github.com/GRIDAPPSD/gridappsd-docker.
 
 Create a test script (tester.py) with the following content.
 
-```python
 
+```python
 from gridappsd import GridAPPSD
 
 def on_message_callback(header, message):
@@ -69,7 +67,6 @@ gapps.send('subcribe.topic', 'A message about subscription')
 time.sleep(5)
 
 gapps.close()
-
 ```
 
 Start up the gridappsd-docker enabled platform.  Then run the following to execute the tester.py script
@@ -77,6 +74,7 @@ Start up the gridappsd-docker enabled platform.  Then run the following to execu
 ```shell
 python tester.py
 ```
+
 
 ## Application Developers
 
@@ -108,8 +106,8 @@ export GRIDAPPSD_PASS=1234App
 The following is the same tester code as above, but with the environment variables set.  The environment variables
 should be set in your environment when running the application inside our docker container.
 
-```python
 
+```python
 from gridappsd import GridAPPSD
 
 def on_message_callback(header, message):
@@ -130,7 +128,6 @@ gapps.send('subcribe.topic', 'A message about subscription')
 time.sleep(5)
 
 gapps.close()
-
 ```
 
 ## Developers
@@ -159,11 +156,11 @@ poetry install
 poetry install --no-dev
 ```
 
+
 ***Note:*** Poetry does not have a setup.py that you can install in editable mode like with pip install -e ., however
 you can extract the generated setup.py file from the built tar.gz file in the dist directory.  Just extract the
 .tar.gz file and copy the setup.py file from the extracted directory to the root of gridappsd-python.  Then you can
 enable editing through pip install -e. as normal.
-
 
 ## Testing
 
@@ -194,15 +191,15 @@ pytest
 
  __NOTE: the first running the tests will download all of the docker images associated with the [GOSS-GridAPPS-D](http://github.com/GRIDAPPSD/GOSS-GridAPPS-D) repository.  
  may take a while.__
- 
+
 ### Running tests created in a new project
 
 The `gridappsd-python` library exposes a testing environment through the `gridappsd.docker_handler` module.  Including the following
 `conftest.py` in the root of your base test directory allows tests to reference these.  Using these fixtures will start all of the
 base containers required for `gridappsd` to run.  
 
-```python
 
+```python
 # conftest.py
 # Create a conftest.py file in the root of the tests directory to enable usage throughout the tests directory and below. 
 # 
@@ -259,10 +256,10 @@ def gridappsd_client(docker_dependencies):
 
 ```
 
-Using the above fixtures from inside a test module and test function looks like the following:
+Using the above fixtures from inside a test module and test function looks like the following
+
 
 ```python
-
 # Example test function using the gridappsd_client fixture 
 
 @mock.patch.dict(os.environ, {"GRIDAPPSD_APPLICATION_ID": "helics_goss_bridge.py"})
@@ -286,4 +283,3 @@ def test_gridappsd_status(gridappsd_client):
     assert gappsd.get_application_status() == ProcessStatusEnum.COMPLETE.value
 
 ```
-
