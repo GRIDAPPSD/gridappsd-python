@@ -100,7 +100,7 @@ export GRIDAPPSD_PORT=61613
 export GRIDAPPSD_USER=app_user
 
 # password to connect to the gridappsd server
-export GRIDAPPSD_PASS=1234App
+export GRIDAPPSD_PASSWORD=1234App
 
 # Note these should be changed on the server in a cyber secure environment!
 ```
