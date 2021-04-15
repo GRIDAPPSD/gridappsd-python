@@ -27,7 +27,7 @@ class ContainersTestCase(TestCase):
         logging.getLogger("docker.auth").setLevel(logging.INFO)
         cls.log = logging.getLogger("test_containers")
 
-        cls.tmp_dir = Path("tmpdir")
+        cls.tmp_dir = Path("/tmp/tmpdir")
         os.makedirs(cls.tmp_dir, exist_ok=True)
         cls.tmp_file_name = cls.tmp_dir.joinpath("woot.txt")
         cls.tmp_file_content = """
@@ -58,7 +58,7 @@ class ContainersTestCase(TestCase):
                                            volume_name=self.vname,
                                            mount_in_container_at=self.in_container_path)
 
-        Containers.copy_to(str(Path(__file__).parent.joinpath("tmpdir")), f"{self.cname}:/foo/bar/bim/tmpdir")
+        Containers.copy_to(self.tmp_dir, f"{self.cname}:/foo/bar/bim/tmpdir")
 
         container = self.client.containers.get(self.cname)
 

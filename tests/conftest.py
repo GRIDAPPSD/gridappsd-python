@@ -41,7 +41,7 @@ STOP_CONTAINER_AFTER_TEST = os.environ.get('GRIDAPPSD_STOP_CONTAINERS_AFTER_TEST
 @pytest.fixture(scope="module")
 def docker_dependencies():
     print("Docker dependencies")
-    Containers.reset_all_containers()
+    # Containers.reset_all_containers()
 
     with run_dependency_containers(stop_after=STOP_CONTAINER_AFTER_TEST) as dep:
         yield dep
@@ -51,7 +51,7 @@ def docker_dependencies():
 @pytest.fixture
 def gridappsd_client(request, docker_dependencies):
     with run_gridappsd_container(stop_after=STOP_CONTAINER_AFTER_TEST):
-        gappsd = GridAPPSD(stop_address="gridappsd", stomp_port=61613)
+        gappsd = GridAPPSD()
         gappsd.connect()
         assert gappsd.connected
         models = gappsd.query_model_names()
