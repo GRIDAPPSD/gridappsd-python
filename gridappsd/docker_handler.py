@@ -17,8 +17,10 @@ from typing import Optional, Union
 
 import stomp
 import time
+from docker.models.containers import Container
 
 from gridappsd import GridAPPSD
+from gridappsd.goss import GRIDAPPSD_ENV_ENUM
 
 _log = logging.getLogger("gridappsd.docker_handler")
 
@@ -391,9 +393,15 @@ if HAS_DOCKER:
             client = docker.from_env()
             # print(f"Docker client version: {client.version()}")
             for service, value in self._container_def.items():
-                if self._container_def[service]['pull']:
-                    _log.info(f"Pulling {service} : {self._container_def[service]['image']}")
-                    client.images.pull(self._container_def[service]['image'])
+                _log.info(f"Pulling {service} image")
+                _log.info(f"Pulling {service} : {self._container_def[service]['image']}")
+                client.images.pull(self._container_def[service]['image'])
+                try:
+                    container = client.containers.get(service)
+                    self._container_def[service]['containerid'] = container.id
+                except docker.errors.NotFound:
+                    _log.debug(f"Couldn't find {service} so continuing on.")
+
                 # Provide a way to dynamically create things that the container will need
                 # on the host system.  This is important if we want to create a volume before
                 # starting the container up.
@@ -445,10 +453,14 @@ if HAS_DOCKER:
                     #    print(f"k->{k}, v->{v}")
                     _log.debug("Starting container with the following args:")
                     _log.debug(f"{pformat(kwargs)}")
-                    container = client.containers.run(**kwargs)
-                    network.connect(container.id)
-                    # time.sleep(10)
-                    # [print(x.name, x.attrs) for x in client.volumes.list()]
+                    launched_container = None
+                    try:
+                        container = client.containers.get(service)
+                        _log.debug("Found existing container")
+                    except docker.errors.NotFound:
+                        container = client.containers.run(**kwargs)
+                        _log.debug("Started new container")
+                        network.connect(container.id)
                     self._container_def[service]['containerid'] = container.id
             _log.debug(f"Current containers are: {[x.name for x in client.containers.list()]}")
 
@@ -511,7 +523,7 @@ if HAS_DOCKER:
 
 
     @contextlib.contextmanager
-    def run_containers(config, stop_after=True):
+    def run_containers(config, stop_after=True) -> Containers:
         containers = Containers(config)
 
         containers.start()
@@ -523,7 +535,7 @@ if HAS_DOCKER:
 
 
     @contextlib.contextmanager
-    def run_dependency_containers(stop_after=False):
+    def run_dependency_containers(stop_after=False) -> Containers:
 
         containers = Containers(DEFAULT_DOCKER_DEPENDENCY_CONFIG)
 
@@ -536,29 +548,24 @@ if HAS_DOCKER:
 
 
     @contextlib.contextmanager
-    def run_gridappsd_container(stop_after=True, rebuild_if_present=False):
+    def run_gridappsd_container(stop_after=True, rebuild_if_present=False) -> Container:
         """ A contextmanager that uses """
 
-        # There needs to be a test to make sure that the current container (assuming run in dev environment)
-        # is able to be run from the docker dev environment.  That environment is going to be assumed to be
-        # the same name as the host name of the container.  See the docker-compose starting the dev environment
-        hostname = str(open("/etc/hostname", "rt").read().strip())
+        parent_container = get_docker_in_docker()
 
         client = docker.from_env()
-        try:
-            parent_container = client.containers.get(hostname)
-            _log.info(f"Inside parent container: {hostname}")
-            # Setup to use gridappsd as the connection address.  This value is used in the
-            # utils script to establish connection with the gridappsd server
-            os.environ["GRIDAPPSD_ADDRESS"] = "tcp://gridappsd"
-        except docker.errors.NotFound:
-            _log.debug(f"Docker container is not named this hostname {hostname}")
-            parent_container = None
-
         # if there is a parent_container then we need to make sure that it is connected
         # to the same network as our systems.  If not then we need to modify the network
         # to include the parent container
         if parent_container:
+            env = DEFAULT_GRIDAPPSD_DOCKER_CONFIG['gridappsd'].get('environment')
+            if env is None:
+                env = {}
+            env[GRIDAPPSD_ENV_ENUM.GRIDAPPSD_ADDRESS.name] = 'gridappsd'
+            env[GRIDAPPSD_ENV_ENUM.GRIDAPPSD_USER.name] = 'test_app_user'
+            env[GRIDAPPSD_ENV_ENUM.GRIDAPPSD_PASSWORD.name] = '4Test'
+            DEFAULT_GRIDAPPSD_DOCKER_CONFIG['gridappsd']['environment'] = env
+
             _log.debug(f"Running inside a container environment: {parent_container.name}")
             network = client.networks.get(NETWORK)
             has_it = False
@@ -604,3 +611,25 @@ if HAS_DOCKER:
         finally:
             if stop_after:
                 containers.stop()
+
+
+    def get_docker_in_docker() -> Container:
+        """
+        Grab the parent container named the same as the current machine's hostname.  We are assuming that this
+        is going to be a container.
+        """
+        # There needs to be a test to make sure that the current container (assuming run in dev environment)
+        # is able to be run from the docker dev environment.  That environment is going to be assumed to be
+        # the same name as the host name of the container.  See the docker-compose starting the dev environment
+        hostname = str(open("/etc/hostname", "rt").read().strip())
+        client = docker.from_env()
+        try:
+            parent_container = client.containers.get(hostname)
+            _log.info(f"Inside parent container: {hostname}")
+            # Setup to use gridappsd as the connection address.  This value is used in the
+            # utils script to establish connection with the gridappsd server
+            os.environ["GRIDAPPSD_ADDRESS"] = "gridappsd"
+        except docker.errors.NotFound:
+            _log.debug(f"Docker container is not named this hostname {hostname}")
+            parent_container = None
+        return parent_container
