@@ -56,8 +56,8 @@ def gridappsd_client(request, docker_dependencies):
         assert gappsd.connected
         models = gappsd.query_model_names()
         assert models is not None
-
-        request.cls.gridappsd_client = gappsd
+        if request.cls is not None:
+            request.cls.gridappsd_client = gappsd
         yield gappsd
 
         gappsd.disconnect()
@@ -75,5 +75,6 @@ def goss_client(docker_dependencies):
 
 @pytest.fixture
 def foo(request):
-    request.cls.gridappsd_client = ["alpha", "beta", "gamma"]
+    if request.cls is not None:
+        request.cls.gridappsd_client = ["alpha", "beta", "gamma"]
 

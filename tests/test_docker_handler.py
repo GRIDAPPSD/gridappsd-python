@@ -76,7 +76,7 @@ def test_create_volume_container():
     Containers.create_volume_container("test_volume", "test_volume", "/startup", restart_if_exists=True)
     Containers.copy_to("/home/gridappsd/repos/gridappsd-python/gridappsd/conf", "test_volume:/startup/conf")
     client = docker.from_env()
-    result = client.containers.get("test_volume").run_exec("ls -l /startup")
+    result = client.containers.get("test_volume").exec_run("ls -l /startup")
     assert True
 
 
@@ -90,7 +90,7 @@ def test_can_upload_files_to_container():
                                            name="test_upload_container",
                                            remove=True)
     # may take a few for image to be up
-    time.sleep(5)
+    time.sleep(20)
     conf_path = str(Path("../gridappsd/conf").absolute())
     Containers.copy_to(conf_path, f"{test_container.name}:/conf")
     results = test_container.exec_run("ls -l /conf")
