@@ -26,7 +26,7 @@ source gridappsd-env/bin/activate
 Upgrade pip to the latest (some packages require 19.0+ version of pip).
 
 ```shell
-python -m pip --upgrade pip
+python -m pip install pip --upgrade
 ```
 
 Install the latest `gridappsd-python` and its dependencies in the virtual environment.
