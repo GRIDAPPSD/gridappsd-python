@@ -24,6 +24,7 @@ packages = [
 [tool.poetry.scripts]
 # Add things in the form
 # myscript = 'my_package:main'
+register_app = 'gridappsd.register_app:main'
 
 
 [tool.poetry.dependencies]
