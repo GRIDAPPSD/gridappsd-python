@@ -217,29 +217,50 @@ base containers required for `gridappsd` to run.
 #     test_myapplication.py
 #   README.md
 
+import logging
 import os
+import sys
 
 import pytest
 
-from gridappsd import GridAPPSD
+from gridappsd import GridAPPSD, GOSS
 from gridappsd.docker_handler import run_dependency_containers, run_gridappsd_container, Containers
 
-# If set to False then None of the containers will clean up after themselves.
-# If more than one test is ran then this will cause an error because the gridappsd
-# container will not be cleansed.
-STOP_CONTAINER_AFTER_TEST = os.environ.get("GRIDAPPSD_STOP_CONTAINERS_AFTER_TESTS", True)
+levels = dict(
+    CRITICAL=50,
+    FATAL=50,
+    ERROR=40,
+    WARNING=30,
+    WARN=30,
+    INFO=20,
+    DEBUG=10,
+    NOTSET=0
+)
 
-if isinstance(STOP_CONTAINER_AFTER_TEST, str):
-    if STOP_CONTAINER_AFTER_TEST.lower() == 'false' or STOP_CONTAINER_AFTER_TEST.lower() != '0':
-        STOP_CONTAINER_AFTER_TEST = False
-    else:
-        STOP_CONTAINER_AFTER_TEST = True
+# Get string representation of the log level passed
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
+
+# Make sure the level passed is one of the valid levels.
+if LOG_LEVEL not in levels.keys():
+    raise AttributeError("Invalid LOG_LEVEL environmental variable set.")
+
+# Set the numeric version of log level to pass to the basicConfig function
+LOG_LEVEL = levels[LOG_LEVEL]
+
+logging.basicConfig(stream=sys.stdout, level=LOG_LEVEL,
+                    format="%(asctime)s|%(levelname)s|%(name)s|%(message)s")
+logging.getLogger("urllib3.connectionpool").setLevel(logging.INFO)
+logging.getLogger("docker.utils.config").setLevel(logging.INFO)
+logging.getLogger("docker.auth").setLevel(logging.INFO)
+
+
+STOP_CONTAINER_AFTER_TEST = os.environ.get('GRIDAPPSD_STOP_CONTAINERS_AFTER_TESTS', True)
 
 
 @pytest.fixture(scope="module")
 def docker_dependencies():
     print("Docker dependencies")
-    Containers.reset_all_containers()
+    # Containers.reset_all_containers()
 
     with run_dependency_containers(stop_after=STOP_CONTAINER_AFTER_TEST) as dep:
         yield dep
@@ -247,15 +268,28 @@ def docker_dependencies():
 
 
 @pytest.fixture
-def gridappsd_client(docker_dependencies):
+def gridappsd_client(request, docker_dependencies):
     with run_gridappsd_container(stop_after=STOP_CONTAINER_AFTER_TEST):
         gappsd = GridAPPSD()
         gappsd.connect()
         assert gappsd.connected
-
+        models = gappsd.query_model_names()
+        assert models is not None
+        if request.cls is not None:
+            request.cls.gridappsd_client = gappsd
         yield gappsd
 
         gappsd.disconnect()
+
+
+@pytest.fixture
+def goss_client(docker_dependencies):
+    with run_gridappsd_container(stop_after=STOP_CONTAINER_AFTER_TEST):
+        goss = GOSS()
+        goss.connect()
+        assert goss.connected
+
+        yield goss
 
 ```
 
