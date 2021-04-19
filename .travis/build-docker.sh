@@ -11,6 +11,8 @@ GITHASH=`git log -1 --pretty=format:"%h"`
 BUILD_VERSION="${TIMESTAMP}_${GITHASH}${TRAVIS_BRANCH:+:$TRAVIS_BRANCH}"
 echo "BUILD_VERSION $BUILD_VERSION"
 
+GRIDAPPSD_PYTHON_VERSION=`grep version pyproject.toml | awk '{print $NF}' | sed 's/"//g'`
+
 if [ -n "$DOCKER_USERNAME" -a -n "$DOCKER_PASSWORD" ]; then
 
   echo " "
@@ -25,7 +27,7 @@ if [ -n "$DOCKER_USERNAME" -a -n "$DOCKER_PASSWORD" ]; then
 fi
 
 # Pass gridappsd tag to docker-compose
-docker build --build-arg TIMESTAMP="${BUILD_VERSION}" -t ${IMAGE}:${TIMESTAMP}_${GITHASH} .
+docker build --build-arg TIMESTAMP="${BUILD_VERSION}" --build-arg GRIDAPPSD_PYTHON_VERSION="==${GRIDAPPSD_PYTHON_VERSION}" -t ${IMAGE}:${TIMESTAMP}_${GITHASH} .
 status=$?
 if [ $status -ne 0 ]; then
   echo "Error: status $status"
