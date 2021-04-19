@@ -1,7 +1,7 @@
 # Docker Environment for Applications
 
 The Dockerfile in the gridappsd-python repository is the base for the
-gridappsd/app-container-base:main container.  It is meant to extended for applications
+gridappsd/application-base-python:main container.  It is meant to extended for applications
 to utilize.  An example of this is used in the
 [gridappsd-sample-app](https://github.com/GRIDAPPSD/gridappsd-sample-app).
 
