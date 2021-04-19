@@ -82,7 +82,7 @@ python tester.py
 
 ### Deployment
 
-Please see [DOCKER_CONTAINER.md] for working within the docker application base container.
+Please see [DOCKER_CONTAINER.md](DOCKER_CONTAINER.md) for working within the docker application base container.
 
 ### Local Development
 
