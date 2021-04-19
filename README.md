@@ -80,6 +80,12 @@ python tester.py
 
 ## Application Developers
 
+### Deployment
+
+Please see [DOCKER_CONTAINER.md] for working within the docker application base container.
+
+### Local Development
+
 Developing applications against gridappsd using the `gridappsd-python` library should follow the same steps
 as above, however with a couple of environmental variables specified.  The following environmental variables are
 available to provide the same context that would be available from inside the application docker container.  These
