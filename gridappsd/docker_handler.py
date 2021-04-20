@@ -172,8 +172,7 @@ if HAS_DOCKER:
     __TPL_GRIDAPPSD_CONFIG__ = {
         "gridappsd": {
             "start": True,
-            "image": "gridappsd/gridappsd:develop",
-            # "image": "gridappsd/gridappsd:{{DEFAULT_GRIDAPPSD_TAG}}",
+            "image": "gridappsd/gridappsd:{{DEFAULT_GRIDAPPSD_TAG}}",
             "pull": True,
             "ports": {"61613/tcp": 61613, "61614/tcp": 61614, "61616/tcp": 61616},
             "environment": {
