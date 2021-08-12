@@ -1,0 +1,46 @@
+[tool.poetry]
+name = "gridappsd-python"
+version = "1.0.20210415"
+description = "A GridAPPS-D Python Adapter"
+authors = [
+    "C. Allwardt <craig.allwardt@pnnl.gov>",
+    "P. Sharma <poorva.sharma@pnnl.gov",
+    "A. Fisher <andrew.fisher@pnnl.gov"
+]
+license = "BSD-3-Clause"
+
+repository = "https://github.com/GRIDAPPSD/gridappsd-python"
+homepage = "https://gridappsd.readthedocs.io"
+
+keywords = ["gridappsd", "grid", "activmq", "powergrid", "simulation", "library"]
+
+readme = "README.md"
+
+include =["gridappsd/conf/*"]
+packages = [
+    { include = 'gridappsd'}
+]
+
+[tool.poetry.scripts]
+# Add things in the form
+# myscript = 'my_package:main'
+register_app = 'gridappsd.register_app:main'
+
+
+[tool.poetry.dependencies]
+python = "^3.6"
+"stomp.py" = "6.0.0"
+PyYAML = "5.3"
+pytz = "2019.3"
+dateutils = "0.6.7"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.2"
+pytest-html = "^3.1.1"
+pytest-bdd = "^4.0.2"
+mock = "^4.0.3"
+docker = "^4.4.4"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

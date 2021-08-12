@@ -51,12 +51,23 @@ def validate_gridappsd_uri():
 
     return problems
 
+
 def get_gridappsd_address():
     """
     Returns the address in such a way that the response will be
-    able to be passed directly to a socket and/or the stomp libraray.
-    :return: tuple(adddress, port)
+    able to be passed directly to a socket and/or the stomp library.
+    :return: tuple(address, port)
     """
+    # New way is to specify the address in environment GRIDAPPSD_ADDRESS and use that
+    # for this utility function
+    address = os.environ.get("GRIDAPPSD_ADDRESS")
+    if address:
+        port = os.environ.get("GRIDAPPS_PORT", "61613")
+        if address.startswith("tcp://"):
+            address = address.replace("tcp://", "")
+
+        return address, port
+
     return (__GRIDAPPSD_URI_PARSED__.hostname,
             __GRIDAPPSD_URI_PARSED__.port)
 

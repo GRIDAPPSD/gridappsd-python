@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
 
-from copy import deepcopy
-from datetime import datetime, timedelta
+import contextlib
 import logging
 import os
-from pprint import pprint
-from subprocess import PIPE
-import threading
-from typing import Optional, Union
-
-import pkg_resources
-from pathlib import Path
 import re
 import shutil
-import sys
-import time
+import tarfile
+import threading
 import urllib.request
-import contextlib
+from copy import deepcopy
+from datetime import datetime, timedelta
+from pathlib import Path
+from pprint import pformat
+from subprocess import PIPE
+from typing import Optional, Union
 
-_log = logging.getLogger(__file__)
+import stomp
+import time
+from docker.models.containers import Container
+
+from gridappsd import GridAPPSD
+from gridappsd.goss import GRIDAPPSD_ENV_ENUM
+
+_log = logging.getLogger("gridappsd.docker_handler")
 
 try:
     import docker
@@ -29,38 +33,60 @@ except ImportError:
 
 if HAS_DOCKER:
 
+    # This named container will be used to hold configuration/folders so that other containers
+    # that start can use them.  To use add "volume_from": [CONFIGURATION_CONTAINER_NAME] and
+    # the mount point within the container will also be within the service container.
+    CONFIGURATION_CONTAINER_NAME = "testconfig"
+
     def expand_all(user_path):
         return os.path.expandvars(os.path.expanduser(user_path))
 
-    # This path needs to be the path to the repo where the data is done.
-    GRIDAPPSD_CONF_DIR = expand_all(os.environ.get("GRIDAPPSD_CONF_DIR",
-                                                   pkg_resources.resource_filename('gridappsd', 'conf')))
-    GRIDAPPSD_DATA_REPO = expand_all(os.environ.get("GRIDAPPSD_DATA_REPO", "/tmp/gridappsd_temp_data"))
+    __TMP_ROOT__ = "/tmp/assets"
+    if Path(__TMP_ROOT__).exists():
+        shutil.rmtree(__TMP_ROOT__, ignore_errors=True)
+    os.makedirs(__TMP_ROOT__)
 
-    if not Path(GRIDAPPSD_CONF_DIR).is_dir():
-        raise AttributeError(f"Invalid GRIDAPPSD_CONF_REPO {GRIDAPPSD_CONF_DIR}")
-
-    os.makedirs(GRIDAPPSD_DATA_REPO, exist_ok=True)
-    if not Path(GRIDAPPSD_DATA_REPO).exists():
-        raise AttributeError(f"Invalid GRIDAPPSD_DATA_REPO couldn't make or doesn't exist {GRIDAPPSD_DATA_REPO}")
-
-    data_dir = GRIDAPPSD_DATA_REPO
+    # This path needs to be the path to the repo where configuration files are located.
+    GRIDAPPSD_CONF_DIR = Path(__file__).resolve().parent.parent.joinpath("gridappsd/conf")
 
     assert Path(GRIDAPPSD_CONF_DIR).joinpath("entrypoint.sh").exists()
     assert Path(GRIDAPPSD_CONF_DIR).joinpath("run-gridappsd.sh").exists()
 
+    # pkg_resources.resource_filename('gridappsd', 'conf')))
+
+    # GRIDAPPSD_ASSET_DIR = "/home/gridappsd/assets"
+    # os.makedirs(GRIDAPPSD_ASSET_DIR, exist_ok=True)
+    #
+    # GRIDAPPSD_ASSET_CONF_DIR = str(Path(GRIDAPPSD_ASSET_DIR).joinpath("conf"))
+    # shutil.rmtree(GRIDAPPSD_ASSET_CONF_DIR, ignore_errors=True)
+    # shutil.copytree(GRIDAPPSD_CONF_DIR, GRIDAPPSD_ASSET_CONF_DIR)
+    # if not Path(GRIDAPPSD_ASSET_CONF_DIR).is_dir():
+    #     raise AttributeError(f"Couldn't create {GRIDAPPSD_ASSET_CONF_DIR}")
+    #
+    GRIDAPPSD_DATA_REPO = str(Path(__TMP_ROOT__).joinpath("mysql").resolve())
+
+    os.makedirs(GRIDAPPSD_DATA_REPO, exist_ok=True)
+    if not Path(GRIDAPPSD_DATA_REPO).is_dir():
+        raise AttributeError(f"Invalid GRIDAPPSD_DATA_REPO couldn't make or doesn't exist {GRIDAPPSD_DATA_REPO}")
+
+    MYSQL_SCHEMA_INIT_DIR = f'{GRIDAPPSD_DATA_REPO}/docker-entrypoint-initdb.d'
+
 
     def mysql_setup():
+        """
+        Downloads gridappsd_mysql_dump.sql into the MYSQL_SCHEMA_INIT_DIR init directory.
+        This will then be mounted into the mysql container.
+        """
         # Downlaod mysql file
         _log.debug("Downloading mysql data file from Bootstrap repository")
-        mysql_dir = f'{data_dir}/dumps'
-        mysql_file = f'{mysql_dir}/gridappsd_mysql_dump.sql'
+        mysql_file = f'{MYSQL_SCHEMA_INIT_DIR}/gridappsd_mysql_dump.sql'
         if os.path.isdir(mysql_file):
             raise RuntimeError(f"mysql datafile is directory, delete {mysql_file} using sudo rm -rf {mysql_file}")
-        if not os.path.isdir(mysql_dir):
-            os.makedirs(mysql_dir, 0o0775, exist_ok=True)
-        urllib.request.urlretrieve('https://raw.githubusercontent.com/GRIDAPPSD/Bootstrap/master/gridappsd_mysql_dump.sql',
-                                   filename=mysql_file)
+        if not os.path.isdir(MYSQL_SCHEMA_INIT_DIR):
+            os.makedirs(MYSQL_SCHEMA_INIT_DIR, 0o0775, exist_ok=True)
+        urllib.request.urlretrieve(
+            'https://raw.githubusercontent.com/GRIDAPPSD/Bootstrap/master/gridappsd_mysql_dump.sql',
+            filename=mysql_file)
 
         # Modify the mysql file to allow connections from gridappsd container
         with open(mysql_file, "r") as sources:
@@ -68,9 +94,13 @@ if HAS_DOCKER:
         with open(mysql_file, "w") as sources:
             for line in lines:
                 sources.write(re.sub(r'localhost', '%', line))
+        assert Path(mysql_file).exists()
 
     # Use the environmental variable if specified otherwise use the develop tag.
     DEFAULT_GRIDAPPSD_TAG = os.environ.get('GRIDAPPSD_TAG_ENV', 'develop')
+
+    # Network to connect all of the containers up to by default.
+    NETWORK = "test_my_network"
 
     __TPL_DEPENDENCY_CONFIG__ = {
         "influxdb": {
@@ -104,10 +134,20 @@ if HAS_DOCKER:
                 "MYSQL_RANDOM_ROOT_PASSWORD": "yes",
                 "MYSQL_PORT": "3306"
             },
-            "volumes": {
-                data_dir + "/dumps/gridappsd_mysql_dump.sql": {"bind": "/docker-entrypoint-initdb.d/schema.sql",
-                                                               "mode": "ro"}
-            },
+            # "volumes": {
+            #     "/home/gridappsd/test-assets": {"bind": "/whatthehell", "mode": "rw"}
+            #     #"test-assets": {"bind": "/whatthehell", "mode": "rw"}
+            #     #data_dir + "/dumps/": {"bind": "/docker-entrypoint-initdb.d/", "mode": "ro"}
+            # },
+            # Our own so we can create
+            "volumes_required": [
+                dict(name="mysql_config",
+                     local_path=MYSQL_SCHEMA_INIT_DIR,
+                     container_path="/docker-entrypoint-initdb.d")
+            ],
+            "volumes_from": [
+                "mysql_config"
+            ],
             "onsetupfn": mysql_setup
         },
         "proven": {
@@ -145,12 +185,16 @@ if HAS_DOCKER:
                       "blazegraph": "blazegraph",
                       "proven": "proven",
                       "redis": "redis"},
-            "volumes": {
-                str(Path(GRIDAPPSD_CONF_DIR).joinpath("entrypoint.sh")):
-                    {"bind": "/gridappsd/entrypoint.sh", "mode": "rw"},
-                str(Path(GRIDAPPSD_CONF_DIR).joinpath("run-gridappsd.sh")):
-                    {"bind": "/gridappsd/run-gridappsd.sh", "mode": "rw"}
-            }
+            "volumes_required": [
+                dict(name="gridappsd_config",
+                     local_path=GRIDAPPSD_CONF_DIR,
+                     container_path="/startup/conf")
+            ],
+            "volumes_from": [
+                "gridappsd_config"
+            ],
+            "entrypoint": "/startup/conf/entrypoint.sh",
+            "command": "/startup/conf/entrypoint.sh"
         }
     }
 
@@ -175,7 +219,7 @@ if HAS_DOCKER:
         global DEFAULT_GRIDAPPSD_TAG
 
         DEFAULT_GRIDAPPSD_TAG = new_gridappsd_tag
-        print(f"Updated to using gridappsd tag {DEFAULT_GRIDAPPSD_TAG} ")
+        _log.info(f"Updated gridappsd docker tag {DEFAULT_GRIDAPPSD_TAG} ")
         __replace_dict__.update({"{{DEFAULT_GRIDAPPSD_TAG}}": DEFAULT_GRIDAPPSD_TAG})
         DEFAULT_DOCKER_DEPENDENCY_CONFIG.update(__update_template_data__(__TPL_DEPENDENCY_CONFIG__, __replace_dict__))
         DEFAULT_GRIDAPPSD_DOCKER_CONFIG.update(__update_template_data__(__TPL_GRIDAPPSD_CONFIG__, __replace_dict__))
@@ -186,8 +230,22 @@ if HAS_DOCKER:
         This class allows the creation/management of containers created by the gridappsd
         docker process.
         """
+        __client__ = docker.from_env()
+
         def __init__(self, container_def):
             self._container_def = container_def
+
+        @property
+        def container_def(self):
+            return self._container_def
+
+        @staticmethod
+        def remove_container(name):
+            try:
+                container = Containers.__client__.containers.get(name)
+                container.kill()
+            except docker.errors.NotFound:
+                _log.debug(f"container {name} not found so couldn't remove.")
 
         @staticmethod
         def container_list(ignore_list: Optional[Union[str, list]] = "gridappsd_dev"):
@@ -202,16 +260,15 @@ if HAS_DOCKER:
             @param: ignore_list:
                 optional container names to not stop :: A string or list of strings
             """
-            client = docker.from_env()
 
             if ignore_list is None:
                 ignore_list = []
             elif isinstance(ignore_list, str):
                 ignore_list = [ignore_list]
             containers = []
-            for container in client.containers.list():
-                if container.name not in ignore_list:
-                    containers.append(container)
+            for cont in Containers.__client__.containers.list():
+                if cont.name not in ignore_list:
+                    containers.append(cont)
             return containers
 
         @staticmethod
@@ -227,40 +284,147 @@ if HAS_DOCKER:
             @param: ignore_list:
                 optional container names to not stop :: A string or list of strings
             """
-            client = docker.from_env()
-
             if ignore_list is None:
                 ignore_list = []
             elif isinstance(ignore_list, str):
                 ignore_list = [ignore_list]
 
-            for container in client.containers.list():
-                if container.name not in ignore_list:
-                    container.kill()
+            for cont in Containers.__client__.containers.list():
+                if cont.name not in ignore_list:
+                    cont.kill()
 
+        @staticmethod
         def check_required_running(self, config):
             my_config = deepcopy(config)
-            client = docker.from_env()
 
-            for c in client.containers.list():
+            for c in Containers.__client__.containers.list():
                 my_config.pop(c.name, None)
 
             assert not my_config, f"The required containers were not satisfied missing {list(my_config.keys())}"
 
-        def start(self):
-            pprint(DEFAULT_GRIDAPPSD_DOCKER_CONFIG)
-            client = docker.from_env()
-            print(f"Docker client version: {client.version()}")
-            for service, value in self._container_def.items():
-                if self._container_def[service]['pull']:
-                    _log.debug(f"Pulling {service} : {self._container_def[service]['image']}")
-                    client.images.pull(self._container_def[service]['image'])
+        @staticmethod
+        def create_volume_container(name, volume_name,
+                                    mount_in_container_at, restart_if_exists: bool = False,
+                                    mode="rw"):
 
+            _log.info(f"Creating container {name} and mounting volume {volume_name} "
+                      f"at {mount_in_container_at} in container {name}")
+            client = docker.from_env()
+
+            should_create = False
+            try:
+                cont = Containers.__client__.containers.get(name)
+            except docker.errors.NotFound:
+                # start container
+                should_create = True
+            else:
+                if restart_if_exists:
+                    should_create = True
+                    cont.stop()
+                else:
+                    return cont
+
+            if should_create:
+                kwargs = {}
+                kwargs['image'] = "alpine"
+                # Only name the containers if remove is on
+                kwargs['remove'] = True
+                kwargs['name'] = name
+                kwargs['detach'] = True
+                kwargs['volumes'] = {
+                    volume_name: {"bind": mount_in_container_at, "mode": mode}
+                }
+                # keep the container running
+                kwargs['command'] = "tail -f /dev/null"
+                cont = client.containers.run(**kwargs)
+                _log.info(f"New container for volume created {cont.name}")
+                # print(f"New container is: {container.name}")
+                return cont
+
+        @staticmethod
+        def create_get_network(name: str) -> docker.models.networks.Network:
+            try:
+                network = Containers.__client__.networks.get(name)
+            except docker.errors.NotFound:
+                network = Containers.__client__.networks.create(name, driver="bridge")
+
+            return network
+
+        @staticmethod
+        def copy_to(src: str, dst: str):
+            """
+            Copy a local directory onto a destination
+
+            .. note::
+
+                Make sure the dst (destination) is in the form container:directory
+
+            @param: src: The local directory to copy from the host
+            @param: dst: The container:destination to copy the src to.
+            """
+            _log.debug(f"copying folder from: {src} to {dst}")
+            src = str(src)
+            # python3.6 can't combine PosixPath and str
+            assert os.path.exists(src), f"{src} does not exist!"
+            client = docker.from_env()
+            name, dst = dst.split(':')
+            container = client.containers.get(name)
+            assert container is not None
+            cwd = os.getcwd()
+            os.chdir(os.path.dirname(src))
+            srcname = os.path.basename(src)
+            tarfilename = src + '.tar'
+            tar = tarfile.open(tarfilename, mode='w')
+            try:
+                tar.add(srcname)
+            finally:
+                tar.close()
+
+            data = open(tarfilename, 'rb').read()
+            resp = container.put_archive(os.path.dirname(dst), data)
+            os.chdir(cwd)
+            _log.debug(f"Response from put_archive {resp}")
+
+        def start(self):
+            _log.info("Starting containers")
+            # Containers.create_volume_container(CONFIGURATION_CONTAINER_NAME, "testconfig", "/testconfig")
+            #pprint(DEFAULT_GRIDAPPSD_DOCKER_CONFIG)
+            client = docker.from_env()
+            # print(f"Docker client version: {client.version()}")
             for service, value in self._container_def.items():
+                _log.info(f"Pulling {service} image")
+                _log.info(f"Pulling {service} : {self._container_def[service]['image']}")
+                client.images.pull(self._container_def[service]['image'])
+                try:
+                    container = client.containers.get(service)
+                    self._container_def[service]['containerid'] = container.id
+                except docker.errors.NotFound:
+                    _log.debug(f"Couldn't find {service} so continuing on.")
+
                 # Provide a way to dynamically create things that the container will need
-                # on the host system.
+                # on the host system.  This is important if we want to create a volume before
+                # starting the container up.
                 if value.get('onsetupfn'):
                     value.get('onsetupfn')()
+
+                if self._container_def[service].get("volumes_required"):
+                    for vr in self._container_def[service].get("volumes_required"):
+                        _log.info(f"Creating volume for {service}: name={vr['name']}, "
+                                  f"volume_name={vr['name']}, container_path={vr['container_path']}")
+                        Containers.create_volume_container(
+                            name=vr["name"],
+                            volume_name=vr["name"],
+                            mount_in_container_at=vr["container_path"],
+                            restart_if_exists=True
+                            )
+                        time.sleep(20)
+                        if vr.get("local_path"):
+                            _log.debug(f"contents of local path({vr.get('local_path')}):\n\t{os.listdir(vr.get('local_path'))}")
+                            _log.info(f"Copy to mounted volume for {service}: "
+                                      f"local_path={vr['local_path']}, container_path={vr['container_path']}")
+                            Containers.copy_to(vr["local_path"], f'{vr["name"]}:{vr["container_path"]}')
+            network = Containers.create_get_network(NETWORK)
+            for service, value in self._container_def.items():
                 if self._container_def[service]['start']:
                     _log.debug(f"Starting {service} : {self._container_def[service]['image']}")
                     kwargs = {}
@@ -269,6 +433,9 @@ if HAS_DOCKER:
                     kwargs['remove'] = True
                     kwargs['name'] = service
                     kwargs['detach'] = True
+                    kwargs['entrypoint'] = value.get('entrypoint')
+                    if self._container_def[service].get('entrypoint'):
+                        kwargs['entrypoint'] = value['entrypoint']
                     if self._container_def[service].get('environment'):
                         kwargs['environment'] = value['environment']
                     if self._container_def[service].get('ports'):
@@ -277,23 +444,34 @@ if HAS_DOCKER:
                         kwargs['volumes'] = value['volumes']
                     if self._container_def[service].get('entrypoint'):
                         kwargs['entrypoint'] = value['entrypoint']
-                    if self._container_def[service].get('links'):
-                        kwargs['links'] = value['links']
-                    for k, v in kwargs.items():
-                        print(f"k->{k}, v->{v}")
-                    container = client.containers.run(**kwargs)
+                    # if self._container_def[service].get('links'):
+                    #     kwargs['links'] = value['links']
+                    if self._container_def[service].get('volumes_from'):
+                        kwargs['volumes_from'] = value['volumes_from']
+                    #for k, v in kwargs.items():
+                    #    print(f"k->{k}, v->{v}")
+                    _log.debug("Starting container with the following args:")
+                    _log.debug(f"{pformat(kwargs)}")
+                    launched_container = None
+                    try:
+                        container = client.containers.get(service)
+                        _log.debug("Found existing container")
+                    except docker.errors.NotFound:
+                        container = client.containers.run(**kwargs)
+                        _log.debug("Started new container")
+                        network.connect(container.id)
                     self._container_def[service]['containerid'] = container.id
-            print([x.name for x in client.containers.list()])
+            _log.debug(f"Current containers are: {[x.name for x in client.containers.list()]}")
 
-        def wait_for_log_pattern(self, container, pattern, timeout=30):
+        def wait_for_log_pattern(self, container, pattern, timeout=60):
             assert self._container_def.get(container), f"Container {container} is not in definition."
             client = docker.from_env()
             container = client.containers.get(self._container_def.get(container)['containerid'])
-            until = datetime.now() + timedelta(timeout)
+            until = datetime.now() + timedelta(seconds=timeout)
             for p in container.logs(stream=True, until=until):
-                print(p)
+                _log.info(f"HANDLER: {p.decode('utf-8')}")
                 if pattern in p.decode('utf-8'):
-                    print(f"Found patter {pattern}")
+                    print(f"Found pattern {pattern}")
                     return
             raise TimeoutError(f"Pattern {pattern} was not found in logs of container {container} within {timeout}s")
 
@@ -305,7 +483,7 @@ if HAS_DOCKER:
             while results is None or not results.ok:
                 test_count += 1
                 if test_count > timeout:
-                    raise TimeoutError(f"Could not reach {url} within alloted timeout {timeout}s")
+                    raise TimeoutError(f"Could not reach {url} within allotted timeout {timeout}s")
                 results = requests.get(url)
                 time.sleep(1)
 
@@ -344,7 +522,7 @@ if HAS_DOCKER:
 
 
     @contextlib.contextmanager
-    def run_containers(config, stop_after=True):
+    def run_containers(config, stop_after=True) -> Containers:
         containers = Containers(config)
 
         containers.start()
@@ -356,7 +534,7 @@ if HAS_DOCKER:
 
 
     @contextlib.contextmanager
-    def run_dependency_containers(stop_after=False):
+    def run_dependency_containers(stop_after=False) -> Containers:
 
         containers = Containers(DEFAULT_DOCKER_DEPENDENCY_CONFIG)
 
@@ -369,21 +547,88 @@ if HAS_DOCKER:
 
 
     @contextlib.contextmanager
-    def run_gridappsd_container(stop_after=True):
+    def run_gridappsd_container(stop_after=True, rebuild_if_present=False) -> Container:
         """ A contextmanager that uses """
+
+        parent_container = get_docker_in_docker()
+
+        client = docker.from_env()
+        # if there is a parent_container then we need to make sure that it is connected
+        # to the same network as our systems.  If not then we need to modify the network
+        # to include the parent container
+        if parent_container:
+            env = DEFAULT_GRIDAPPSD_DOCKER_CONFIG['gridappsd'].get('environment')
+            if env is None:
+                env = {}
+            env[GRIDAPPSD_ENV_ENUM.GRIDAPPSD_ADDRESS.name] = 'gridappsd'
+            env[GRIDAPPSD_ENV_ENUM.GRIDAPPSD_USER.name] = 'test_app_user'
+            env[GRIDAPPSD_ENV_ENUM.GRIDAPPSD_PASSWORD.name] = '4Test'
+            DEFAULT_GRIDAPPSD_DOCKER_CONFIG['gridappsd']['environment'] = env
+
+            _log.debug(f"Running inside a container environment: {parent_container.name}")
+            network = client.networks.get(NETWORK)
+            has_it = False
+            for x in network.containers:
+                if x.name == parent_container.name:
+                    has_it = True
+                    _log.debug(f"parent_container {parent_container.name} is connected to the network.")
+                    break
+            if not has_it:
+                _log.debug(f"Connecting new container to the network: {parent_container.name}")
+                network.connect(parent_container)
+        else:
+            _log.debug("Not running in a container")
 
         containers = Containers(DEFAULT_GRIDAPPSD_DOCKER_CONFIG)
 
-        containers.start()
+        gridappsd_container = None
         try:
-            containers.wait_for_log_pattern("gridappsd", "MYSQL")
-            # Wait for blazegraph to show up
-            time.sleep(30)
-            containers.wait_for_http_ok("http://localhost:8889/bigdata/", timeout=300)
-            # Waith 30 seconds before returning from this to make sure
-            # gridappsd container is fully setup ready for simulation
-            # and querying.
-            yield containers
+            gridappsd_container = client.containers.get("gridappsd")
+            _log.info(f"{gridappsd_container.name} container found")
+            if rebuild_if_present:
+                gridappsd_container.kill()
+        except docker.errors.NotFound:
+            _log.debug("gridappsd container not found!")
+
+        try:
+            if gridappsd_container is None:
+                containers.start()
+
+                time.sleep(10)
+                while True:
+                    try:
+                        g = GridAPPSD()
+                        if g.connected:
+                            g.disconnect()
+                            break
+
+                    except stomp.exception.ConnectFailedException as ex:
+                        time.sleep(10)
+                        _log.exception(ex)
+
+            yield gridappsd_container
         finally:
             if stop_after:
                 containers.stop()
+
+
+    def get_docker_in_docker() -> Container:
+        """
+        Grab the parent container named the same as the current machine's hostname.  We are assuming that this
+        is going to be a container.
+        """
+        # There needs to be a test to make sure that the current container (assuming run in dev environment)
+        # is able to be run from the docker dev environment.  That environment is going to be assumed to be
+        # the same name as the host name of the container.  See the docker-compose starting the dev environment
+        hostname = str(open("/etc/hostname", "rt").read().strip())
+        client = docker.from_env()
+        try:
+            parent_container = client.containers.get(hostname)
+            _log.info(f"Inside parent container: {hostname}")
+            # Setup to use gridappsd as the connection address.  This value is used in the
+            # utils script to establish connection with the gridappsd server
+            os.environ["GRIDAPPSD_ADDRESS"] = "gridappsd"
+        except docker.errors.NotFound:
+            _log.debug(f"Docker container is not named this hostname {hostname}")
+            parent_container = None
+        return parent_container
