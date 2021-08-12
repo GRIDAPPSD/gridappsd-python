@@ -3,6 +3,7 @@
 import contextlib
 import logging
 import os
+import random
 import re
 import shutil
 import tarfile
@@ -33,6 +34,11 @@ except ImportError:
 
 if HAS_DOCKER:
 
+    # The following variable is used for creating a volume for the gridappsd container
+    # to utilize.  It allows the ability to use multiple containers to run tests
+    # along side each other.
+    GRIDAPPSD_CONFIG_VOLUME_NAME = f"gridappsd_config_{random.randint(1,100)}"
+
     # This named container will be used to hold configuration/folders so that other containers
     # that start can use them.  To use add "volume_from": [CONFIGURATION_CONTAINER_NAME] and
     # the mount point within the container will also be within the service container.
@@ -52,17 +58,6 @@ if HAS_DOCKER:
     assert Path(GRIDAPPSD_CONF_DIR).joinpath("entrypoint.sh").exists()
     assert Path(GRIDAPPSD_CONF_DIR).joinpath("run-gridappsd.sh").exists()
 
-    # pkg_resources.resource_filename('gridappsd', 'conf')))
-
-    # GRIDAPPSD_ASSET_DIR = "/home/gridappsd/assets"
-    # os.makedirs(GRIDAPPSD_ASSET_DIR, exist_ok=True)
-    #
-    # GRIDAPPSD_ASSET_CONF_DIR = str(Path(GRIDAPPSD_ASSET_DIR).joinpath("conf"))
-    # shutil.rmtree(GRIDAPPSD_ASSET_CONF_DIR, ignore_errors=True)
-    # shutil.copytree(GRIDAPPSD_CONF_DIR, GRIDAPPSD_ASSET_CONF_DIR)
-    # if not Path(GRIDAPPSD_ASSET_CONF_DIR).is_dir():
-    #     raise AttributeError(f"Couldn't create {GRIDAPPSD_ASSET_CONF_DIR}")
-    #
     GRIDAPPSD_DATA_REPO = str(Path(__TMP_ROOT__).joinpath("mysql").resolve())
 
     os.makedirs(GRIDAPPSD_DATA_REPO, exist_ok=True)
@@ -186,12 +181,12 @@ if HAS_DOCKER:
                       "proven": "proven",
                       "redis": "redis"},
             "volumes_required": [
-                dict(name="gridappsd_config",
+                dict(name=GRIDAPPSD_CONFIG_VOLUME_NAME,
                      local_path=GRIDAPPSD_CONF_DIR,
                      container_path="/startup/conf")
             ],
             "volumes_from": [
-                "gridappsd_config"
+                GRIDAPPSD_CONFIG_VOLUME_NAME
             ],
             "entrypoint": "/startup/conf/entrypoint.sh",
             "command": "/startup/conf/entrypoint.sh"
@@ -496,9 +491,19 @@ if HAS_DOCKER:
                     try:
                         cnt = client.containers.get(value.get('containerid'))
                         cnt.kill()
+                        time.sleep(2)
+
+                        if "volumes_required" in value:
+                            # Loop over the volumes that are required for each image and
+                            # remove the volume.
+                            for volume_spec in value["volumes_required"]:
+                                Containers.remove_container(volume_spec['name'])
+                                time.sleep(2)
+
                         # client.containers.get(value.get('containerid')).kill() # value.get('name')).kill()
-                    except docker.errors.NotFound:
-                        pass
+                    except docker.errors.NotFound as ex:
+                        _log.error(f"Volume {value.get('containerid')} was not found.")
+                        _log.exception(ex)
 
 
     threads = []
