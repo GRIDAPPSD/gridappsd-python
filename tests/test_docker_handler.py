@@ -74,7 +74,8 @@ def test_can_dependencies_continue_after_context_manager():
 
 def test_create_volume_container():
     Containers.create_volume_container("test_volume", "test_volume", "/startup", restart_if_exists=True)
-    Containers.copy_to("/home/gridappsd/repos/gridappsd-python/gridappsd/conf", "test_volume:/startup/conf")
+    path = str(Path("gridappsd/conf").absolute())
+    Containers.copy_to(path, "test_volume:/startup/conf")
     client = docker.from_env()
     result = client.containers.get("test_volume").exec_run("ls -l /startup")
     assert True
@@ -91,7 +92,7 @@ def test_can_upload_files_to_container():
                                            remove=True)
     # may take a few for image to be up
     time.sleep(20)
-    conf_path = str(Path("../gridappsd/conf").absolute())
+    conf_path = str(Path("gridappsd/conf").absolute())
     Containers.copy_to(conf_path, f"{test_container.name}:/conf")
     results = test_container.exec_run("ls -l /conf")
     for f in os.listdir(conf_path):
