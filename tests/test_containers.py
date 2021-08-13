@@ -1,9 +1,11 @@
 import logging
 import os
 from pathlib import Path
+import random
 import shutil
 import sys
 from unittest import TestCase
+
 
 _log = logging.getLogger("test_containers")
 
@@ -37,10 +39,10 @@ class ContainersTestCase(TestCase):
             stream.write(cls.tmp_file_content)
 
     def setUp(self) -> None:
-        self.cname = "test_container"
-        self.vname = "test_volume"
+        self.cname = f"test_container_{random.randint(1,1000)}"
+        self.vname = f"test_volume_{random.randint(1,1000)}"
         self.in_container_path = "/foo/bar/bim"
-        self.network_name = "foo"
+        self.network_name = f"foo_{random.randint(1,1000)}"
         self.client = docker.from_env()
 
     def test_can_create_volume(self):
@@ -71,7 +73,7 @@ class ContainersTestCase(TestCase):
         assert b"woot.txt" in result
 
     def test_network_creation(self):
-        network = Containers.create_get_network("foo")
+        network = Containers.create_get_network(self.network_name)
         assert network is not None
         assert self.network_name == network.name
 
