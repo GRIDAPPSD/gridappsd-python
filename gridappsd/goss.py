@@ -43,25 +43,32 @@ Created on March 1, 2018
 
 @author: Craig Allwardt
 """
-import os
-from datetime import datetime
-from collections import defaultdict
+import base64
 import inspect
 import json
 import logging
+import os
 import random
-import base64
-from logging import Logger
-from time import sleep
-from queue import Queue
 import threading
-
+from collections import defaultdict
+from datetime import datetime
+from enum import Enum
+from logging import Logger
+from queue import Queue
 
 from stomp import Connection12 as Connection
 from stomp.exception import NotConnectedException
-
+from time import sleep
 
 _log: Logger = logging.getLogger(inspect.getmodulename(__file__))
+
+
+class GRIDAPPSD_ENV_ENUM(Enum):
+    GRIDAPPSD_USER = "GRIDAPPSD_USER"
+    GRIDAPPSD_PASSWORD = "GRIDAPPSD_PASSWORD"
+    GRIDAPPSD_ADDRESS = "GRIDAPPSD_ADDRESS"
+    GRIDAPPSD_PORT = "GRIDAPPSD_PORT"
+    GRIDAPPSD_PASS = "GRIDAPPSD_PASSWORD"
 
 
 class TimeoutError(Exception):
@@ -81,19 +88,30 @@ class GOSS(object):
         logging.getLogger('stomp.py').setLevel(stomp_log_level)
         logging.getLogger('goss').setLevel(goss_log_level)
 
-        self.__user = username 
-        self.__pass = password
-        if not self.__user:
-            self.__user = os.environ.get("GRIDAPPSD_USER")
-            if not self.__user:
-                raise ValueError("passed username or environmental variable GRIDAPPSD_USER not set.")
-        if not self.__pass:
-            self.__pass = os.environ.get("GRIDAPPSD_PASSWORD")
-            if not self.__pass:
-                raise ValueError("pass password or environmental variable GRIDAPPSD_PASSWORD not set.")
-
+        self.__user__ = username
+        self.__pass__ = password
         self.stomp_address = stomp_address
         self.stomp_port = stomp_port
+
+        # Environmental variables should overrule the passed arguments.
+        if os.environ.get(GRIDAPPSD_ENV_ENUM.GRIDAPPSD_USER.value):
+            _log.debug(f"Environment for {GRIDAPPSD_ENV_ENUM.GRIDAPPSD_USER.value} is set")
+            self.__user__ = os.environ.get(GRIDAPPSD_ENV_ENUM.GRIDAPPSD_USER.value)
+
+        if os.environ.get(GRIDAPPSD_ENV_ENUM.GRIDAPPSD_PASSWORD.value):
+            _log.debug(f"Environment for {GRIDAPPSD_ENV_ENUM.GRIDAPPSD_PASSWORD.value} is set")
+            self.__pass__ = os.environ.get(GRIDAPPSD_ENV_ENUM.GRIDAPPSD_PASSWORD.value)
+
+        if os.environ.get(GRIDAPPSD_ENV_ENUM.GRIDAPPSD_ADDRESS.value):
+            _log.debug(f"Environment for {GRIDAPPSD_ENV_ENUM.GRIDAPPSD_ADDRESS.value} is set")
+            self.stomp_address = os.environ.get(GRIDAPPSD_ENV_ENUM.GRIDAPPSD_ADDRESS.value)
+
+        if os.environ.get(GRIDAPPSD_ENV_ENUM.GRIDAPPSD_PORT.value):
+            _log.debug(f"Environment for {GRIDAPPSD_ENV_ENUM.GRIDAPPSD_PORT.value} is set")
+            self.stomp_port = os.environ.get(GRIDAPPSD_ENV_ENUM.GRIDAPPSD_PORT.value)
+
+        if not self.__user__ or not self.__pass__:
+            raise ValueError("Invalid username/password specified.")
         self._conn = None
         self._ids = set()
         self._topic_set = set()
@@ -263,11 +281,10 @@ class GOSS(object):
                 # get token
                 # get initial connection
                 dt=datetime.now()
-                replyDest = "temp.token_resp."+self.__user+"-"+str(dt)
-                # self._conn2.connect(self.__user, self.__pass, wait=True)
+                replyDest = f"temp.token_resp.{self.__user__}-{dt}"
 
                 # create token request string
-                userAuthStr = self.__user+":"+self.__pass
+                userAuthStr = f"{self.__user__}:{self.__pass__}"
                 base64Str = base64.b64encode(userAuthStr.encode())
 
                 # set up token callback
@@ -277,7 +294,7 @@ class GOSS(object):
                 tmpConn = Connection([(self.stomp_address, self.stomp_port)])
                 if self._override_thread_fc is not None:
                     tmpConn.transport.override_threading(self._override_thread_fc)
-                tmpConn.connect(self.__user, self.__pass, wait=True)
+                tmpConn.connect(self.__user__, self.__pass__, wait=True)
                 
                 class TokenResponseListener():
                     def __init__(self):
