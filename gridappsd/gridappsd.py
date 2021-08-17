@@ -67,12 +67,17 @@ class GridAPPSD(GOSS):
     """
     # TODO Get the caller from the traceback/inspect module.
     def __init__(self, simulation_id=None,
-                 address=utils.get_gridappsd_address(), **kwargs):
+                 address=None, **kwargs):
+
+        if address is None:
+            address = utils.get_gridappsd_address()
+
         if 'stomp_address' in kwargs and 'stomp_port' in kwargs:
             address = (kwargs.pop('stomp_address'), kwargs.pop('stomp_port'))
         elif 'stomp_address' in kwargs and not 'stomp_port' in kwargs or \
              'stomp_port' in kwargs and not 'stomp_address' in kwargs:
             raise ValueError("If stomp_address is specified the so should stomp_port")
+
         super(GridAPPSD, self).__init__(
             stomp_address=address[0],
             stomp_port=address[1],

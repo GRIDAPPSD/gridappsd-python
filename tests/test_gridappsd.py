@@ -8,18 +8,12 @@ import mock
 from gridappsd import GridAPPSD, topics as t, ProcessStatusEnum
 
 
-def test_get_model_info(record_property, gridappsd_client):
+def test_get_model_info(gridappsd_client):
     """ The expecation is that we will have multiple models that we can retrieve from the
     database.  Two of which should have the model name of ieee8500 and ieee123.  The models
     should have the correct entry keys.
     """
-    doc_str = """
-    This function queries the database through the gridappsd api.  Specifically checking 
-    that the specific models are available.  The results are interrogated for the 8500 node
-    model and the the iee123 model.  The return values of the query are interrogated and
-    the values associated are tested
-    """
-    record_property("gridappsd_doc", doc_str)
+
     gappsd = gridappsd_client
     import time
     time.sleep(10)
@@ -143,24 +137,4 @@ def test_gridappsd_status(gridappsd_client):
     gappsd.set_service_status("Foo")
     assert gappsd.get_service_status() == ProcessStatusEnum.COMPLETE.value
     assert gappsd.get_application_status() == ProcessStatusEnum.COMPLETE.value
-    
-def test_response_format(record_property, gridappsd_client):
-    doc_str = """
-    This function sends requests with different response format through the gridappsd query_model api.  
-    Specifically checking that the response it receives is in the format expected by the request.
-    """
-    record_property("gridappsd_doc", doc_str)
-    gappsd = gridappsd_client
-    
-    response = gappsd.query_model(model_id='_49AD8E07-3BF9-A4E2-CB8F-C3722F837B62', response_format='JSON')
-    assert isinstance(response, dict), "Response did not return valid JSON"
-    
-    response = gappsd.query_model(model_id='_49AD8E07-3BF9-A4E2-CB8F-C3722F837B62')
-    assert isinstance(response, dict), "Response did not return valid JSON"
-    
-    response = gappsd.query_model(model_id='_49AD8E07-3BF9-A4E2-CB8F-C3722F837B62', response_format='XML')
-    try:
-        ET.fromstring(response)
-    except:
-        assert False, "Response did not return valid XML"
-    assert True 
+

@@ -23,7 +23,7 @@ class Simulation(object):
 
     There are four events that can be registered: ontimestep, onmeasurement, oncomplete, and
     onstart.  To register one of the events call the method add_ontimestep_callback,
-    add_onmesurement_callback, add_oncomplete_callback or add_onstart_callback method respectively.
+    add_onmeasurement_callback, add_oncomplete_callback or add_onstart_callback method respectively.
     """
     def __init__(self, gapps: 'GridAPPSD', run_config):
         assert type(gapps).__name__ == 'GridAPPSD',  "Must be an instance of GridAPPSD"
@@ -103,7 +103,7 @@ class Simulation(object):
             simulation = Simulation(gapps, config)
             simulation.add_ontimestep_callback(ontimestep)
             simulation.add_oncomplete_callback(oncomplete)
-            simulation.add_onmesurement_callback(onmeasurment)
+            simulation.add_onmeasurement_callback(onmeasurment)
             simulation.add_onstart_callback(onstart)
             simulation.run_loop()
 
@@ -125,7 +125,7 @@ class Simulation(object):
         self._gapps.send(simulation_input_topic(self.simulation_id), json.dumps(command))
         self._running_or_paused = True
 
-    def add_onmesurement_callback(self, callback, device_filter=()):
+    def add_onmeasurement_callback(self, callback, device_filter=()):
         """ registers an onmeasurment callback to be called when measurements have come through.
 
         Note:

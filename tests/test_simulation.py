@@ -33,7 +33,7 @@ def test_simulation_no_duplicate_measurement_timestamps(gridappsd_client):
 
     gapps = gridappsd_client
     sim = Simulation(gapps, base_config())
-    sim.add_onmesurement_callback(measurement)
+    sim.add_onmeasurement_callback(measurement)
     sim.start_simulation()
     sim.run_loop()
 

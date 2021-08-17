@@ -123,7 +123,7 @@ def on_simulated_output(header, message):
 
 
 sim.add_onstart_callback(onstart)
-sim.add_onmesurement_callback(onmeasurment)
+sim.add_onmeasurement_callback(onmeasurment)
 sim.add_ontimestep_callback(ontimestep)
 sim.add_oncomplete_callback(onfinishsimulation)
 sim.start_simulation()
