@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gridappsd-python"
-version = "2.0.20210813"
+version = "2.1.20210824"
 description = "A GridAPPS-D Python Adapter"
 authors = [
     "C. Allwardt <craig.allwardt@pnnl.gov>",
