@@ -1,4 +1,4 @@
-![Build status](https://github.com/GRIDAPPSD/gridappsd-python/workflows/Python%20package/badge.svg)
+[![Run All Pytests](https://github.com/GRIDAPPSD/gridappsd-python/actions/workflows/run-pytest.yml/badge.svg)](https://github.com/GRIDAPPSD/gridappsd-python/actions/workflows/run-pytest.yml)
 
 # gridappsd-python
 Python library for developing applications and services against the gridappsd api
