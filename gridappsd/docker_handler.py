@@ -599,17 +599,23 @@ if HAS_DOCKER:
             if gridappsd_container is None:
                 containers.start()
 
-                time.sleep(10)
+                # the gridappsd container itself will take a bit to start up.
+                time.sleep(30)
+
+                tries = 30
                 while True:
+                    tries -= 1
+                    if tries <=0:
+                        raise RuntimeError("Couldn't connect to gridappsd server in a timely manner!")
                     try:
                         g = GridAPPSD()
                         if g.connected:
+                            _log.info("Connected to gridappsd!")
                             g.disconnect()
                             break
 
-                    except stomp.exception.ConnectFailedException as ex:
-                        time.sleep(10)
-                        _log.exception(ex)
+                    except stomp.exception.ConnectFailedException or stomp.exception.NotConnectedException:
+                        _log.error("Retesting connection")
 
             yield gridappsd_container
         finally:
