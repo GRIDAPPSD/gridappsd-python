@@ -36,6 +36,9 @@ def test_simulation_no_duplicate_measurement_timestamps(gridappsd_client):
     sim.add_onmeasurement_callback(measurement)
     sim.start_simulation()
     sim.run_loop()
+    
+    # if empty then we know the simulation did not work.
+    assert timestamps
 
 
 # from gridappsd import GridAPPSD
