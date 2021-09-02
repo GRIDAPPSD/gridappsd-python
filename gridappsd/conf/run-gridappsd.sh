@@ -4,6 +4,7 @@ set -eux
 
 # Setup the path for running the gridappsd framework
 export PATH=/gridappsd/services/fncsgossbridge/service:$PATH
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib64
 
 cd /gridappsd
 
