@@ -23,7 +23,12 @@ from docker.models.containers import Container
 from gridappsd import GridAPPSD
 from gridappsd.goss import GRIDAPPSD_ENV_ENUM
 
+logging.getLogger("urllib3.connectionpool").setLevel(logging.INFO)
+logging.getLogger("docker.auth").setLevel(logging.INFO)
+logging.getLogger("docker.utils").setLevel(logging.INFO)
+
 _log = logging.getLogger("gridappsd.docker_handler")
+
 
 try:
     import docker
