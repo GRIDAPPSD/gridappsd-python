@@ -202,7 +202,7 @@ class Simulation(object):
         if 'logMessage' in message:
             log_message = message['logMessage']
             # if this is the last timestamp then call the finished callbacks
-            if log_message == "Simulation {} has finished.".format(self.simulation_id):
+            if log_message == f"Simulation {self.simulation_id} complete":
                 for p in self.__on_simulation_complete_callbacks:
                     p(self)
                 self._running_or_paused = False
