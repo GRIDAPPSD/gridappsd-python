@@ -37,8 +37,9 @@
 # PACIFIC NORTHWEST NATIONAL LABORATORY operated by BATTELLE for the
 # UNITED STATES DEPARTMENT OF ENERGY under Contract DE-AC05-76RL01830
 # -------------------------------------------------------------------------------
-
 DEFAULT_FNCS_LOCATION = 'tcp://localhost:5570'
+
+BASE_TOPIC = '/topic/goss.gridappsd'
 FNCS_BASE_INPUT_TOPIC = '/topic/goss.gridappsd.simulation.input'
 FNCS_BASE_OUTPUT_TOPIC = '/topic/goss.gridappsd.simulation.output'
 BASE_SIMULATION_TOPIC = '/topic/goss.gridappsd.simulation'
@@ -140,8 +141,11 @@ def application_output_topic(application_id, simulation_id):
     :return: str: Topic to subscribe to for application specific output.
     """
     assert application_id, "application_id cannot be empty"
-    assert simulation_id, "simulation_id cannot be empty"
-    return "{}.{}.{}.output".format(BASE_SIMULATION_TOPIC, application_id, simulation_id)
+    #assert simulation_id, "simulation_id cannot be empty"
+    if simulation_id is None:
+        return "{}.{}.output".format(BASE_TOPIC, application_id)
+    else:
+        return "{}.{}.{}.output".format(BASE_SIMULATION_TOPIC, application_id, simulation_id)
 
 
 def simulation_output_topic(simulation_id):
