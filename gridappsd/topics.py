@@ -63,6 +63,7 @@ REQUEST_SIMULATION_STATUS = ".".join((PROCESS_PREFIX, "request.status.simulation
 REQUEST_SIMULATION = ".".join((PROCESS_PREFIX, "request.simulation"))
 
 REQUEST_POWERGRID_DATA = ".".join((REQUEST_DATA, "powergridmodel"))
+REQUEST_TIMESERIES_DATA = ".".join((REQUEST_DATA, "timeseries"))
 
 REQUEST_REGISTER_APP = ".".join((PROCESS_PREFIX, "request.app.remote.register"))
 REQUEST_APP_START = ".".join((PROCESS_PREFIX, "request.app.start"))
