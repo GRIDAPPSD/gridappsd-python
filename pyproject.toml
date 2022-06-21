@@ -29,10 +29,10 @@ register_app = 'gridappsd.register_app:main'
 
 [tool.poetry.dependencies]
 python = "^3.7"
-"stomp.py" = "6.0.0"
 PyYAML = "5.3"
 pytz = "2019.3"
 dateutils = "0.6.7"
+"stomp.py" = "^8.0.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"
