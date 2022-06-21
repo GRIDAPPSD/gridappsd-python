@@ -51,8 +51,10 @@ class DistributedAgent:
     def connect(self):
         if self.upstream_message_bus is not None:
             self.upstream_message_bus.connect()
-        self.downstream_message_bus.connect()
-
+        if self.downstream_message_bus is not None:
+            self.downstream_message_bus.connect()
+        if self.downstream_message_bus is None and self.upstream_message_bus is None:
+            raise ValueError("Either upstream or downstream bus must be specified!")
         self.subscribe_to_measurement()
 
     def subscribe_to_measurement(self):
