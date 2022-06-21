@@ -32,7 +32,7 @@ python = "^3.7"
 PyYAML = "5.3"
 pytz = "2019.3"
 dateutils = "0.6.7"
-stomp-py = "^8.0.1"
+stomp-py = "6.0.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"
