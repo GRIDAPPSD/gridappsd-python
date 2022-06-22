@@ -86,7 +86,7 @@ jobs:
           today=$(date +'%Y%m%d')
 
           new_version="${versionarr[0]}.${versionarr[1]}.$today"
-          poetry version new_version
+          poetry version $new_version
           poetry version prerelease
 
           tag_in_question="v$(poetry version --short)"
