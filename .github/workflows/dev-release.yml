@@ -14,8 +14,7 @@ env:
   LANG: en_US.utf-8
   LC_ALL: en_US.utf-8
   PYTHON_VERSION: '3.8'
-  PROJECT_NAME: test-release-actions
-  RUNS_ON: ubuntu-20.04
+  RUNS_ON: ubuntu-latest
 
 jobs:
 
