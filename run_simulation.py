@@ -1,6 +1,5 @@
 import json
 import logging
-from pprint import pprint
 import sys
 import os
 from time import sleep
@@ -9,7 +8,7 @@ from stomp.exception import ConnectFailedException
 
 from gridappsd import GridAPPSD, topics as t
 from gridappsd.simulation import Simulation
-# from measureables import get_sensor_config
+
 
 logging.basicConfig(level=logging.DEBUG)
 _log = logging.getLogger(__name__)
@@ -47,6 +46,9 @@ import time, datetime
 start_time = time.mktime(datetime.datetime.today().timetuple())
 
 try:
+    os.environ['GRIDAPPSD_USER'] = 'system'
+    os.environ['GRIDAPPSD_PASSWORD'] = 'manager'
+    os.environ['GRIDAPPSD_ADDRESS'] = 'gridappsd'
     gapps = GridAPPSD(goss_log_level=logging.INFO)
 except ConnectFailedException:
     print("Failed to connect, possible system is not running or login invalid!")
