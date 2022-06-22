@@ -91,7 +91,7 @@ jobs:
 
           tag_in_question="v$(poetry version --short)"
 
-          while [[ ! $(git tag -l "$tag_in_question" = '' ]]
+          while [[ ! $(git tag -l "$tag_in_question") = '' ]]
           do
             poetry version prerelease
             tag_in_question="v$(poetry version --short)"
