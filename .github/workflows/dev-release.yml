@@ -97,11 +97,11 @@ jobs:
             tag_in_question="v$(poetry version --short)"
           loop
 
-          NEW_TAG=$tag_in_question
+          # NEW_TAG=$tag_in_question
 
           # Finally because we want to be able to use the variable in later
           # steps we set a NEW_TAG environmental variable
-          echo "NEW_TAG=$(echo ${NEW_TAG})" >> $GITHUB_ENV
+          #echo "NEW_TAG=$(echo ${NEW_TAG})" >> $GITHUB_ENV
 
       #---------------------------------------------------------------
       # create build artifacts to be included as part of release
@@ -117,5 +117,6 @@ jobs:
           generateReleaseNotes: true
           commit: ${{ github.ref }}
           prerelease: true
-          tag: ${{ env.NEW_TAG }}
+          tag: "v$(poetry version --short)" 
+          # ${{ env.NEW_TAG }}
           token: ${{ secrets.GITHUB_TOKEN }}
