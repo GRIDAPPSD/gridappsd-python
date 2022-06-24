@@ -89,7 +89,7 @@ jobs:
           poetry version $new_version
           poetry version prerelease
 
-          tag_in_question="v$(poetry version --short)"
+          NEW_TAG="v$(poetry version --short)"
           echo "NEW_TAG=$(echo ${NEW_TAG})" >> $GITHUB_ENV
 
 #           while [[ ! $(git tag -l "$tag_in_question") = '' ]]
