@@ -117,6 +117,6 @@ jobs:
           generateReleaseNotes: true
           commit: ${{ github.ref }}
           prerelease: true
-          tag: "v$(poetry version --short)" 
+          tag: ${{ "v$(poetry version --short)" }}
           # ${{ env.NEW_TAG }}
           token: ${{ secrets.GITHUB_TOKEN }}
