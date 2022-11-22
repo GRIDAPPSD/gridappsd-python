@@ -1,5 +1,11 @@
+import cim.data_profile as cim
+
 from abc import abstractmethod
 
+from cim.loaders import Parameter, ConnectionParameters
+from cim.loaders.gridappsd import GridappsdConnection, get_topology_response
+from cim.models import SwitchArea, SecondaryArea, DistributedModel
+from dataclasses import dataclass, field
 from gridappsd.field_interface.gridappsd_field_bus import GridAPPSDMessageBus
 from gridappsd.field_interface.interfaces import MessageBusDefinition
 # from field_interface.volttron_field_bus import VolttronMessageBus
@@ -24,6 +30,8 @@ class DistributedAgent:
         self.downstream_message_bus = None
         self.simulation_id = simulation_id
         self.context = None
+        self.params = ConnectionParameters()
+        self.connection = GridappsdConnection(self.params)
 
         if upstream_message_bus_def is not None:
             if upstream_message_bus_def.is_ot_bus:
@@ -39,9 +47,9 @@ class DistributedAgent:
 
         # self.context = ContextManager.get(self.feeder_id, self.area_id)
 
-        if agent_dict is not None:
-            self.addressable_equipments = agent_dict['addressable_equipment']
-            self.unaddressable_equipments = agent_dict['unaddressable_equipment']
+        #if agent_dict is not None:
+        #    self.addressable_equipments = agent_dict['addressable_equipment']
+        #    self.unaddressable_equipments = agent_dict['unaddressable_equipment']
 
     @classmethod
     def from_feeder(cls, feeder_id, area_id):
@@ -108,10 +116,10 @@ class FeederAgent(DistributedAgent):
         super(FeederAgent, self).__init__(upstream_message_bus_def,
                                           downstream_message_bus_def,
                                           feeder_dict, simulation_id)
-
+        
         if feeder_dict is not None:
-            self.feeder_id = feeder_dict['feeder_id']
-            self.switch_areas = feeder_dict['switch_areas']
+            feeder = cim.Feeder(mRID=downstream_message_bus_def.id)
+            self.feeder_area = DistributedModel(connection=self.connection, feeder=feeder, topology_response=feeder_dict)
 
     def on_measurement(self, peer, sender, bus, topic, headers, message) -> None:
         pass
@@ -121,13 +129,13 @@ class SwitchAreaAgent(DistributedAgent):
 
     def __init__(self, upstream_message_bus_def: MessageBusDefinition, downstream_message_bus_def: MessageBusDefinition,
                  switch_area_dict=None, simulation_id=None):
-        super(SwitchAreaAgent, self).__init__(upstream_message_bus_def, downstream_message_bus_def,
+        DistributedAgent.__init__(self,upstream_message_bus_def, downstream_message_bus_def,
                                               switch_area_dict, simulation_id)
-
+        #SwitchArea.__init__(self,downstream_message_bus_def.id)
+        
         if switch_area_dict is not None:
-            self.boundary_switches = switch_area_dict['boundary_switches']
-            self.secondary_areas = switch_area_dict['secondary_areas']
-            self.connectivity_node = switch_area_dict['connectivity_node']
+            self.switch_area = SwitchArea(downstream_message_bus_def.id, self.connection)
+            self.switch_area.initialize_switch_area(switch_area_dict)
 
     def on_measurement(self, peer, sender, bus, topic, headers, message) -> None:
         pass
@@ -141,8 +149,8 @@ class SecondaryAreaAgent(DistributedAgent):
                                                  secondary_area_dict, simulation_id)
 
         if secondary_area_dict is not None:
-            self.distribution_transformer = secondary_area_dict['distribution_transformer']
-            self.connectivity_node = secondary_area_dict['connectivity_node']
+            self.secondary_area = SecondaryArea(downstream_message_bus_def.id, self.connection)
+            self.secondary_area.initialize_secondary_area(secondary_area_dict)
 
     def on_measurement(self, peer, sender, bus, topic, headers, message) -> None:
         pass
