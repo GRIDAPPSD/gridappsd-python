@@ -119,7 +119,7 @@ class FeederAgent(DistributedAgent):
         
         if feeder_dict is not None:
             feeder = cim.Feeder(mRID=downstream_message_bus_def.id)
-            self.feeder_area = DistributedModel(connection=self.connection, feeder=feeder, topology_response=feeder_dict)
+            self.feeder_area = DistributedModel(connection=self.connection, feeder=feeder, topology=feeder_dict)
 
     def on_measurement(self, peer, sender, bus, topic, headers, message) -> None:
         pass

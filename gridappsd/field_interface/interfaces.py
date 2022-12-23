@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from enum import Enum
 import logging
 from os import PathLike
@@ -25,10 +26,12 @@ class SerializationProtocol(Enum):
 
 
 class ConnectionType(Enum):
-    CONNECTION_TYPE_VIP = "VIP"
-    CONNECTION_TYPE_WS = "WS"
-    CONNECTION_TYPE_HTTP = "HTTP"
-    CONNECTION_TYPE_TCP = "TCP"
+    # VOLTTRON based connection
+    CONNECTION_TYPE_VOLTTRON = "VIP"
+    # Web Socket
+    # CONNECTION_TYPE_WS = "WS"
+    # CONNECTION_TYPE_HTTP = "HTTP"
+    # CONNECTION_TYPE_TCP = "TCP"
     CONNECTION_TYPE_GRIDAPPSD = "CONNECTION_TYPE_GRIDAPPSD"
 
 
@@ -59,6 +62,8 @@ class ProtocolTransformer(ABC):
         pass
 
 
+
+@dataclass
 class MessageBusDefinition:
     """
     A `MessageBusDefinition` class is used to define how to connect to the

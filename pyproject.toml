@@ -25,6 +25,7 @@ packages = [
 # Add things in the form
 # myscript = 'my_package:main'
 register_app = 'gridappsd.register_app:main'
+gridappsd-cli = 'gridappsd.cli:_main'
 
 
 [tool.poetry.dependencies]
@@ -33,13 +34,19 @@ PyYAML = "^6.0"
 pytz = "^2022.7"
 dateutils = "^0.6.7"
 stomp-py = "6.0"
+#gridappsd-cim-profile = {path = "/repos/gridappsd-cim-profile"}
+# gridappsd-cim-profile = "/repos/gridappsd-cim-profile/dist/gridappsd_cim_profile-0.2.0-py3-none-any.whl"
+# gridappsd-cim-profile = {path = "/repos/gridappsd-cim-profile/dist/gridappsd_cim_profile-0.2.0-py3-none-any.whl"}
+# gridappsd-cim-profile = {path = "../gridappsd-cim-profile"}
 
-[tool.poetry.dev-dependencies]
+
+[tool.poetry.group.dev.dependencies]
 pytest = "^6.2.2"
 pytest-html = "^3.1.1"
 mock = "^4.0.3"
 docker = "^4.4.4"
+yapf = "^0.32.0"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.2.0"]
 build-backend = "poetry.core.masonry.api"

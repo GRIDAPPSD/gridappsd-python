@@ -35,7 +35,9 @@ logging.getLogger("docker.utils.config").setLevel(logging.INFO)
 logging.getLogger("docker.auth").setLevel(logging.INFO)
 
 
-STOP_CONTAINER_AFTER_TEST = os.environ.get('GRIDAPPSD_STOP_CONTAINERS_AFTER_TESTS', True)
+STOP_CONTAINER_AFTER_TEST = os.environ.get('GRIDAPPSD_STOP_CONTAINERS_AFTER_TESTS', False)
+os.environ['GRIDAPPSD_USER'] = 'system'
+os.environ['GRIDAPPSD_PASSWORD'] = 'manager'
 
 
 @pytest.fixture(scope="module")

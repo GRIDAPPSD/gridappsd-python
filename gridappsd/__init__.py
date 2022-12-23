@@ -43,10 +43,15 @@ The :mod:`gridappsd` contains a connection class :class:`gridappsd.GridAPPSD` fo
 main GridAPPSD executable.
 
 """
-from enum import Enum
+import pathlib
+import typing
 
-from . goss import GOSS
-from . utils import ProcessStatusEnum
-from . gridappsd import GridAPPSD
-from . difference_builder import DifferenceBuilder
-from . app_registration import ApplicationController
+StrPath = typing.Union[str, pathlib.Path]
+
+from gridappsd.goss import GOSS
+from gridappsd.utils import ProcessStatusEnum
+from gridappsd.gridappsd import GridAPPSD
+from gridappsd.difference_builder import DifferenceBuilder
+from gridappsd.app_registration import ApplicationController
+
+
