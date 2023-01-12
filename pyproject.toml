@@ -29,16 +29,12 @@ gridappsd-cli = 'gridappsd.cli:_main'
 
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = ">=3.8,<4.0"
 PyYAML = "^6.0"
 pytz = "^2022.7"
 dateutils = "^0.6.7"
-stomp-py = "6.0"
-#gridappsd-cim-profile = {path = "/repos/gridappsd-cim-profile"}
-# gridappsd-cim-profile = "/repos/gridappsd-cim-profile/dist/gridappsd_cim_profile-0.2.0-py3-none-any.whl"
-# gridappsd-cim-profile = {path = "/repos/gridappsd-cim-profile/dist/gridappsd_cim_profile-0.2.0-py3-none-any.whl"}
-# gridappsd-cim-profile = {path = "../gridappsd-cim-profile"}
-
+gridappsd-cim-profile = "^0.0.1a2"
+stomp-py = "6.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^6.2.2"
