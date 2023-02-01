@@ -2,10 +2,12 @@ import cimlab.data_profile.cimext_2022 as cim
 
 from abc import abstractmethod
 
+from dataclasses import dataclass, field
+
 from cimlab.loaders import Parameter, ConnectionParameters
 from cimlab.loaders.gridappsd import GridappsdConnection, get_topology_response
 from cimlab.models import SwitchArea, SecondaryArea, DistributedModel
-from dataclasses import dataclass, field
+
 from gridappsd.field_interface.gridappsd_field_bus import GridAPPSDMessageBus
 from gridappsd.field_interface.interfaces import MessageBusDefinition
 # from field_interface.volttron_field_bus import VolttronMessageBus
@@ -13,18 +15,36 @@ from gridappsd import topics
 
 from gridappsd.field_interface.context import ContextManager
 
+class CimBase:
+    __cim__ = None
 
-class DistributedAgent:
+    def __init__(self, cim_profile: str = "rc4_2021", **kwargs):
+        """Allow customized cim profile versioning for reuse and customization"""
+
+        import importlib
+        CimBase.__cim__ = importlib.import_module(f'cimlab.data_profile.{cim_profile}')
+        self.__cim__ = CimBase.__cim__
+
+    @property
+    def cim():
+        return self.__cim__
+        
+        
+
+
+class DistributedAgent(CimBase):
 
     def __init__(self,
                  upstream_message_bus_def: MessageBusDefinition,
                  downstream_message_bus_def: MessageBusDefinition,
                  agent_dict=None,
-                 simulation_id=None):
+                 simulation_id=None,
+                 cim_profile: str = None):
         """
         Creates a DistributedAgent object that connects to the specified message
         buses and gets context based on feeder id and area id.
         """
+        super().__init__(cim_profile)
 
         self.upstream_message_bus = None
         self.downstream_message_bus = None
@@ -118,8 +138,10 @@ class FeederAgent(DistributedAgent):
                                           feeder_dict, simulation_id)
         
         if feeder_dict is not None:
-            feeder = cim.Feeder(mRID=downstream_message_bus_def.id)
-            self.feeder_area = DistributedModel(connection=self.connection, feeder=feeder, topology=feeder_dict)
+            feeder = self.cim.Feeder(mRID=downstream_message_bus_def.id)
+
+            self.feeder_area = DistributedModel(connection=self.connection, feeder=feeder, topology_response=feeder_dict)
+
 
     def on_measurement(self, peer, sender, bus, topic, headers, message) -> None:
         pass
