@@ -1,10 +1,10 @@
-import cim.data_profile as cim
+import cimlab.data_profile.cimext_2022 as cim
 
 from abc import abstractmethod
 
-from cim.loaders import Parameter, ConnectionParameters
-from cim.loaders.gridappsd import GridappsdConnection, get_topology_response
-from cim.models import SwitchArea, SecondaryArea, DistributedModel
+from cimlab.loaders import Parameter, ConnectionParameters
+from cimlab.loaders.gridappsd import GridappsdConnection, get_topology_response
+from cimlab.models import SwitchArea, SecondaryArea, DistributedModel
 from dataclasses import dataclass, field
 from gridappsd.field_interface.gridappsd_field_bus import GridAPPSDMessageBus
 from gridappsd.field_interface.interfaces import MessageBusDefinition

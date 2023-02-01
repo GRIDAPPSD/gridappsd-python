@@ -102,7 +102,7 @@ class MessageBusDefinition:
             if k not in config:
                 raise ValueError(f"Missing keys for connection {k}")
 
-        definition = MessageBusDefinition()
+        definition = MessageBusDefinition(config[required[0]], config[required[1]], config[required[2]])
         for k in config:
             if k == "connection_args":
                 definition.conneciton_args = dict()
