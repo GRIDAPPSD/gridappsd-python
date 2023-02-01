@@ -12,6 +12,7 @@ from gridappsd.field_interface.interfaces import MessageBusDefinition
 from gridappsd import topics
 
 from gridappsd.field_interface.context import ContextManager
+from cimlab.data_profile import CIM_PROFILE
 
 
 class DistributedAgent:
@@ -19,6 +20,7 @@ class DistributedAgent:
     def __init__(self,
                  upstream_message_bus_def: MessageBusDefinition,
                  downstream_message_bus_def: MessageBusDefinition,
+                 cim_profile : CIM_PROFILE,
                  agent_dict=None,
                  simulation_id=None):
         """
@@ -32,7 +34,8 @@ class DistributedAgent:
         self.context = None
         self.params = ConnectionParameters()
         self.connection = GridappsdConnection(self.params)
-
+        self.connection.set_cim_profile(cim_profile)
+        
         if upstream_message_bus_def is not None:
             if upstream_message_bus_def.is_ot_bus:
                 self.upstream_message_bus = GridAPPSDMessageBus(upstream_message_bus_def)
@@ -112,9 +115,11 @@ class FeederAgent(DistributedAgent):
 
     def __init__(self, upstream_message_bus_def: MessageBusDefinition,
                  downstream_message_bus_def: MessageBusDefinition,
+                 cim_profile : CIM_PROFILE,
                  feeder_dict=None, simulation_id=None):
         super(FeederAgent, self).__init__(upstream_message_bus_def,
                                           downstream_message_bus_def,
+                                          cim_profile,
                                           feeder_dict, simulation_id)
         
         if feeder_dict is not None:
@@ -127,10 +132,15 @@ class FeederAgent(DistributedAgent):
 
 class SwitchAreaAgent(DistributedAgent):
 
-    def __init__(self, upstream_message_bus_def: MessageBusDefinition, downstream_message_bus_def: MessageBusDefinition,
+    def __init__(self, upstream_message_bus_def: MessageBusDefinition, 
+                 downstream_message_bus_def: MessageBusDefinition,
+                 cim_profile : CIM_PROFILE,
                  switch_area_dict=None, simulation_id=None):
-        DistributedAgent.__init__(self,upstream_message_bus_def, downstream_message_bus_def,
-                                              switch_area_dict, simulation_id)
+        
+        super(SwitchAreaAgent, self).__init__(upstream_message_bus_def, 
+                                  downstream_message_bus_def,
+                                  cim_profile,
+                                  switch_area_dict, simulation_id)
         #SwitchArea.__init__(self,downstream_message_bus_def.id)
         
         if switch_area_dict is not None:
@@ -143,9 +153,14 @@ class SwitchAreaAgent(DistributedAgent):
 
 class SecondaryAreaAgent(DistributedAgent):
 
-    def __init__(self, upstream_message_bus_def: MessageBusDefinition, downstream_message_bus_def: MessageBusDefinition,
+    def __init__(self, upstream_message_bus_def: MessageBusDefinition, 
+                 downstream_message_bus_def: MessageBusDefinition,
+                 cim_profile : CIM_PROFILE,
                  secondary_area_dict=None, simulation_id=None):
-        super(SecondaryAreaAgent, self).__init__(upstream_message_bus_def, downstream_message_bus_def,
+        
+        super(SecondaryAreaAgent, self).__init__(upstream_message_bus_def, 
+                                                 downstream_message_bus_def,
+                                                 cim_profile,
                                                  secondary_area_dict, simulation_id)
 
         if secondary_area_dict is not None:
