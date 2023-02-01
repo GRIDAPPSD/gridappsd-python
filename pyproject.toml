@@ -33,8 +33,8 @@ python = ">=3.7.9,<4.0"
 PyYAML = "^6.0"
 pytz = "^2022.7"
 dateutils = "^0.6.7"
-gridappsd-cim-profile={url="https://github.com/GRIDAPPSD/gridappsd-cim-profile/releases/download/v0.7.20230120180831a0/gridappsd_cim_profile-0.7.20230120180831a0-py3-none-any.whl"}
-#gridappsd-cim-profile = "^0.6.0"
+#gridappsd-cim-profile={url="https://github.com/GRIDAPPSD/gridappsd-cim-profile/releases/download/v0.7.20230120180831a0/gridappsd_cim_profile-0.7.20230120180831a0-py3-none-any.whl"}
+gridappsd-cim-profile = "^0.8"
 stomp-py = "6.0.0"
 
 [tool.poetry.group.dev.dependencies]
