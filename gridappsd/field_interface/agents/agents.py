@@ -1,4 +1,4 @@
-import cim.data_profile as cim
+import cimlab.data_profile.cimext_2022 as cim
 
 from abc import abstractmethod
 
