@@ -247,7 +247,7 @@ class Simulation:
         _log.debug("Resuming simulation. Will pause after {} seconds".format(
             pause_in))
         command = dict(command="resumePauseAt", input=dict(pauseIn=pause_in))
-        self._gapps.send(simulation_input_topic(self.simulation_id),
+        self._gapps.send(t.simulation_input_topic(self.simulation_id),
                          json.dumps(command))
         self._running_or_paused = True
 
