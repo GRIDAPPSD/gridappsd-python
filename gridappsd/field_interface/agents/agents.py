@@ -96,7 +96,6 @@ class DistributedAgent():
         print(message)
 
     def on_simulation_output(self, headers, message):
-        print('in simulation output')
         self.on_measurement(peer=None, sender=None, bus=None, topic=None, headers=headers, message=message)
 
 
