@@ -1,23 +1,18 @@
-import cimlab.data_profile.cimext_2022 as cim
-
 from abc import abstractmethod
 from dataclasses import dataclass, field
 import importlib
 
 from gridappsd.field_interface.context import ContextManager
-
-from cimlab.loaders import Parameter, ConnectionParameters
-from cimlab.loaders.gridappsd import GridappsdConnection, get_topology_response
-from cimlab.models import SwitchArea, SecondaryArea, DistributedModel
-
 from gridappsd.field_interface.gridappsd_field_bus import GridAPPSDMessageBus
 from gridappsd.field_interface.interfaces import MessageBusDefinition
 
-import cimlab.data_profile.cimext_2022 as cim
-from cimlab.loaders import Parameter, ConnectionParameters
+from cimlab.loaders import ConnectionParameters
 from cimlab.loaders import gridappsd
-from cimlab.loaders.gridappsd import GridappsdConnection, get_topology_response
-from cimlab.models import SwitchArea, SecondaryArea, DistributedModel
+from cimlab.loaders.gridappsd import GridappsdConnection
+import cimlab.models.distributed_model
+from cimlab.models.distributed_model import DistributedModel
+from cimlab.models.secondary_area import SecondaryArea
+from cimlab.models.switch_area import SwitchArea
 
 
 cim = None
@@ -37,8 +32,7 @@ class DistributedAgent():
                  upstream_message_bus_def: MessageBusDefinition,
                  downstream_message_bus_def: MessageBusDefinition,
                  agent_dict=None,
-                 simulation_id=None,
-                 cim_profile: str = None):
+                 simulation_id=None):
         """
         Creates a DistributedAgent object that connects to the specified message
         buses and gets context based on feeder id and area id.
