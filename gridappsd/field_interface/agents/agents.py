@@ -1,8 +1,10 @@
+from typing import Dict
 import cimlab.data_profile.cimext_2022 as cim
 
 from abc import abstractmethod
 from dataclasses import dataclass, field
 import importlib
+import logging
 
 from gridappsd.field_interface.context import ContextManager
 
@@ -24,13 +26,15 @@ cim = None
 sparql = None
 
 
+_log = logging.getLogger(__name__)
+
 def set_cim_profile(cim_profile):
     global cim
     cim = importlib.import_module('cimlab.data_profile.' + cim_profile)
     gridappsd.set_cim_profile(cim_profile)
 
       
-class DistributedAgent():
+class DistributedAgent:
 
 
     def __init__(self,
@@ -43,7 +47,7 @@ class DistributedAgent():
         Creates a DistributedAgent object that connects to the specified message
         buses and gets context based on feeder id and area id.
         """
-
+        _log.debug(f"Creating DistributedAgent: {self.__class__.__name__}")
         self.upstream_message_bus = None
         self.downstream_message_bus = None
         self.simulation_id = simulation_id
@@ -88,15 +92,15 @@ class DistributedAgent():
             self.downstream_message_bus.subscribe(f"fieldbus/{self.downstream_message_bus.id}", self.on_measurement)
         else:
             topic = f"/topic/goss.gridappsd.field.simulation.output.{self.simulation_id}.{self.downstream_message_bus.id}"
-            print('subscribing to sim_output on topic ' + topic)
+            _log.debug(f"subscribing to sim_output on topic {topic}")
             self.downstream_message_bus.subscribe(topic,
                                                   self.on_simulation_output)
 
-    def on_measurement(self, peer, sender, bus, topic, headers, message) -> None:
-        print(message)
+    def on_measurement(self, headers: Dict, message) -> None:
+        raise NotImplementedError(f"{self.__class__.__name__} must be overriden in child class")
 
     def on_simulation_output(self, headers, message):
-        self.on_measurement(peer=None, sender=None, bus=None, topic=None, headers=headers, message=message)
+        self.on_measurement(headers=headers, message=message)
 
 
 '''  TODO this has not been implemented yet, so we are commented them out for now.
@@ -139,9 +143,6 @@ class FeederAgent(DistributedAgent):
 
             self.feeder_area = DistributedModel(connection=self.connection, feeder=feeder, topology=feeder_dict)
 
-    def on_measurement(self, peer, sender, bus, topic, headers, message) -> None:
-        pass
-
 
 class SwitchAreaAgent(DistributedAgent):
 
@@ -149,7 +150,7 @@ class SwitchAreaAgent(DistributedAgent):
                  downstream_message_bus_def: MessageBusDefinition,
                  switch_area_dict=None, simulation_id=None):
         
-        super(SwitchAreaAgent, self).__init__(upstream_message_bus_def, 
+        super().__init__(upstream_message_bus_def, 
                                   downstream_message_bus_def,
                                   switch_area_dict, simulation_id)
         
@@ -157,26 +158,20 @@ class SwitchAreaAgent(DistributedAgent):
             self.switch_area = SwitchArea(downstream_message_bus_def.id, self.connection)
             self.switch_area.initialize_switch_area(switch_area_dict)
 
-    def on_measurement(self, peer, sender, bus, topic, headers, message) -> None:
-        pass
-
-
+    
 class SecondaryAreaAgent(DistributedAgent):
 
     def __init__(self, upstream_message_bus_def: MessageBusDefinition, 
                  downstream_message_bus_def: MessageBusDefinition,
                  secondary_area_dict=None, simulation_id=None):
         
-        super(SecondaryAreaAgent, self).__init__(upstream_message_bus_def, 
+        super().__init__(upstream_message_bus_def, 
                                                  downstream_message_bus_def,
                                                  secondary_area_dict, simulation_id)
 
         if secondary_area_dict is not None:
             self.secondary_area = SecondaryArea(downstream_message_bus_def.id, self.connection)
             self.secondary_area.initialize_secondary_area(secondary_area_dict)
-
-    def on_measurement(self, peer, sender, bus, topic, headers, message) -> None:
-        pass
 
 
 class CoordinatingAgent:
