@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gridappsd-python"
-version = "2.7.0"
+version = "2.7.2"
 description = "A GridAPPS-D Python Adapter"
 authors = [
     "C. Allwardt <3979063+craig8@users.noreply.github.com>",
@@ -34,7 +34,7 @@ PyYAML = "^6.0"
 pytz = "^2022.7"
 dateutils = "^0.6.7"
 #gridappsd-cim-profile={url="https://github.com/GRIDAPPSD/gridappsd-cim-profile/releases/download/v0.7.20230120180831a0/gridappsd_cim_profile-0.7.20230120180831a0-py3-none-any.whl"}
-gridappsd-cim-profile = "^0.8"
+gridappsd-cim-profile = "^0.8.20230202190144a0"
 stomp-py = "6.0.0"
 
 [tool.poetry.group.dev.dependencies]
