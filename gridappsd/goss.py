@@ -356,7 +356,7 @@ class CallbackRouter(object):
         self._thread.start()
 
     def run_callbacks(self):
-        _log.info("Starting thread queue")
+        _log.debug("Starting thread queue")
         while True:
             cb, hdrs, msg = self._queue_callerback.get()
             try:

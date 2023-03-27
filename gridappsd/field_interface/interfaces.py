@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
+import gridappsd.topics as t
 import logging
 from os import PathLike
 from pathlib import Path
@@ -164,194 +165,25 @@ class FieldMessageBus:
         pass
 
     @abstractmethod
-    def publish(self, data, topic: str = None):
+    def send(self, topic, data):
         """
         Publish device specific data to the concrete message bus.
-        """
-        pass
-
-    @abstractmethod
-    def disconnect(self):
-        """
-        Disconnect the device from the concrete message bus.
-        """
-        pass
-
-
-class SwitchAreaMessageBus:
-    def __init__(self, config: MessageBusDefinition):
-        self._devices = dict()
-        self._is_ot_bus = config.is_ot_bus
-        self._id = config.id
-
-    @property
-    def id(self):
-        return self._id
-
-    @property
-    def is_ot_bus(self):
-        return self._is_ot_bus
-
-    def add_device(self, device: "DeviceFieldInterface"):
-        self._devices[device.id] = device
-
-    def disconnect_device(self, id: str):
-        del self._devices[id]
-
-    @abstractmethod
-    def query_devices(self) -> dict:
-        pass
-
-    @abstractmethod
-    def is_connected(self) -> bool:
-        """
-        Is this object connected to the message bus
-        """
-        pass
-
-    @abstractmethod
-    def connect(self):
-        """
-        Connect to the concrete message bus that implements this interface.
-        """
-        pass
-
-    @abstractmethod
-    def subscribe(self, topic, callback):
-        pass
-
-    @abstractmethod
-    def unsubscribe(self, topic):
-        pass
-
-    @abstractmethod
-    def publish(self, data, topic: str = None):
-        """
-        Publish device specific data to the concrete message bus.
-        """
-        pass
-
-    @abstractmethod
-    def disconnect(self):
-        """
-        Disconnect the device from the concrete message bus.
-        """
-        pass
-
-
-class SecondaryMessageBus:
-    def __init__(self, config: MessageBusDefinition):
-        self._devices = dict()
-        self._is_ot_bus = config.is_ot_bus
-        self._id = config.id
-
-    @property
-    def id(self):
-        return self._id
-
-    @property
-    def is_ot_bus(self):
-        return self._is_ot_bus
-
-    def add_device(self, device: "DeviceFieldInterface"):
-        self._devices[device.id] = device
-
-    def disconnect_device(self, id: str):
-        del self._devices[id]
-
-    @abstractmethod
-    def query_devices(self) -> dict:
-        pass
-
-    @abstractmethod
-    def is_connected(self) -> bool:
-        """
-        Is this object connected to the message bus
-        """
-        pass
-
-    @abstractmethod
-    def connect(self):
-        """
-        Connect to the concrete message bus that implements this interface.
-        """
-        pass
-
-    @abstractmethod
-    def subscribe(self, topic, callback):
-        pass
-
-    @abstractmethod
-    def unsubscribe(self, topic):
-        pass
-
-    @abstractmethod
-    def publish(self, data, topic: str = None):
-        """
-        Publish device specific data to the concrete message bus.
-        """
-        pass
-
-    @abstractmethod
-    def disconnect(self):
-        """
-        Disconnect the device from the concrete message bus.
         """
         pass
     
-
-class FeederMessageBus:
-    def __init__(self, config: MessageBusDefinition):
-        self._devices = dict()
-        self._is_ot_bus = config.is_ot_bus
-        self._id = config.id
-
-    @property
-    def id(self):
-        return self._id
-
-    @property
-    def is_ot_bus(self):
-        return self._is_ot_bus
-
-    def add_device(self, device: "DeviceFieldInterface"):
-        self._devices[device.id] = device
-
-    def disconnect_device(self, id: str):
-        del self._devices[id]
-
     @abstractmethod
-    def query_devices(self) -> dict:
-        pass
-
+    def get_response(self, topic, message, timeout):
+        """
+        Sends a message on a specific queue, waits and returns the response
+        """
+        
     @abstractmethod
-    def is_connected(self) -> bool:
+    def get_agent_response(self, agent_id, message, timeout):
         """
-        Is this object connected to the message bus
+        Sends a message on a specific agent's request queue, waits and returns the response
         """
-        pass
-
-    @abstractmethod
-    def connect(self):
-        """
-        Connect to the concrete message bus that implements this interface.
-        """
-        pass
-
-    @abstractmethod
-    def subscribe(self, topic, callback):
-        pass
-
-    @abstractmethod
-    def unsubscribe(self, topic):
-        pass
-
-    @abstractmethod
-    def publish(self, data, topic: str = None):
-        """
-        Publish device specific data to the concrete message bus.
-        """
-        pass
+        topic = "{}.request.{}.{}".format(t.BASE_FIELD_QUEUE,self.id, agent_id)
+        self.get_response(topic, message, timeout)
 
     @abstractmethod
     def disconnect(self):
@@ -361,8 +193,6 @@ class FeederMessageBus:
         pass
 
 
-
- 
 class MessageBusDefinitions:
     def __init__(
         self,

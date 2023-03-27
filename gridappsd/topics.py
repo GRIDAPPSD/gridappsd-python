@@ -44,6 +44,10 @@ FNCS_BASE_INPUT_TOPIC = '/topic/goss.gridappsd.simulation.input'
 FNCS_BASE_OUTPUT_TOPIC = '/topic/goss.gridappsd.simulation.output'
 BASE_SIMULATION_TOPIC = '/topic/goss.gridappsd.simulation'
 BASE_SIMULATION_LOG_TOPIC = "/topic/goss.gridappsd.simulation.log"
+BASE_FIELD_TOPIC = '/topic/goss.gridappsd.field'
+
+BASE_FIELD_QUEUE = 'goss.gridappsd.field'
+REGISTER_AGENT_QUEUE = 'goss.gridappsd.field.register.agent'
 
 BLAZEGRAPH = "/queue/goss.gridappsd.process.request.data.powergridmodel"
 # https://gridappsd.readthedocs.io/en/latest/using_gridappsd/index.html#querying-logs
@@ -68,7 +72,6 @@ REQUEST_TIMESERIES_DATA = ".".join((REQUEST_DATA, "timeseries"))
 REQUEST_REGISTER_APP = ".".join((PROCESS_PREFIX, "request.app.remote.register"))
 REQUEST_APP_START = ".".join((PROCESS_PREFIX, "request.app.start"))
 BASE_APPLICATION_HEARTBEAT = ".".join((BASE_TOPIC_PREFIX, "heartbeat"))
-
 
 def platform_log_topic():
     """ Utility method for getting the platform.log base topic
@@ -171,3 +174,57 @@ def simulation_log_topic(simulation_id):
     """https://gridappsd.readthedocs.io/en/latest/using_gridappsd/index.html#subscribing-to-logs
     """
     return "{}.{}".format(BASE_SIMULATION_LOG_TOPIC, simulation_id)
+
+def field_message_bus_topic(message_bus_id, app_id=None, agent_id=None):
+    """ Utility method for getting the publish/subscribe topic for a specific message bus.
+
+    :param message_bus_id:
+    :param app_id:
+    :param agent_id:
+    :return:
+    """
+    assert message_bus_id, "message_bus_id cannot be empty"
+    return "{}.{}.{}.{}".format(BASE_FIELD_TOPIC, message_bus_id, app_id, agent_id)
+
+def field_message_bus_app_topic(message_bus_id, app_id=None):
+    """ Utility method for getting the publish/subscribe topic for a specific message bus.
+
+    :param message_bus_id:
+    :param app_id:
+    :return:
+    """
+    assert message_bus_id, "message_bus_id cannot be empty"
+    return "{}.{}.{}".format(BASE_FIELD_TOPIC, message_bus_id, app_id)
+
+def field_message_bus_agent_topic(message_bus_id, agent_id=None):
+    """ Utility method for getting the publish/subscribe topic for a specific message bus.
+
+    :param message_bus_id:
+    :param agent_id:
+    :return:
+    """
+    assert message_bus_id, "message_bus_id cannot be empty"
+    return "{}.{}.{}".format(BASE_FIELD_TOPIC, message_bus_id, agent_id)
+
+def field_agent_request_queue(message_bus_id, agent_id):
+    """ Utility method for getting the request topic for a specific distributed agent
+
+    :param message_bus_id:
+    :param agent_id:
+    :return:
+    """
+    assert message_bus_id, "message_bus_id cannot be empty"
+    return "{}.request.{}.{}".format(BASE_FIELD_QUEUE, message_bus_id, agent_id)
+
+
+
+def context_request_queue(message_bus_id):
+    """ Utility method for getting the request topic for context manager
+
+    :param message_bus_id:
+    :return:
+    """
+    assert message_bus_id, "message_bus_id cannot be empty"
+    
+    return "{}.request.{}.{}".format(BASE_FIELD_QUEUE, message_bus_id, message_bus_id+'.context_manager')
+
