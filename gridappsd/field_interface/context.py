@@ -1,5 +1,7 @@
 from gridappsd.field_interface.interfaces import FieldMessageBus
+import dataclasses
 import gridappsd.topics as t
+import json
 
 
 
@@ -17,12 +19,9 @@ class LocalContext:
     @classmethod
     def get_context_by_message_bus(cls, downstream_message_bus: FieldMessageBus):
         """
-        return agents/devices based on upstream and/or downstream message bus as input
-        make message bus id a list
-        
-        based on filter return distributed agents for different applications as well 
+        return agents/devices based on downstream message bus as input
+
         """
-        
         request = {'request_type' : 'get_context',
                    'downstream_message_bus_id': downstream_message_bus.id,
                    'agents': True,

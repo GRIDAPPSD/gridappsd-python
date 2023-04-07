@@ -175,7 +175,7 @@ def simulation_log_topic(simulation_id):
     """
     return "{}.{}".format(BASE_SIMULATION_LOG_TOPIC, simulation_id)
 
-def field_message_bus_topic(message_bus_id, app_id=None, agent_id=None):
+def field_message_bus_topic(message_bus_id:str, app_id: str=None, agent_id: str=None):
     """ Utility method for getting the publish/subscribe topic for a specific message bus.
 
     :param message_bus_id:
@@ -184,7 +184,9 @@ def field_message_bus_topic(message_bus_id, app_id=None, agent_id=None):
     :return:
     """
     assert message_bus_id, "message_bus_id cannot be empty"
-    return "{}.{}.{}.{}".format(BASE_FIELD_TOPIC, message_bus_id, app_id, agent_id)
+    
+    return f"{BASE_FIELD_TOPIC}.{message_bus_id}.{app_id}.{agent_id}" 
+
 
 def field_message_bus_app_topic(message_bus_id, app_id=None):
     """ Utility method for getting the publish/subscribe topic for a specific message bus.
@@ -216,8 +218,6 @@ def field_agent_request_queue(message_bus_id, agent_id):
     assert message_bus_id, "message_bus_id cannot be empty"
     return "{}.request.{}.{}".format(BASE_FIELD_QUEUE, message_bus_id, agent_id)
 
-
-
 def context_request_queue(message_bus_id):
     """ Utility method for getting the request topic for context manager
 
@@ -228,3 +228,15 @@ def context_request_queue(message_bus_id):
     
     return "{}.request.{}.{}".format(BASE_FIELD_QUEUE, message_bus_id, message_bus_id+'.context_manager')
 
+def field_output_topic(message_bus_id, simulation_id=None):
+    """ Utility method for getting the field output topic for distributed agents to receive measurements on the given message bus.
+
+    :param message_bus_id:
+    :return: str: Topic to receive field measurements 
+    """
+    assert message_bus_id, "message_bus_id cannot be empty"
+    
+    if simulation_id is None:
+        return "{}.{}".format(BASE_FIELD_TOPIC, "output")
+    else:
+        return "{}.{}.{}.{}".format(BASE_FIELD_TOPIC,"simulation.output",simulation_id,message_bus_id)

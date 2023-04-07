@@ -1,6 +1,7 @@
 from gridappsd import GridAPPSD
 from gridappsd.field_interface.interfaces import FieldMessageBus
 from gridappsd.field_interface.interfaces import MessageBusDefinition
+from typing import Any
 
 
 class GridAPPSDMessageBus(FieldMessageBus):
@@ -36,7 +37,7 @@ class GridAPPSDMessageBus(FieldMessageBus):
     def unsubscribe(self, topic):
         pass
 
-    def send(self, topic, message):
+    def send(self, topic: str, message: Any):
         """
         Publish device specific data to the concrete message bus.
         """
@@ -50,13 +51,6 @@ class GridAPPSDMessageBus(FieldMessageBus):
         if self.gridappsd_obj is not None:
             return self.gridappsd_obj.get_response(topic, message, timeout)
         
-    def get_agent_response(self, topic, message, timeout=5):
-        """
-        Sends a message on a specific concrete queue, waits and returns the response
-        """
-        if self.gridappsd_obj is not None:
-            return self.gridappsd_obj.get_response(topic, message, timeout)
-
     def disconnect(self):
         """
         Disconnect the device from the concrete message bus.

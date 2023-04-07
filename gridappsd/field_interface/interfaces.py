@@ -165,9 +165,9 @@ class FieldMessageBus:
         pass
 
     @abstractmethod
-    def send(self, topic, data):
+    def send(self, topic, message):
         """
-        Publish device specific data to the concrete message bus.
+        Publish device specific message to the concrete message bus.
         """
         pass
     
@@ -177,7 +177,6 @@ class FieldMessageBus:
         Sends a message on a specific queue, waits and returns the response
         """
         
-    @abstractmethod
     def get_agent_response(self, agent_id, message, timeout):
         """
         Sends a message on a specific agent's request queue, waits and returns the response

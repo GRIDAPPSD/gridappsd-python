@@ -1,8 +1,10 @@
+import dataclasses
 from dataclasses import dataclass, field
+from datetime import datetime
 import importlib
+import json
 import logging
 from typing import Dict
-import uuid
 
 from cimlab.loaders import ConnectionParameters
 from cimlab.loaders import gridappsd
@@ -11,7 +13,8 @@ from cimlab.models import SwitchArea, SecondaryArea, DistributedModel
 
 from gridappsd.field_interface.context import LocalContext
 from gridappsd.field_interface.gridappsd_field_bus import GridAPPSDMessageBus
-from gridappsd.field_interface.interfaces import MessageBusDefinition
+from gridappsd.field_interface.interfaces import MessageBusDefinition,\
+    FieldMessageBus
 import gridappsd.topics as t 
 
 
@@ -25,6 +28,15 @@ def set_cim_profile(cim_profile):
     global cim
     cim = importlib.import_module('cimlab.data_profile.' + cim_profile)
     gridappsd.set_cim_profile(cim_profile)
+    
+
+@dataclass
+class AgentRegistrationDetails:
+    agent_id:str
+    app_id: str
+    description: str
+    upstream_message_bus_id: FieldMessageBus.id
+    downstream_message_bus_id: FieldMessageBus.id 
 
       
 class DistributedAgent:
@@ -53,7 +65,9 @@ class DistributedAgent:
         
         self.app_id = agent_config['app_id']
         self.description = agent_config['description']
-        self.agent_id = str(uuid.uuid4())
+        dt = datetime.now()
+        ts = datetime.timestamp(dt)
+        self.agent_id = "da_"+self.app_id+"_"+str(int(ts))
         self.agent_area_dict = agent_area_dict
         
 
@@ -97,9 +111,9 @@ class DistributedAgent:
 
     def subscribe_to_measurement(self):
         if self.simulation_id is None:
-            self.downstream_message_bus.subscribe(f"/topic/goss.gridappsd.field.output.{self.downstream_message_bus.id}", self.on_measurement)
+            self.downstream_message_bus.subscribe(t.field_output_topic(self.downstream_message_bus.id), self.on_measurement)
         else:
-            topic = f"/topic/goss.gridappsd.field.simulation.output.{self.simulation_id}.{self.downstream_message_bus.id}"
+            topic = t.field_output_topic(self.downstream_message_bus.id, self.simulation_id)
             _log.debug(f"subscribing to simulation output on topic {topic}")
             self.downstream_message_bus.subscribe(topic,
                                                   self.on_simulation_output)
@@ -116,7 +130,7 @@ class DistributedAgent:
         self.downstream_message_bus.subscribe(t.field_message_bus_app_topic(self.upstream_message_bus.id, self.app_id), self.on_upstream_message)
         
         _log.debug(f"Subscribing to message on agents topics: \n {t.field_message_bus_agent_topic(self.downstream_message_bus.id, self.agent_id)} \
-                                                            \n {t.field_message_bus_agent_topic(self.downstream_message_bus.id, self.agent_id)}")
+                                                            \n {t.field_message_bus_agent_topic(self.upstream_message_bus.id, self.agent_id)}")
         self.downstream_message_bus.subscribe(t.field_message_bus_agent_topic(self.downstream_message_bus.id, self.agent_id), self.on_downstream_message)
         self.downstream_message_bus.subscribe(t.field_message_bus_agent_topic(self.upstream_message_bus.id, self.agent_id), self.on_upstream_message)
         
@@ -149,12 +163,12 @@ class DistributedAgent:
         raise NotImplementedError(f"{self.__class__.__name__} must be overriden in child class")
     
     def get_registration_details(self):
-        return {'agent_id':str(self.agent_id),
-                'app_id':self.app_id,
-                'description':self.description,
-                'upstream_message_bus_id':self.upstream_message_bus.id,
-                'downstream_message_bus_id':self.downstream_message_bus.id
-            }
+        details = AgentRegistrationDetails(str(self.agent_id), 
+                                   self.app_id,
+                                   self.description,
+                                   self.upstream_message_bus.id,
+                                   self.downstream_message_bus.id)
+        return dataclasses.asdict(details)
     
             
 '''  TODO this has not been implemented yet, so we are commented them out for now.
