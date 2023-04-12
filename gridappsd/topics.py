@@ -228,15 +228,32 @@ def context_request_queue(message_bus_id):
     
     return "{}.request.{}.{}".format(BASE_FIELD_QUEUE, message_bus_id, message_bus_id+'.context_manager')
 
-def field_output_topic(message_bus_id, simulation_id=None):
-    """ Utility method for getting the field output topic for distributed agents to receive measurements on the given message bus.
-
+def field_output_topic(message_bus_id=None, simulation_id=None):
+    """ Utility method for getting the field output topic.
+    If message_bus_id is None, it returns topic used by centralized device interfaces to publish measurements.
+    If message_bus_id is not None, it returns topic used by distributed devices interfaces to publish measurements which is then subscribed by distributed agents. 
+    
     :param message_bus_id:
+    :param simulation_id
     :return: str: Topic to receive field measurements 
     """
-    assert message_bus_id, "message_bus_id cannot be empty"
     
     if simulation_id is None:
         return "{}.{}".format(BASE_FIELD_TOPIC, "output")
     else:
         return "{}.{}.{}.{}".format(BASE_FIELD_TOPIC,"simulation.output",simulation_id,message_bus_id)
+    
+def field_input_topic(message_bus_id=None, simulation_id=None):
+    """ Utility method for getting the field input topic.
+    If message_bus_id is None, it returns topic used by centralized device interfaces to subscribe to control commands.
+    If message_bus_id is not None, it returns topic used by distributed devices interfaces to subscribe to control commands. 
+    
+    :param message_bus_id:
+    :param simulation_id
+    :return: str: Topic to receive input control commands 
+    """
+    
+    if simulation_id is None:
+        return "{}.{}".format(BASE_FIELD_TOPIC, "input")
+    else:
+        return "{}.{}.{}.{}".format(BASE_FIELD_TOPIC,"simulation.input",simulation_id,message_bus_id)
