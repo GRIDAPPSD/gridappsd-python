@@ -1,9 +1,10 @@
-from gridappsd.field_interface.interfaces import MessageBusDefinition
-from gridappsd.field_interface.interfaces import FeederMessageBus
 from gridappsd import GridAPPSD
+from gridappsd.field_interface.interfaces import FieldMessageBus
+from gridappsd.field_interface.interfaces import MessageBusDefinition
+from typing import Any
 
 
-class GridAPPSDMessageBus(FeederMessageBus):
+class GridAPPSDMessageBus(FieldMessageBus):
     def __init__(self, definition: MessageBusDefinition):
         super(GridAPPSDMessageBus, self).__init__(definition)
         self._id = definition.id
@@ -36,12 +37,20 @@ class GridAPPSDMessageBus(FeederMessageBus):
     def unsubscribe(self, topic):
         pass
 
-    def publish(self, data, topic: str = None):
+    def send(self, topic: str, message: Any):
         """
         Publish device specific data to the concrete message bus.
         """
-        pass
-
+        if self.gridappsd_obj is not None:
+            self.gridappsd_obj.send(topic, message)
+            
+    def get_response(self, topic, message, timeout=5):
+        """
+        Sends a message on a specific concrete queue, waits and returns the response
+        """
+        if self.gridappsd_obj is not None:
+            return self.gridappsd_obj.get_response(topic, message, timeout)
+        
     def disconnect(self):
         """
         Disconnect the device from the concrete message bus.
