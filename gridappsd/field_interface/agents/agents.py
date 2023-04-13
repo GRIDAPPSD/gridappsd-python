@@ -7,9 +7,9 @@ from datetime import datetime
 from typing import Dict
 
 from cimgraph.loaders import ConnectionParameters, gridappsd
-from cimgraph.models import DistributedModel, SecondaryArea, SwitchArea
 from cimgraph.loaders.gridappsd import GridappsdConnection
-cimgraph.
+from cimgraph.models import DistributedModel, SecondaryArea, SwitchArea
+
 import gridappsd.topics as t
 from gridappsd.field_interface.context import LocalContext
 from gridappsd.field_interface.gridappsd_field_bus import GridAPPSDMessageBus
