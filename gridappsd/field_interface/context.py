@@ -23,9 +23,8 @@ class LocalContext:
 
         """
         request = {'request_type' : 'get_context',
-                   'downstream_message_bus_id': downstream_message_bus.id,
-                   'agents': True,
-                   'devices': True}
+                   'downstream_message_bus_id': downstream_message_bus.id
+                   }
         return downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request)
     
     @classmethod
