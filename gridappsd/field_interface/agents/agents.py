@@ -89,11 +89,6 @@ class DistributedAgent:
 
     def connect(self):
 
-        if self.agent_area_dict is None:
-            context = LocalContext.get_context_by_message_bus(
-                self.downstream_message_bus)
-            self.agent_area_dict = context['data']
-
         if self.upstream_message_bus is not None:
             self.upstream_message_bus.connect()
         if self.downstream_message_bus is not None:
@@ -101,6 +96,11 @@ class DistributedAgent:
         if self.downstream_message_bus is None and self.upstream_message_bus is None:
             raise ValueError(
                 "Either upstream or downstream bus must be specified!")
+            
+        if self.agent_area_dict is None:
+            context = LocalContext.get_context_by_message_bus(
+                self.downstream_message_bus)
+            self.agent_area_dict = context['data']
 
         self.subscribe_to_measurement()
         self.subscribe_to_messages()
@@ -230,11 +230,11 @@ class FeederAgent(DistributedAgent):
                              downstream_message_bus_def, agent_config,
                              feeder_dict, simulation_id)
 
-        if feeder_dict is not None:
+        if self.agent_area_dict is not None:
             feeder = cim.Feeder(mRID=downstream_message_bus_def.id)
             self.feeder_area = DistributedModel(connection=self.connection,
                                                 feeder=feeder,
-                                                topology=feeder_dict)
+                                                topology=self.agent_area_dict)
 
 
 class SwitchAreaAgent(DistributedAgent):
@@ -249,10 +249,10 @@ class SwitchAreaAgent(DistributedAgent):
         super().__init__(upstream_message_bus_def, downstream_message_bus_def,
                          agent_config, switch_area_dict, simulation_id)
 
-        if switch_area_dict is not None:
+        if self.agent_area_dict is not None:
             self.switch_area = SwitchArea(downstream_message_bus_def.id,
                                           self.connection)
-            self.switch_area.initialize_switch_area(switch_area_dict)
+            self.switch_area.initialize_switch_area(self.agent_area_dict)
 
 
 class SecondaryAreaAgent(DistributedAgent):
@@ -267,10 +267,10 @@ class SecondaryAreaAgent(DistributedAgent):
         super().__init__(upstream_message_bus_def, downstream_message_bus_def,
                          agent_config, secondary_area_dict, simulation_id)
 
-        if secondary_area_dict is not None:
+        if self.agent_area_dict is not None:
             self.secondary_area = SecondaryArea(downstream_message_bus_def.id,
                                                 self.connection)
-            self.secondary_area.initialize_secondary_area(secondary_area_dict)
+            self.secondary_area.initialize_secondary_area(self.agent_area_dict)
 
 
 class CoordinatingAgent:
