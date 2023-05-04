@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Getting next version
         id: find-version
-        uses: craig8/versioner@v1
+        uses: craig8/versioner@main
 
       - name: Create build artifacts
         run: |
