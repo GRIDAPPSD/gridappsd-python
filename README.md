@@ -324,6 +324,5 @@ def test_gridappsd_status(gridappsd_client):
     gappsd.set_service_status("Foo")
     assert gappsd.get_service_status() == ProcessStatusEnum.COMPLETE.value
     assert gappsd.get_application_status() == ProcessStatusEnum.COMPLETE.value
-
 ```
 
