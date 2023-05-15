@@ -30,7 +30,7 @@ gridappsd-cli = 'gridappsd.cli:_main'
 
 [tool.poetry.dependencies]
 python = ">=3.7.9,<4.0"
-gridappsd-python = {path="../gridappsd-python", develop=true}
+gridappsd-python = {path="../gridappsd-python-lib", develop=true}
 cim-graph = "^0.1.20230413185916a0"
 
 [tool.poetry.group.dev.dependencies]

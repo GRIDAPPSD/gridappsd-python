@@ -16,32 +16,9 @@ keywords = ["gridappsd", "grid", "activmq", "powergrid", "simulation", "library"
 
 readme = "README.md"
 
-include =["gridappsd/conf/*"]
-packages = [
-    { include = 'gridappsd'}
-]
-
-[tool.poetry.scripts]
-# Add things in the form
-# myscript = 'my_package:main'
-register_app = 'gridappsd.register_app:main'
-gridappsd-cli = 'gridappsd.cli:_main'
-
-
 [tool.poetry.dependencies]
 python = ">=3.7.9,<4.0"
-PyYAML = "^6.0"
-pytz = "^2022.7"
-dateutils = "^0.6.7"
-stomp-py = "6.0.0"
-cim-graph = "^0.1.20230413185916a0"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^6.2.2"
-pytest-html = "^3.1.1"
-mock = "^4.0.3"
-docker = "^4.4.4"
-yapf = "^0.32.0"
 
 [build-system]
 requires = ["poetry-core>=1.2.0"]
