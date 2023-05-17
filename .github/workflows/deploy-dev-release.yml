@@ -122,6 +122,7 @@ jobs:
             # current_tag is now the version we want to set our poetry version so
             # that we can bump the version
             ./scripts/run_on_each.sh poetry version ${current_tag}
+            ./scripts/run_on_each.sh poetry version prerelease
 
             # poetry version ${current_tag}
             # poetry version prerelease --no-interaction
