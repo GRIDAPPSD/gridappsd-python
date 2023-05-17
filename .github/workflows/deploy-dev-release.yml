@@ -204,7 +204,8 @@ jobs:
           # poetry version ${NEW_TAG#?} 
           # poetry build -vvv
 
-      - uses: ncipollo/release-action@v1
+      - name: Push artifacts to github
+        uses: ncipollo/release-action@v1
         with:
           artifacts: "dist/*.gz,dist/*.whl"
           artifactErrorsFailBuild: true
