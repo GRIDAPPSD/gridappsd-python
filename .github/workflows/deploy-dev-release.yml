@@ -187,18 +187,18 @@ jobs:
 
           # set the right version in pyproject.toml before build and publish
           ./scripts/poetry_build.sh
-          ./scripts/replace_path_deps.sh
+          #./scripts/replace_path_deps.sh
 
-          # all python packages, in topological order
-          . scripts/projects.sh
-          _projects=". ${PROJECTS}"
-          echo "Running on following projects: ${_projects}"
-          for p in $_projects
-          do
-            cd "${p}" || exit
-            echo "==running in ${p}=="
-            ../scripts/replace_path_deps.sh
-          done
+          # # all python packages, in topological order
+          # . scripts/projects.sh
+          # _projects=". ${PROJECTS}"
+          # echo "Running on following projects: ${_projects}"
+          # for p in $_projects
+          # do
+          #   cd "${p}" || exit
+          #   echo "==running in ${p}=="
+          #   ../scripts/replace_path_deps.sh
+          # done
 
           # poetry version ${NEW_TAG#?} 
           # poetry build -vvv

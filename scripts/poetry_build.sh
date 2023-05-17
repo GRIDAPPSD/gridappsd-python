@@ -20,8 +20,7 @@ for p in $_projects
 do
   cd "${DIR}/../${p}" || exit
   # change path deps in project def
-  echo "Leave the path to local version"
-  #sed -i$SEP'' "s|{.*path.*|\"^$VERSION\"|" pyproject.toml
+  sed -i$SEP'' "s|{.*path.*|\"^$VERSION\"|" pyproject.toml
   # include project changelog
   cp ../CHANGELOG.md ./
   poetry build
