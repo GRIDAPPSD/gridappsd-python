@@ -216,13 +216,13 @@ jobs:
           tag: ${{ env.NEW_TAG }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # - name: Publish to pypi
-      #   id: publish-to-pypi
-      #   if: github.repository_owner == 'GRIDAPPSD' || github.repository_owner == 'PNNL-CIM-Tools'
-      #   run: |
-      #     echo "POETRY_PUBLISH_OPTIONS=''" >> $GITHUB_ENV
-      #     ./scripts/run_on_each.sh poetry config pypi-token.pypi ${{ secrets.pypi-token }}
-      #     ./scripts/run_on_each.sh poetry publish
+      - name: Publish to pypi
+        id: publish-to-pypi
+        if: github.repository_owner == 'GRIDAPPSD' || github.repository_owner == 'PNNL-CIM-Tools'
+        run: |
+          echo "POETRY_PUBLISH_OPTIONS=''" >> $GITHUB_ENV
+          ./scripts/run_on_each.sh poetry config pypi-token.pypi ${{ secrets.pypi-token }}
+          ./scripts/run_on_each.sh poetry publish
 
     #   - name: Publish to test-pypi
     #     id: publish-to-test-pypi
