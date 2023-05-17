@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gridappsd-python"
-version = "v2.8.230413"
+version = "2023.5.2a0"
 description = "A GridAPPS-D Python Adapter"
 authors = [
     "C. Allwardt <3979063+craig8@users.noreply.github.com>",
@@ -34,13 +34,16 @@ PyYAML = "^6.0"
 pytz = "^2022.7"
 dateutils = "^0.6.7"
 stomp-py = "6.0.0"
+requests = "2.28.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^6.2.2"
 pytest-html = "^3.1.1"
 mock = "^4.0.3"
-docker = "^4.4.4"
 yapf = "^0.32.0"
+mypy = "^1.3.0"
+python-on-whales = "^0.60.1"
+gitpython = "^3.1.31"
 
 [build-system]
 requires = ["poetry-core>=1.2.0"]

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gridappsd-field-bus"
-version = "v2.8.230413"
+version = "2023.5.2a0"
 description = "GridAPPS-D Field Bus Implementation"
 authors = [
     "C. Allwardt <3979063+craig8@users.noreply.github.com>",
@@ -21,16 +21,10 @@ packages = [
     { include = 'gridappsd'}
 ]
 
-[tool.poetry.scripts]
-# Add things in the form
-# myscript = 'my_package:main'
-register_app = 'gridappsd.register_app:main'
-gridappsd-cli = 'gridappsd.cli:_main'
-
 
 [tool.poetry.dependencies]
 python = ">=3.7.9,<4.0"
-gridappsd-python = {path="../gridappsd-python-lib", develop=true}
+gridappsd-python = "^2023.5.2a0"
 cim-graph = "^0.1.20230413185916a0"
 
 [tool.poetry.group.dev.dependencies]
