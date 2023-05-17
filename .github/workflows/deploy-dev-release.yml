@@ -181,13 +181,13 @@ jobs:
 
       - name: Create build artifacts
         run: |
-          # set the right version in pyproject.toml before build and publish
-          ./scripts/poetry_build.sh
-          ./scripts/replace_path_deps.sh
-
           set -x
           set -u
           set -e
+
+          # set the right version in pyproject.toml before build and publish
+          ./scripts/poetry_build.sh
+          ./scripts/replace_path_deps.sh
 
           # all python packages, in topological order
           . scripts/projects.sh
