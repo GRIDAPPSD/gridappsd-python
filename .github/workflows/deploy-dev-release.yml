@@ -23,6 +23,7 @@ env:
 
 jobs:
   deploy-dev-release:
+    if: github.repository_owner == 'GRIDAPPSD' || github.repository_owner == 'PNNL-CIM-Tools'
     runs-on: ubuntu-22.04
     permissions:
       contents: write # To push a branch
@@ -203,16 +204,16 @@ jobs:
           # poetry version ${NEW_TAG#?} 
           # poetry build -vvv
 
-      # - uses: ncipollo/release-action@v1
-      #   with:
-      #     artifacts: "dist/*.gz,dist/*.whl"
-      #     artifactErrorsFailBuild: true
-      #     generateReleaseNotes: true
-      #     commit: ${{ github.ref }}
-      #     # check bump-rule and set accordingly
-      #     prerelease: true
-      #     tag: ${{ env.NEW_TAG }}
-      #     token: ${{ secrets.git-token }}
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*.gz,dist/*.whl"
+          artifactErrorsFailBuild: true
+          generateReleaseNotes: true
+          commit: ${{ github.ref }}
+          # check bump-rule and set accordingly
+          prerelease: true
+          tag: ${{ env.NEW_TAG }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       # - name: Publish to pypi
       #   id: publish-to-pypi
