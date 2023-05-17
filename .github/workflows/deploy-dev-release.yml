@@ -23,7 +23,6 @@ env:
 
 jobs:
   deploy-dev-release:
-    if: github.repository_owner == 'GRIDAPPSD' || github.repository_owner == 'PNNL-CIM-Tools'
     runs-on: ubuntu-22.04
     permissions:
       contents: write # To push a branch
