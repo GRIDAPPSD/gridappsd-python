@@ -1,4 +1,4 @@
-name: Deploy Release Artifacts
+name: Deploy Dev Release Artifacts
 
 on:
   push:
@@ -221,7 +221,7 @@ jobs:
         if: github.repository_owner == 'GRIDAPPSD' || github.repository_owner == 'PNNL-CIM-Tools'
         run: |
           echo "POETRY_PUBLISH_OPTIONS=''" >> $GITHUB_ENV
-          ./scripts/run_on_each.sh poetry config pypi-token.pypi ${{ secrets.pypi-token }}
+          ./scripts/run_on_each.sh poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
           ./scripts/run_on_each.sh poetry publish
 
     #   - name: Publish to test-pypi
