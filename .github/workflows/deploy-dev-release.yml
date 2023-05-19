@@ -142,43 +142,6 @@ jobs:
           # Finally because we want to be able to use the variable in later
           # steps we set a NEW_TAG environmental variable
           echo "NEW_TAG=$(echo ${NEW_TAG})" >> $GITHUB_ENV
-          # we don't want to update pyproject.toml yet. don't want this change to create merge conflict.
-          # we don't really persist right version in pyproject.toml to figure out the next version. we use git tags.
-          #git restore pyproject.toml
-
-      #   #--------------------------------------------------------------
-      #   # Create a new releases/new_tag
-      #   #--------------------------------------------------------------
-      #   - name: Create a new releases branch
-      #     run: |
-      #       git checkout -b releases/${NEW_TAG}
-      #       git push --set-upstream origin releases/${NEW_TAG}
-
-      #   #--------------------------------------------------------------
-      #   # merge changes back to main
-      #   #--------------------------------------------------------------
-      #   - name: Merge changes back to main
-      #     run: |
-      #       git checkout main
-      #       git merge ${{ inputs.merge-strategy }} releases/${NEW_TAG}
-      #       git push
-
-      #   - name: Run tests on main branch
-      #     id: run-tests-on-main
-      #     run: |
-      #       poetry run pytest --timeout=${{ inputs.run-tests-wait }} tests
-      #     continue-on-error: true
-
-      #   - name: Do something with a failing build
-      #     if: steps.run-tests-on-main.outcome != 'success'
-      #     run: |
-      #       echo "tests on main did not succeed. Outcome is ${{ steps.run-tests-on-main.outcome }}"
-      #       git reset --hard HEAD~1
-      #       git push origin HEAD --force
-      #       git branch -d releases/${NEW_TAG}
-      #       git push origin --delete releases/${NEW_TAG}
-      #       echo "reverted changes to main and removed release branch"
-      #       exit 1
 
       - name: Create build artifacts
         run: |
@@ -188,21 +151,6 @@ jobs:
 
           # set the right version in pyproject.toml before build and publish
           ./scripts/poetry_build.sh
-          #./scripts/replace_path_deps.sh
-
-          # # all python packages, in topological order
-          # . scripts/projects.sh
-          # _projects=". ${PROJECTS}"
-          # echo "Running on following projects: ${_projects}"
-          # for p in $_projects
-          # do
-          #   cd "${p}" || exit
-          #   echo "==running in ${p}=="
-          #   ../scripts/replace_path_deps.sh
-          # done
-
-          # poetry version ${NEW_TAG#?} 
-          # poetry build -vvv
 
       - name: Push artifacts to github
         uses: ncipollo/release-action@v1
@@ -220,9 +168,20 @@ jobs:
         id: publish-to-pypi
         if: github.repository_owner == 'GRIDAPPSD' || github.repository_owner == 'PNNL-CIM-Tools'
         run: |
+          set -x
+          set -u
+          set -e
+
+          # This is needed, because the poetry publish will fail at the top level of the project
+          # so ./scripts/run_on_each.sh fails for that.
           echo "POETRY_PUBLISH_OPTIONS=''" >> $GITHUB_ENV
-          ./scripts/run_on_each.sh poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
-          ./scripts/run_on_each.sh poetry publish
+          cd gridappsd-python-lib 
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }} 
+          poetry publish
+
+          cd ../gridappsd-field-bus-lib
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }} 
+          poetry publish
 
     #   - name: Publish to test-pypi
     #     id: publish-to-test-pypi
