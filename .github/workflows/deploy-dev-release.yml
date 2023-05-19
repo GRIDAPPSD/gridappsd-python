@@ -1,0 +1,216 @@
+name: Deploy Dev Release Artifacts
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+    inputs:
+      release-version:
+        description: "Version number to use. If provided bump-rule will be ignored"
+        required: false
+        default: ""
+        type: string
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  LANG: en_US.utf-8
+  LC_ALL: en_US.utf-8
+  PYTHON_VERSION: "3.10"
+
+jobs:
+  deploy-dev-release:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write # To push a branch
+      pull-requests: write # To create a PR from that branch
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+
+      #----------------------------------------------
+      #       check-out repo and set-up python
+      #----------------------------------------------
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          # ref: develop
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      #----------------------------------------------
+      #  -----  install & configure poetry  -----
+      #----------------------------------------------
+      - name: Install Poetry
+        uses: snok/install-poetry@v1.3.3
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      # #----------------------------------------------
+      # #       load cached venv if cache exists
+      # #----------------------------------------------
+      # - name: Load cached venv
+      #   id: cached-poetry-dependencies
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: .venv
+      #     key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      # #----------------------------------------------
+      # # install dependencies if cache does not exist
+      # #----------------------------------------------
+      # - name: Install dependencies
+      #   if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      #   run: poetry install --no-interaction --no-root
+
+      #----------------------------------------------
+      # install your root project, if required
+      #----------------------------------------------
+      - name: Install library
+        run: |
+          ./scripts/poetry_install.sh
+
+          # git checkout develop
+          # poetry lock --no-update
+          # poetry install --no-interaction
+
+      #   - name: Use given release-version number
+      #     if: inputs.release-version != ''
+      #     run: |
+      #       echo "Using given release version is ${{ inputs.release-version }}"
+      #       poetry version ${{ inputs.release-version }}
+
+      #       NEW_TAG=v$(poetry version --short)
+
+      #       # we want to be able to use the variable in later
+      #       # steps we set a NEW_TAG environmental variable
+      #       echo "NEW_TAG=$(echo ${NEW_TAG})" >> $GITHUB_ENV
+      #       # we don't want to update pyproject.toml yet. don't want this change to create merge conflict.
+      #       # we don't really persist right version in pyproject.toml to figure out the next version. we use git tags.
+      #       git restore pyproject.toml
+
+      #----------------------------------------------
+      # bump version number for patch
+      #----------------------------------------------
+      - name: Bump Version
+        run: |
+          # current_tag is the last tagged release in the repository.   From there
+          # we need to remove the v from the beginning of the tag.
+          #   echo "Bump rule is ${{ inputs.bump-rule }}"
+          #   echo "Given release version is ${{ inputs.release-version }}"
+          dt=$(date +%Y.%-m.0)
+          if ! $(git tag -l "v*" = ''); then
+            # uses -V which is version sort to keep it monotonically increasing.
+            current_tag=$(git tag -l "v*" | grep --invert-match '-' | sort --reverse -V  | sed -n 1p)
+            echo "current git tag is ${current_tag}"
+            current_tag=${current_tag#?}
+            if [[ "$current_tag" < "$dt" ]]; then
+                current_tag=$dt
+            fi
+            # current_tag is now the version we want to set our poetry version so
+            # that we can bump the version
+            ./scripts/run_on_each.sh poetry version ${current_tag}
+            ./scripts/run_on_each.sh poetry version prerelease
+
+            # poetry version ${current_tag}
+            # poetry version prerelease --no-interaction
+            
+          else
+            # very first release. start with inputs.release-version
+            
+            echo "First release. Setting tag as 0.1.0rc0"
+            current_tag=$(date +%Y.%-m.1)
+            ./scripts/run_on_each.sh poetry version ${current_tag}
+            
+            # poetry version ${current_tag}
+          fi
+
+          NEW_TAG=v$(poetry version --short)
+
+          # Finally because we want to be able to use the variable in later
+          # steps we set a NEW_TAG environmental variable
+          echo "NEW_TAG=$(echo ${NEW_TAG})" >> $GITHUB_ENV
+
+      - name: Create build artifacts
+        run: |
+          set -x
+          set -u
+          set -e
+
+          # set the right version in pyproject.toml before build and publish
+          ./scripts/poetry_build.sh
+
+      - name: Push artifacts to github
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*.gz,dist/*.whl"
+          artifactErrorsFailBuild: true
+          generateReleaseNotes: true
+          commit: ${{ github.ref }}
+          # check bump-rule and set accordingly
+          prerelease: true
+          tag: ${{ env.NEW_TAG }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to pypi
+        id: publish-to-pypi
+        if: github.repository_owner == 'GRIDAPPSD' || github.repository_owner == 'PNNL-CIM-Tools'
+        run: |
+          set -x
+          set -u
+          set -e
+
+          # This is needed, because the poetry publish will fail at the top level of the project
+          # so ./scripts/run_on_each.sh fails for that.
+          echo "POETRY_PUBLISH_OPTIONS=''" >> $GITHUB_ENV
+          cd gridappsd-python-lib 
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }} 
+          poetry publish
+
+          cd ../gridappsd-field-bus-lib
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }} 
+          poetry publish
+
+    #   - name: Publish to test-pypi
+    #     id: publish-to-test-pypi
+    #     if: ${{ inputs.publish-to-test-pypi  }}
+    #     run: |
+    #       poetry config repositories.test-pypi https://test.pypi.org/legacy/
+    #       poetry config pypi-token.test-pypi ${{ secrets.pypi-token }}
+    #       poetry publish -r test-pypi
+    #     continue-on-error: true
+
+    #   - name: if publish to pypi/test-pypi failed revert main and delete release branch
+    #     if: ${{ steps.publish-to-pypi.outcome != 'success' && steps.publish-to-test-pypi.outcome != 'success' }}
+    #     run: |
+    #       echo "publish to pypi/test-pypi did not succeed. Outcome for pypi = ${{ steps.publish-to-pypi.outcome }} outcome for test-pypi= ${{ steps.publish-to-test-pypi.outcome }}"
+    #       git reset --hard HEAD~1
+    #       git push origin HEAD --force
+    #       git branch -d releases/${NEW_TAG}
+    #       git push origin --delete releases/${NEW_TAG}
+    #       echo "reverted changes to main and removed release branch"
+
+    #   - name: if publish to pypi/test-pypi failed delete release and tag on github
+    #     if: ${{ ! (steps.publish-to-pypi.outcome == 'success' || steps.publish-to-test-pypi.outcome == 'success') }}
+    #     uses: dev-drprasad/delete-tag-and-release@v0.2.1
+    #     env:
+    #       GITHUB_TOKEN: ${{ secrets.git-token }}
+    #     with:
+    #       tag_name: ${{ env.NEW_TAG }}
+
+    #   - name: if publish to pypi/test-pypi failed exit with exit code 1
+    #     if: ${{ steps.publish-to-pypi.outcome != 'success' && steps.publish-to-test-pypi.outcome != 'success' }}
+    #     run: |
+    #       exit 1
