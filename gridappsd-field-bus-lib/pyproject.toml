@@ -25,7 +25,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.7.9,<4.0"
 gridappsd-python = {path="../gridappsd-python-lib", develop=true}
-cim-graph = "^0.1.20230413185916a0"
+cim-graph = "^2023.5.1a3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^6.2.2"
