@@ -262,7 +262,16 @@ class SwitchAreaAgent(DistributedAgent):
         if self.agent_area_dict is not None:
             self.switch_area = SwitchArea(self.downstream_message_bus_def.id,
                                           self.connection)
-            self.switch_area.initialize_switch_area(self.agent_area_dict)
+            if "secondary_areas" in self.agent_area_dict.keys():
+                self.switch_area.initialize_switch_area(self.agent_area_dict)
+            else:
+                _log.warn(
+                    f"{type(self).__name__}:{self.downstream_message_bus_def.id} recieved erroneously the feeder level context dictionary from the switch area context manager instance."
+                )
+                for area in self.agent_area_dict.get("switch_areas",[]):
+                    if self.downstream_message_bus_def.id == area.get("message_bus_id"):
+                        self.switch_area.initialize_switch_area(area)
+                        break
     
 
     def connect(self):
@@ -270,7 +279,16 @@ class SwitchAreaAgent(DistributedAgent):
         if self.switch_area is None:
             self.switch_area = SwitchArea(self.downstream_message_bus_def.id,
                                           self.connection)
-            self.switch_area.initialize_switch_area(self.agent_area_dict)
+            if "secondary_areas" in self.agent_area_dict.keys():
+                self.switch_area.initialize_switch_area(self.agent_area_dict)
+            else:
+                _log.warn(
+                    f"{type(self).__name__}:{self.downstream_message_bus_def.id} recieved erroneously the feeder level context dictionary from the switch area context manager instance."
+                )
+                for area in self.agent_area_dict.get("switch_areas",[]):
+                    if self.downstream_message_bus_def.id == area.get("message_bus_id"):
+                        self.switch_area.initialize_switch_area(area)
+                        break
 
 
 class SecondaryAreaAgent(DistributedAgent):
@@ -288,7 +306,25 @@ class SecondaryAreaAgent(DistributedAgent):
         if self.agent_area_dict is not None:
             self.secondary_area = SecondaryArea(self.downstream_message_bus_def.id,
                                                 self.connection)
-            self.secondary_area.initialize_secondary_area(self.agent_area_dict)
+            if "switch_areas" in self.agent_area_dict.keys():
+                _log.warn(
+                    f"{type(self).__name__}:{self.downstream_message_bus_def.id} recieved erroneously the feeder level context dictionary from the secondary area context manager instance."
+                )
+                for switchArea in self.agent_area_dict.get("switch_areas",[]):
+                    for secondaryArea in switchArea.get("secondary_areas",[]):
+                        if self.downstream_message_bus_def.id == secondaryArea.get("message_bus_id"):
+                            self.secondary_area.initialize_secondary_area(secondaryArea)
+                            break
+            elif "secondary_areas" in self.agent_area_dict.keys():
+                _log.warn(
+                    f"{type(self).__name__}:{self.downstream_message_bus_def.id} recieved erroneously the feeder level context dictionary from the secondary area context manager instance."
+                )
+                for secondaryArea in switchArea.get("secondary_areas",[]):
+                    if self.downstream_message_bus_def.id == secondaryArea.get("message_bus_id"):
+                        self.secondary_area.initialize_secondary_area(secondaryArea)
+                        break
+            else:
+                self.secondary_area.initialize_secondary_area(self.agent_area_dict)
     
 
     def connect(self):
@@ -296,7 +332,25 @@ class SecondaryAreaAgent(DistributedAgent):
         if self.secondary_area is None:
             self.secondary_area = SecondaryArea(self.downstream_message_bus_def.id,
                                                 self.connection)
-            self.secondary_area.initialize_secondary_area(self.agent_area_dict)
+            if "switch_areas" in self.agent_area_dict.keys():
+                _log.warn(
+                    f"{type(self).__name__}:{self.downstream_message_bus_def.id} recieved erroneously the feeder level context dictionary from the secondary area context manager instance."
+                )
+                for switchArea in self.agent_area_dict.get("switch_areas",[]):
+                    for secondaryArea in switchArea.get("secondary_areas",[]):
+                        if self.downstream_message_bus_def.id == secondaryArea.get("message_bus_id"):
+                            self.secondary_area.initialize_secondary_area(secondaryArea)
+                            break
+            elif "secondary_areas" in self.agent_area_dict.keys():
+                _log.warn(
+                    f"{type(self).__name__}:{self.downstream_message_bus_def.id} recieved erroneously the feeder level context dictionary from the secondary area context manager instance."
+                )
+                for secondaryArea in switchArea.get("secondary_areas",[]):
+                    if self.downstream_message_bus_def.id == secondaryArea.get("message_bus_id"):
+                        self.secondary_area.initialize_secondary_area(secondaryArea)
+                        break
+            else:
+                self.secondary_area.initialize_secondary_area(self.agent_area_dict)
 
 
 class CoordinatingAgent:
