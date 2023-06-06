@@ -96,7 +96,6 @@ jobs:
           ./scripts/poetry_build.sh
 
       - name: Push artifacts to github
-        # if: inputs.publish-to == 'pypi'
         uses: ncipollo/release-action@v1
         with:
           artifacts: "dist/*.gz,dist/*.whl"
