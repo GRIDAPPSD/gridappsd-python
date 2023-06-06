@@ -14,7 +14,7 @@ on:
       publish-to:
         description: "Publish to pypi or pypi-test"
         required: true
-        type: string
+        type: choice
         default: "pypi"
         options:
           - "pypi"
@@ -96,7 +96,6 @@ jobs:
           ./scripts/poetry_build.sh
 
       - name: Push artifacts to github
-        # if: inputs.publish-to == 'pypi'
         uses: ncipollo/release-action@v1
         with:
           artifacts: "dist/*.gz,dist/*.whl"
@@ -140,9 +139,9 @@ jobs:
           # so ./scripts/run_on_each.sh fails for that.
           echo "POETRY_PUBLISH_OPTIONS='--repository testpypi'" >> $GITHUB_ENV
           cd gridappsd-python-lib 
-          poetry config pypi-token.pypi ${{ secrets.PYPI_TEST_TOKEN }} 
+          poetry config pypi-token.testpypi ${{ secrets.PYPI_TEST_TOKEN }} 
           poetry publish
 
           cd ../gridappsd-field-bus-lib
-          poetry config pypi-token.pypi ${{ secrets.PYPI_TEST_TOKEN }} 
+          poetry config pypi-token.testpypi ${{ secrets.PYPI_TEST_TOKEN }} 
           poetry publish

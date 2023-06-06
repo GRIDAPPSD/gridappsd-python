@@ -2,6 +2,7 @@ on: [push, pull_request]
 
 jobs:
   push:
+    if: github.repository_owner == 'GRIDAPPSD' || github.repository_owner == 'PNNL-CIM-Tools'
     runs-on: ubuntu-latest
     name: Build and push the docker container
     steps:
@@ -19,7 +20,7 @@ jobs:
       - name: Log in to docker
         run: |
           if [ -n "${{ secrets.DOCKER_USERNAME }}" -a -n "${{ secrets.DOCKER_TOKEN }}" ]; then
-          
+
             echo " "
             echo "Connecting to docker"
             echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
@@ -29,7 +30,7 @@ jobs:
               exit 1
             fi
           fi
-          
+
       - name: Build the image
         env:
           DOCKER_IMAGE_NAME: ${{ secrets.DOCKER_IMAGE_NAME }}
@@ -67,11 +68,11 @@ jobs:
           ORG="${ORG:+${ORG}/}"
           IMAGE="${ORG}${{ env.DOCKER_IMAGE_NAME }}"
           if [ -n "${{ secrets.DOCKER_USERNAME }}" -a -n "${{ secrets.DOCKER_TOKEN }}" ]; then
-          
+
             if [ -n "$TAG" -a -n "$ORG" ]; then
               # Get the built container name
               CONTAINER=`docker images --format "{{.Repository}}:{{.Tag}}" ${IMAGE}`
-          
+
               echo "docker push ${CONTAINER}"
               docker push "${CONTAINER}"
               status=$?
@@ -79,7 +80,7 @@ jobs:
                 echo "Error: status $status"
                 exit 1
               fi
-          
+
               echo "docker tag ${CONTAINER} ${IMAGE}:$TAG"
               docker tag ${CONTAINER} ${IMAGE}:$TAG
               status=$?
@@ -87,7 +88,7 @@ jobs:
                 echo "Error: status $status"
                 exit 1
               fi
-          
+
               echo "docker push ${IMAGE}:$TAG"
               docker push ${IMAGE}:$TAG
               status=$?
@@ -96,5 +97,5 @@ jobs:
                 exit 1
               fi
             fi
-          
+
           fi
