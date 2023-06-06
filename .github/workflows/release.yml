@@ -14,7 +14,7 @@ on:
       publish-to:
         description: "Publish to pypi or pypi-test"
         required: true
-        type: string
+        type: choice
         default: "pypi"
         options:
           - "pypi"
