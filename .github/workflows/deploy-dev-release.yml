@@ -183,34 +183,3 @@ jobs:
           poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }} 
           poetry publish
 
-    #   - name: Publish to test-pypi
-    #     id: publish-to-test-pypi
-    #     if: ${{ inputs.publish-to-test-pypi  }}
-    #     run: |
-    #       poetry config repositories.test-pypi https://test.pypi.org/legacy/
-    #       poetry config pypi-token.test-pypi ${{ secrets.pypi-token }}
-    #       poetry publish -r test-pypi
-    #     continue-on-error: true
-
-    #   - name: if publish to pypi/test-pypi failed revert main and delete release branch
-    #     if: ${{ steps.publish-to-pypi.outcome != 'success' && steps.publish-to-test-pypi.outcome != 'success' }}
-    #     run: |
-    #       echo "publish to pypi/test-pypi did not succeed. Outcome for pypi = ${{ steps.publish-to-pypi.outcome }} outcome for test-pypi= ${{ steps.publish-to-test-pypi.outcome }}"
-    #       git reset --hard HEAD~1
-    #       git push origin HEAD --force
-    #       git branch -d releases/${NEW_TAG}
-    #       git push origin --delete releases/${NEW_TAG}
-    #       echo "reverted changes to main and removed release branch"
-
-    #   - name: if publish to pypi/test-pypi failed delete release and tag on github
-    #     if: ${{ ! (steps.publish-to-pypi.outcome == 'success' || steps.publish-to-test-pypi.outcome == 'success') }}
-    #     uses: dev-drprasad/delete-tag-and-release@v0.2.1
-    #     env:
-    #       GITHUB_TOKEN: ${{ secrets.git-token }}
-    #     with:
-    #       tag_name: ${{ env.NEW_TAG }}
-
-    #   - name: if publish to pypi/test-pypi failed exit with exit code 1
-    #     if: ${{ steps.publish-to-pypi.outcome != 'success' && steps.publish-to-test-pypi.outcome != 'success' }}
-    #     run: |
-    #       exit 1
