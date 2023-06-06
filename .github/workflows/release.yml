@@ -1,0 +1,148 @@
+name: Deploy Release Artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      previous-version:
+        description: "Previous version number to use for release notes generation."
+        required: true
+        type: bool
+      release-version:
+        description: "Version number to use for this release, do not start with v."
+        required: true        
+        type: bool
+      publish-to:
+        description: "Publish to pypi or pypi-test"
+        required: true
+        type: string
+        default: "pypi"
+        options:
+          - "pypi"
+          - "pypi-test"
+      
+defaults:
+  run:
+    shell: bash
+
+env:
+  LANG: en_US.utf-8
+  LC_ALL: en_US.utf-8
+  PYTHON_VERSION: "3.10"
+
+jobs:
+  deploy-release:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write # To push a branch
+      pull-requests: write # To create a PR from that branch
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+
+      #----------------------------------------------
+      #       check-out repo and set-up python
+      #----------------------------------------------
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          # ref: develop
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      #----------------------------------------------
+      #  -----  install & configure poetry  -----
+      #----------------------------------------------
+      - name: Install Poetry
+        uses: snok/install-poetry@v1.3.3
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      #----------------------------------------------
+      # install your root project, if required
+      #----------------------------------------------
+      - name: Install library
+        run: |
+          ./scripts/poetry_install.sh
+
+      #----------------------------------------------
+      # Update to new release version
+      #----------------------------------------------
+      - name: Update Version
+        run: |
+          ./scripts/run_on_each.sh poetry version ${{ inputs.release-version }}
+
+          NEW_TAG=v$(poetry version --short)
+
+          # Finally because we want to be able to use the variable in later
+          # steps we set a NEW_TAG environmental variable
+          echo "NEW_TAG=$(echo ${NEW_TAG})" >> $GITHUB_ENV
+
+      - name: Create build artifacts
+        run: |
+          set -x
+          set -u
+          set -e
+
+          # set the right version in pyproject.toml before build and publish
+          ./scripts/poetry_build.sh
+
+      - name: Push artifacts to github
+        # if: inputs.publish-to == 'pypi'
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*.gz,dist/*.whl"
+          artifactErrorsFailBuild: true
+          generateReleaseNotes: true
+          commit: ${{ github.ref }}
+          makeLatest: true
+          tag: ${{ env.NEW_TAG }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to pypi
+        id: publish-to-pypi
+        if: github.repository_owner == 'GRIDAPPSD' || github.repository_owner == 'PNNL-CIM-Tools'
+        run: |
+          set -x
+          set -u
+          set -e
+
+          # This is needed, because the poetry publish will fail at the top level of the project
+          # so ./scripts/run_on_each.sh fails for that.
+          echo "POETRY_PUBLISH_OPTIONS=''" >> $GITHUB_ENV
+          cd gridappsd-python-lib 
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }} 
+          poetry publish
+
+          cd ../gridappsd-field-bus-lib
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }} 
+          poetry publish
+
+      - name: Publish to pypi test
+        id: publish-to-pypi-test
+        if: inputs.publish-to == 'pypi-test'
+        run: |
+          set -x
+          set -u
+          set -e
+        
+          ./scripts/run_on_each.sh poetry config repositories.testpypi https://test.pypi.org/legacy/
+
+          # This is needed, because the poetry publish will fail at the top level of the project
+          # so ./scripts/run_on_each.sh fails for that.
+          echo "POETRY_PUBLISH_OPTIONS='--repository testpypi'" >> $GITHUB_ENV
+          cd gridappsd-python-lib 
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TEST_TOKEN }} 
+          poetry publish
+
+          cd ../gridappsd-field-bus-lib
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TEST_TOKEN }} 
+          poetry publish
