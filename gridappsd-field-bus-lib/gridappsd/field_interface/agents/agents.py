@@ -186,7 +186,7 @@ class DistributedAgent:
     def on_downstream_message(self, headers: Dict, message) -> None:
         raise NotImplementedError(
             f"{self.__class__.__name__} must be overriden in child class")
-        
+
     def on_request_from_uptream(self, headers: Dict, message):
         self.on_request(self.upstream_message_bus, headers, message)
 
