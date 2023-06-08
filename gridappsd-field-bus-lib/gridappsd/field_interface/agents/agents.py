@@ -203,6 +203,12 @@ class DistributedAgent:
                                            self.upstream_message_bus.id,
                                            self.downstream_message_bus.id)
         return dataclasses.asdict(details)
+    
+    def publish_downstream(self, message):
+        self.downstream_message_bus.send(t.field_message_bus_topic(self.downstream_message_bus), message)
+        
+    def publish_upstream(self, message):
+        self.downstream_message_bus.send(t.field_message_bus_topic(self.downstream_message_bus), message)
 
 
 '''  TODO this has not been implemented yet, so we are commented them out for now.
