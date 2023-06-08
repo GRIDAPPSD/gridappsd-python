@@ -186,7 +186,7 @@ class DistributedAgent:
     def on_downstream_message(self, headers: Dict, message) -> None:
         raise NotImplementedError(
             f"{self.__class__.__name__} must be overriden in child class")
-
+        
     def on_request_from_uptream(self, headers: Dict, message):
         self.on_request(self.upstream_message_bus, headers, message)
 
@@ -203,6 +203,12 @@ class DistributedAgent:
                                            self.upstream_message_bus.id,
                                            self.downstream_message_bus.id)
         return dataclasses.asdict(details)
+    
+    def publish_downstream(self, message):
+        self.downstream_message_bus.send(t.field_message_bus_topic(self.downstream_message_bus), message)
+        
+    def publish_upstream(self, message):
+        self.downstream_message_bus.send(t.field_message_bus_topic(self.downstream_message_bus), message)
 
 
 '''  TODO this has not been implemented yet, so we are commented them out for now.
