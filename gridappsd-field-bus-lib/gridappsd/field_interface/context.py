@@ -13,7 +13,6 @@ class LocalContext:
         request = {'request_type' : 'get_context',
                     'modelId': feeder_mrid,
                    'areaId': area_id}
-        print("*****************************")
         print(t.context_request_queue(downstream_message_bus.id))
         response = downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request, timeout=10)
         return response
