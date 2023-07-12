@@ -277,7 +277,6 @@ class SwitchAreaAgent(DistributedAgent):
         if self.agent_area_dict is not None:
             self.switch_area = SwitchArea(self.downstream_message_bus_def.id,
                                           self.connection)
-            print(self.agent_area_dict)
             self.switch_area.initialize_switch_area(self.agent_area_dict)
 
 
