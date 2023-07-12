@@ -11,9 +11,9 @@ from cimgraph.loaders.gridappsd import GridappsdConnection
 from cimgraph.models import DistributedModel, SecondaryArea, SwitchArea
 
 import gridappsd.topics as t
-from gridappsd.field_interface.context import LocalContext
-from gridappsd.field_interface.gridappsd_field_bus import GridAPPSDMessageBus
-from gridappsd.field_interface.interfaces import (FieldMessageBus,
+from gridappsd_field_interface.context import LocalContext
+from gridappsd_field_interface.gridappsd_field_bus import GridAPPSDMessageBus
+from gridappsd_field_interface.interfaces import (FieldMessageBus,
                                                   MessageBusDefinition)
 
 cim = None
@@ -64,7 +64,11 @@ class DistributedAgent:
         self.description = agent_config['description']
         dt = datetime.now()
         ts = datetime.timestamp(dt)
-        self.agent_id = "da_" + self.app_id + "_" + str(int(ts))
+        if ('context_manager' not in self.app_id):
+            self.agent_id = "da_" + self.app_id + "_" + str(int(ts))
+        else:
+            self.agent_id = downstream_message_bus_def.id+'.context_manager'
+
         self.agent_area_dict = agent_area_dict
 
         if upstream_message_bus_def is not None:
@@ -87,7 +91,7 @@ class DistributedAgent:
         #    self.addressable_equipments = agent_dict['addressable_equipment']
         #    self.unaddressable_equipments = agent_dict['unaddressable_equipment']
 
-    def connect(self):
+    def _connect(self):
 
         if self.upstream_message_bus is not None:
             self.upstream_message_bus.connect()
@@ -109,6 +113,13 @@ class DistributedAgent:
         if ('context_manager' not in self.app_id):
             LocalContext.register_agent(self.downstream_message_bus,
                                         self.upstream_message_bus, self)
+            
+    def disconnect(self):
+
+        if self.upstream_message_bus is not None:
+            self.upstream_message_bus.disconnect()
+        if self.downstream_message_bus is not None:
+            self.downstream_message_bus.disconnect()
 
     def subscribe_to_measurement(self):
         if self.simulation_id is None:
@@ -144,18 +155,20 @@ class DistributedAgent:
                                           self.app_id),
             self.on_upstream_message)
 
-        _log.debug(
-            f"Subscribing to message on agents topics: \n {t.field_message_bus_agent_topic(self.downstream_message_bus.id, self.agent_id)} \
-                                                            \n {t.field_message_bus_agent_topic(self.upstream_message_bus.id, self.agent_id)}"
-        )
-        self.downstream_message_bus.subscribe(
-            t.field_message_bus_agent_topic(self.downstream_message_bus.id,
-                                            self.agent_id),
-            self.on_downstream_message)
-        self.downstream_message_bus.subscribe(
-            t.field_message_bus_agent_topic(self.upstream_message_bus.id,
-                                            self.agent_id),
-            self.on_upstream_message)
+
+        if ('context_manager' not in self.app_id):
+            _log.debug(
+                f"Subscribing to message on agents topics: \n {t.field_message_bus_agent_topic(self.downstream_message_bus.id, self.agent_id)} \
+                                                                \n {t.field_message_bus_agent_topic(self.upstream_message_bus.id, self.agent_id)}"
+            )
+            self.downstream_message_bus.subscribe(
+                t.field_message_bus_agent_topic(self.downstream_message_bus.id,
+                                                self.agent_id),
+                self.on_downstream_message)
+            self.upstream_message_bus.subscribe(
+                t.field_message_bus_agent_topic(self.upstream_message_bus.id,
+                                                self.agent_id),
+                self.on_upstream_message)
 
     def subscribe_to_requests(self):
 
@@ -231,22 +244,15 @@ class FeederAgent(DistributedAgent):
                  agent_config: Dict,
                  feeder_dict=None,
                  simulation_id=None):
-        super(FeederAgent,
-              self).__init__(upstream_message_bus_def,
+        super().__init__(upstream_message_bus_def,
                              downstream_message_bus_def, agent_config,
                              feeder_dict, simulation_id)
         self.feeder_area = None
         self.downstream_message_bus_def = downstream_message_bus_def
-        if self.agent_area_dict is not None:
-            feeder = cim.Feeder(mRID=self.downstream_message_bus_def.id)
-            self.feeder_area = DistributedModel(connection=self.connection,
-                                                feeder=feeder,
-                                                topology=self.agent_area_dict)
-    
 
-    def connect(self):
-        super().connect()
-        if self.feeder_area is None:
+        self._connect()
+
+        if self.agent_area_dict is not None:
             feeder = cim.Feeder(mRID=self.downstream_message_bus_def.id)
             self.feeder_area = DistributedModel(connection=self.connection,
                                                 feeder=feeder,
@@ -265,17 +271,13 @@ class SwitchAreaAgent(DistributedAgent):
                          agent_config, switch_area_dict, simulation_id)
         self.switch_area = None
         self.downstream_message_bus_def = downstream_message_bus_def
+
+        self._connect()
+
         if self.agent_area_dict is not None:
             self.switch_area = SwitchArea(self.downstream_message_bus_def.id,
                                           self.connection)
-            self.switch_area.initialize_switch_area(self.agent_area_dict)
-    
-
-    def connect(self):
-        super().connect()
-        if self.switch_area is None:
-            self.switch_area = SwitchArea(self.downstream_message_bus_def.id,
-                                          self.connection)
+            print(self.agent_area_dict)
             self.switch_area.initialize_switch_area(self.agent_area_dict)
 
 
@@ -291,18 +293,17 @@ class SecondaryAreaAgent(DistributedAgent):
                          agent_config, secondary_area_dict, simulation_id)
         self.secondary_area = None
         self.downstream_message_bus_def = downstream_message_bus_def
-        if self.agent_area_dict is not None:
-            self.secondary_area = SecondaryArea(self.downstream_message_bus_def.id,
-                                                self.connection)
-            self.secondary_area.initialize_secondary_area(self.agent_area_dict)
-    
 
-    def connect(self):
-        super().connect()
-        if self.secondary_area is None:
+        self._connect()
+
+        if self.agent_area_dict is not None:
+            if len(self.agent_area_dict['addressable_equipment']) == 0:
+                _log.warn(f"No addressable equipment in the secondary area with down stream message bus id: {self.downstream_message_bus.id}.")
+            
             self.secondary_area = SecondaryArea(self.downstream_message_bus_def.id,
                                                 self.connection)
             self.secondary_area.initialize_secondary_area(self.agent_area_dict)
+            
 
 
 class CoordinatingAgent:
@@ -337,12 +338,11 @@ class CoordinatingAgent:
 
         # self.subscribe_to_feeder_bus()
 
-    def spawn_distributed_agent(self, distributed_agent: DistributedAgent):
+
+''' def spawn_distributed_agent(self, distributed_agent: DistributedAgent):
         distributed_agent.connect()
         self.distributed_agents.append(distributed_agent)
 
-
-'''    
     def on_control(self, control):
         device_id = control.get('device')
         command = control.get('command')
