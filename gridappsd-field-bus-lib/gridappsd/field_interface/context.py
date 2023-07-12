@@ -1,4 +1,4 @@
-from gridappsd.field_interface.interfaces import FieldMessageBus
+from gridappsd_field_interface.interfaces import FieldMessageBus
 import dataclasses
 import gridappsd.topics as t
 import json
@@ -13,6 +13,7 @@ class LocalContext:
         request = {'request_type' : 'get_context',
                     'modelId': feeder_mrid,
                    'areaId': area_id}
+        print(t.context_request_queue(downstream_message_bus.id))
         response = downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request, timeout=10)
         return response
 
@@ -23,7 +24,7 @@ class LocalContext:
 
         """
         request = {'request_type' : 'get_context',
-                   'downstream_message_bus_id': downstream_message_bus.id
+                   'areaId': downstream_message_bus.id
                    }
         return downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request)
     

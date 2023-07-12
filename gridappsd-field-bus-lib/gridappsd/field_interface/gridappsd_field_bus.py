@@ -53,6 +53,6 @@ class GridAPPSDMessageBus(FieldMessageBus):
         
     def disconnect(self):
         """
-        Disconnect the device from the concrete message bus.
+        Disconnect from the concrete message bus.
         """
-        pass
+        self.gridappsd_obj.disconnect()
