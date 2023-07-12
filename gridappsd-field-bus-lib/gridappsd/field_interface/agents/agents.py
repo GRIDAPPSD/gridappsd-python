@@ -11,9 +11,9 @@ from cimgraph.loaders.gridappsd import GridappsdConnection
 from cimgraph.models import DistributedModel, SecondaryArea, SwitchArea
 
 import gridappsd.topics as t
-from gridappsd_field_interface.context import LocalContext
-from gridappsd_field_interface.gridappsd_field_bus import GridAPPSDMessageBus
-from gridappsd_field_interface.interfaces import (FieldMessageBus,
+from gridappsd.field_interface.context import LocalContext
+from gridappsd.field_interface.gridappsd_field_bus import GridAPPSDMessageBus
+from gridappsd.field_interface.interfaces import (FieldMessageBus,
                                                   MessageBusDefinition)
 
 cim = None
