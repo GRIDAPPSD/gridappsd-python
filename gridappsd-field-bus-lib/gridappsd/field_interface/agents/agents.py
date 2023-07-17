@@ -136,10 +136,10 @@ class DistributedAgent:
     def subscribe_to_messages(self):
 
         self.downstream_message_bus.subscribe(
-            t.field_message_bus_topic(self.downstream_message_bus),
+            t.field_message_bus_topic(self.downstream_message_bus.id),
             self.on_downstream_message)
         self.upstream_message_bus.subscribe(
-            t.field_message_bus_topic(self.upstream_message_bus),
+            t.field_message_bus_topic(self.upstream_message_bus.id),
             self.on_upstream_message)
 
         _log.debug(
