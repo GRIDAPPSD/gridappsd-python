@@ -65,7 +65,7 @@ class DistributedAgent:
         dt = datetime.now()
         ts = datetime.timestamp(dt)
         if ('context_manager' not in self.app_id):
-            self.agent_id = "da_" + self.app_id + "_" + self.downstream_message_bus_def.id
+            self.agent_id = "da_" + self.app_id + "_" + self.downstream_message_bus.id
         else:
             self.agent_id = downstream_message_bus_def.id+'.context_manager'
 
