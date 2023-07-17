@@ -138,7 +138,7 @@ class DistributedAgent:
         self.downstream_message_bus.subscribe(
             t.field_message_bus_topic(self.downstream_message_bus),
             self.on_downstream_message)
-        self.downstream_message_bus.subscribe(
+        self.upstream_message_bus.subscribe(
             t.field_message_bus_topic(self.upstream_message_bus),
             self.on_upstream_message)
 
@@ -150,7 +150,7 @@ class DistributedAgent:
             t.field_message_bus_app_topic(self.downstream_message_bus.id,
                                           self.app_id),
             self.on_downstream_message)
-        self.downstream_message_bus.subscribe(
+        self.upstream_message_bus.subscribe(
             t.field_message_bus_app_topic(self.upstream_message_bus.id,
                                           self.app_id),
             self.on_upstream_message)
@@ -180,7 +180,7 @@ class DistributedAgent:
             t.field_agent_request_queue(self.downstream_message_bus.id,
                                         self.agent_id),
             self.on_request_from_downstream)
-        self.downstream_message_bus.subscribe(
+        self.upstream_message_bus.subscribe(
             t.field_agent_request_queue(self.upstream_message_bus.id,
                                         self.agent_id),
             self.on_request_from_uptream)
@@ -221,7 +221,7 @@ class DistributedAgent:
         self.downstream_message_bus.send(t.field_message_bus_topic(self.downstream_message_bus), message)
         
     def publish_upstream(self, message):
-        self.downstream_message_bus.send(t.field_message_bus_topic(self.downstream_message_bus), message)
+        self.upstream_message_bus.send(t.field_message_bus_topic(self.upstream_message_bus), message)
 
 
 '''  TODO this has not been implemented yet, so we are commented them out for now.
