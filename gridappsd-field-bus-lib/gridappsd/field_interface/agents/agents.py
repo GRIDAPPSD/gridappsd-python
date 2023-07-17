@@ -100,7 +100,10 @@ class DistributedAgent:
         if self.downstream_message_bus is None and self.upstream_message_bus is None:
             raise ValueError(
                 "Either upstream or downstream bus must be specified!")
-            
+
+        if ('context_manager' not in self.app_id):
+            self.agent_id = "da_" + self.app_id + "_" + self.downstream_message_bus.id
+        
         if self.agent_area_dict is None:
             context = LocalContext.get_context_by_message_bus(
                 self.downstream_message_bus)
