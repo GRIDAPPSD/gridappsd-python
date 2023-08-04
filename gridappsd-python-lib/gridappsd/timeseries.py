@@ -1,5 +1,5 @@
-import json
-from gridappsd import topics
+#import json
+from gridappsd import topics, json_extension as json
 from typing import Optional
 
 

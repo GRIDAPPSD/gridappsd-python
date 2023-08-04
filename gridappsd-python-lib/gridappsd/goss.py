@@ -45,7 +45,7 @@ Created on March 1, 2018
 """
 import base64
 import inspect
-import json
+#import json
 import logging
 import os
 import random
@@ -59,6 +59,8 @@ from queue import Queue
 from stomp import Connection12 as Connection
 from stomp.exception import NotConnectedException
 from time import sleep
+
+from gridappsd import json_extension as json
 
 _log: Logger = logging.getLogger(inspect.getmodulename(__file__))
 

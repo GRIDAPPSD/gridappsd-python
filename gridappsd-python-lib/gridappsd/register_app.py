@@ -1,10 +1,10 @@
-import json
+#import json
 import logging
 import os
 import sys
 import time
 import stomp
-from gridappsd import ApplicationController, GridAPPSD, utils
+from gridappsd import ApplicationController, GridAPPSD, utils, json_extension as json
 
 def main():
     loglevel = logging.INFO
@@ -25,7 +25,10 @@ def main():
         _log.error("Invalid /appconfig reference...map the /appconfig to your container")
         sys.exit(1)
 
-    config = json.loads(open("/appconfig").read())
+    config = {}
+    with open("/appconfig") as fo:
+        config = json.load(fo)
+    #config = json.loads(open("/appconfig").read())
 
     if "id" not in config:
         _log.error("Invalid appconfig, must have a unique id set.")
