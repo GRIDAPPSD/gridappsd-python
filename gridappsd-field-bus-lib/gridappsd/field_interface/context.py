@@ -26,7 +26,7 @@ class LocalContext:
         request = {'request_type' : 'get_context',
                    'areaId': downstream_message_bus.id
                    }
-        return downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request)
+        return downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request, timeout=10)
     
     @classmethod
     def register_agent(cls, downstream_message_bus: FieldMessageBus, upstream_message_bus: FieldMessageBus, agent):
