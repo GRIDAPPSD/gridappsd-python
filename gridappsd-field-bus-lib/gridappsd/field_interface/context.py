@@ -42,7 +42,7 @@ class LocalContext:
     
     @classmethod
     def get_agents(cls, downstream_message_bus: FieldMessageBus):
-        """git sta
+        """
         Sends the newly created distributed agent's info to OT bus
 
         """
