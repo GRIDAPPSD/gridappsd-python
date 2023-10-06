@@ -55,9 +55,10 @@ class LocalContext:
         Sends the control command to device
 
         """
-        request = {'request_type' : 'control_command'}
+        request = {'request_type' : 'control_command',
+                   'difference_builder': difference_builder.get_message()}
         downstream_message_bus.send(t.context_request_queue(downstream_message_bus.id), 
-                                    difference_builder.get_message())
+                                    request)
 
 # Provide context based on router (ip trace) or PKI
 # Maybe able to emulate/simulate
