@@ -230,7 +230,7 @@ class DistributedAgent:
 
     def send_control_command(self, differenceBuilder : DifferenceBuilder):
         if self.simulation_id is not None:
-            LocalContext.control_command(differenceBuilder)
+            LocalContext.send_control_command(self.downstream_message_bus, differenceBuilder)
     '''
         TODO This block needs to be tested with device interface
         else:
