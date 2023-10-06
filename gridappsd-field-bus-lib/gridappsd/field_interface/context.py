@@ -1,3 +1,4 @@
+from gridappsd import DifferenceBuilder
 from gridappsd.field_interface.interfaces import FieldMessageBus
 import dataclasses
 import gridappsd.topics as t
@@ -41,12 +42,22 @@ class LocalContext:
     
     @classmethod
     def get_agents(cls, downstream_message_bus: FieldMessageBus):
-        """
+        """git sta
         Sends the newly created distributed agent's info to OT bus
 
         """
         request = {'request_type' : 'get_agents'}
         return downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request)
+    
+    @classmethod
+    def send_control_command(cls, downstream_message_bus: FieldMessageBus, difference_builder: DifferenceBuilder):
+        """
+        Sends the control command to device
+
+        """
+        request = {'request_type' : 'control_command'}
+        downstream_message_bus.send(t.context_request_queue(downstream_message_bus.id), 
+                                    difference_builder.get_message())
 
 # Provide context based on router (ip trace) or PKI
 # Maybe able to emulate/simulate
