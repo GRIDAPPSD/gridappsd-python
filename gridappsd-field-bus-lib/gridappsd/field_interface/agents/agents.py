@@ -10,6 +10,7 @@ from cimgraph.loaders import ConnectionParameters, gridappsd
 from cimgraph.loaders.gridappsd import GridappsdConnection
 from cimgraph.models import DistributedModel, SecondaryArea, SwitchArea
 
+from gridappsd import DifferenceBuilder
 import gridappsd.topics as t
 from gridappsd.field_interface.context import LocalContext
 from gridappsd.field_interface.gridappsd_field_bus import GridAPPSDMessageBus
@@ -227,16 +228,22 @@ class DistributedAgent:
         self.upstream_message_bus.send(t.field_message_bus_topic(self.upstream_message_bus.id), message)
 
 
+    def send_control_command(self, differenceBuilder : DifferenceBuilder):
+        if self.simulation_id is not None:
+            LocalContext.control_command(differenceBuilder)
+    '''
+        TODO This block needs to be tested with device interface
+        else:
+        self.downstream_message_bus.send(devie_interface_topic, differenceBuilder)
+    '''  
+
 '''  TODO this has not been implemented yet, so we are commented them out for now.
     # not all agent would use this    
     def on_control(self, control):
         device_id = control.get('device')
         command = control.get('command')
         self.control_device(device_id, command)
-
-    def control_device(self, device_id, command):
-        device_topic = self.devices.get(device_id)
-        self.secondary_message_bus.publish(device_topic, command)'''
+'''
 
 
 class FeederAgent(DistributedAgent):
