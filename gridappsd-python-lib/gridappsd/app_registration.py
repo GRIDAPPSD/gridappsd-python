@@ -1,4 +1,4 @@
-import json
+#import json
 import logging
 import os
 try:
@@ -15,7 +15,7 @@ import os
 
 from . gridappsd import GridAPPSD
 from . topics import REQUEST_REGISTER_APP
-from . import utils
+from . import utils, json_extension as json
 
 _log = logging.getLogger(__name__)
 
