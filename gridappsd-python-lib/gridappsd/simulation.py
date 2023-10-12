@@ -3,11 +3,12 @@ from pathlib import Path
 import sys
 import time
 from copy import deepcopy
-import json
+#import json
 import logging
 from typing import Dict, List, Union
 
 import gridappsd.topics as t
+from . import json_extension as json
 
 _log = logging.getLogger(__name__)
 

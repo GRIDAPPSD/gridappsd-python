@@ -39,14 +39,13 @@
 # -------------------------------------------------------------------------------
 
 import inspect
-import json
 import logging
 from datetime import datetime
 from logging import DEBUG, INFO, WARNING, FATAL, WARN
 import time
 
 from gridappsd.goss import GOSS
-from gridappsd import utils
+from gridappsd import utils, json_extension as json
 import gridappsd.topics as t
 from gridappsd import ProcessStatusEnum
 from gridappsd.houses import Houses
