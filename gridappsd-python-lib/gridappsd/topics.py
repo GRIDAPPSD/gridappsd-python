@@ -184,8 +184,8 @@ def field_message_bus_topic(message_bus_id:str, app_id: str=None, agent_id: str=
     :return:
     """
     assert message_bus_id, "message_bus_id cannot be empty"
-    
-    return f"{BASE_FIELD_TOPIC}.{message_bus_id}.{app_id}.{agent_id}" 
+
+    return f"{BASE_FIELD_TOPIC}.{message_bus_id}" 
 
 
 def field_message_bus_app_topic(message_bus_id, app_id=None):
