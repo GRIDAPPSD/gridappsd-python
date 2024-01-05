@@ -85,6 +85,16 @@ class FeederAreaContextManager(FeederAgent):
             reply_to = headers['reply-to']
             message_bus.send(reply_to, self.registered_agents)
 
+        elif message['request_type'] == 'is_initialized':
+            reply_to = headers['reply-to']
+            message = {'initialized':True}
+            message_bus.send(reply_to, message)
+
+        elif message['request_type'] == 'control_command':
+            simulation_id = message['input']['simulation_id']
+            self.ot_connection.send(t.simulation_input_topic(simulation_id),
+                                    message)
+
 
 class SwitchAreaContextManager(SwitchAreaAgent):
 
@@ -137,8 +147,13 @@ class SwitchAreaContextManager(SwitchAreaAgent):
             
         elif message['request_type'] == 'is_initialized':
             reply_to = headers['reply-to']
-            message = {'is_initialized':self.is_initialized}
+            message = {'initialized':True}
             message_bus.send(reply_to, message)
+
+        elif message['request_type'] == 'control_command':
+            simulation_id = message['input']['simulation_id']
+            self.ot_connection.send(t.simulation_input_topic(simulation_id),
+                                    message)
 
 
 class SecondaryAreaContextManager(SecondaryAreaAgent):
@@ -188,6 +203,16 @@ class SecondaryAreaContextManager(SecondaryAreaAgent):
         elif message['request_type'] == 'get_agents':
             reply_to = headers['reply-to']
             message_bus.send(reply_to, self.registered_agents)
+
+        elif message['request_type'] == 'is_initialized':
+            reply_to = headers['reply-to']
+            message = {'initialized':True}
+            message_bus.send(reply_to, message)
+
+        elif message['request_type'] == 'control_command':
+            simulation_id = message['input']['simulation_id']
+            self.ot_connection.send(t.simulation_input_topic(simulation_id),
+                                    message)
 
 def get_MessageBusDefinition(area_id: str) -> MessageBusDefinition:
     
