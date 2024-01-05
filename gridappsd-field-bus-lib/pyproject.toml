@@ -21,6 +21,10 @@ packages = [
     { include = 'gridappsd'}
 ]
 
+[tool.poetry.scripts]
+# Add things in the form
+# myscript = 'my_package:main'
+context_manager = 'gridappsd.context_manager:main'
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4.0"
