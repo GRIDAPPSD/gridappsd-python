@@ -6,9 +6,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict
 
-from cimgraph.loaders import ConnectionParameters, gridappsd
-from cimgraph.loaders.gridappsd import GridappsdConnection
-from cimgraph.models import DistributedModel, SecondaryArea, SwitchArea
+from cimgraph.databases import ConnectionParameters
+from cimgraph.databases.gridappsd import GridappsdConnection
+from cimgraph.models import FeederModel
+from cimgraph.models.distributed_area import DistributedArea
 
 from gridappsd import DifferenceBuilder
 import gridappsd.topics as t
@@ -17,16 +18,20 @@ from gridappsd.field_interface.gridappsd_field_bus import GridAPPSDMessageBus
 from gridappsd.field_interface.interfaces import (FieldMessageBus,
                                                   MessageBusDefinition)
 
+CIM_PROFILE = None
+IEC61970_301 = None
 cim = None
-sparql = None
 
 _log = logging.getLogger(__name__)
 
 
-def set_cim_profile(cim_profile):
+def set_cim_profile(cim_profile:str, iec61970_301:int):
+    global CIM_PROFILE
+    global IEC61970_301
     global cim
+    CIM_PROFILE = cim_profile
+    IEC61970_301 = iec61970_301
     cim = importlib.import_module('cimgraph.data_profile.' + cim_profile)
-    gridappsd.set_cim_profile(cim_profile)
 
 
 @dataclass
@@ -58,8 +63,10 @@ class DistributedAgent:
         self.context = None
 
         #TODO: Change params and connection to local connection
-        self.params = ConnectionParameters()
+        self.params = ConnectionParameters(cim_profile=CIM_PROFILE, iec61970_301=IEC61970_301)
+        
         self.connection = GridappsdConnection(self.params)
+        self.connection.cim_profile = cim_profile
 
         self.app_id = agent_config['app_id']
         self.description = agent_config['description']
@@ -263,10 +270,11 @@ class FeederAgent(DistributedAgent):
         self._connect()
 
         if self.agent_area_dict is not None:
-            feeder = cim.Feeder(mRID=self.downstream_message_bus_def.id)
-            self.feeder_area = DistributedModel(connection=self.connection,
-                                                feeder=feeder,
-                                                topology=self.agent_area_dict)
+            feeder = cim.EquipmentContainer(mRID=self.downstream_message_bus_def.id)
+            self.feeder_area = DistributedArea(connection=self.connection,
+                                                container=feeder,
+                                                distributed=True)
+            self.feeder_area.build_from_topo_message(topology_dict=self.agent_area_dict, centralized_graph=None)
 
 
 class SwitchAreaAgent(DistributedAgent):
@@ -285,9 +293,11 @@ class SwitchAreaAgent(DistributedAgent):
         self._connect()
 
         if self.agent_area_dict is not None:
-            self.switch_area = SwitchArea(self.downstream_message_bus_def.id,
-                                          self.connection)
-            self.switch_area.initialize_switch_area(self.agent_area_dict)
+            container = cim.EquipmentContainer(mRID=self.downstream_message_bus_def.id)
+            self.switch_area = DistributedArea(container=container,
+                                          connection=self.connection,
+                                          distributed=True)
+            self.switch_area.build_from_topo_message(topology_dict=self.agent_area_dict, centralized_graph=None)
 
 
 class SecondaryAreaAgent(DistributedAgent):
@@ -308,10 +318,11 @@ class SecondaryAreaAgent(DistributedAgent):
         if self.agent_area_dict is not None:
             if len(self.agent_area_dict['addressable_equipment']) == 0:
                 _log.warn(f"No addressable equipment in the secondary area with down stream message bus id: {self.downstream_message_bus.id}.")
-            
-            self.secondary_area = SecondaryArea(self.downstream_message_bus_def.id,
-                                                self.connection)
-            self.secondary_area.initialize_secondary_area(self.agent_area_dict)
+            container = cim.EquipmentContainer(mRID=self.downstream_message_bus_def.id)
+            self.secondary_area = DistributedArea(container=container,
+                                          connection=self.connection,
+                                          distributed=True)
+            self.secondary_area.build_from_topo_message(topology_dict=self.agent_area_dict, centralized_graph=None)
             
 
 
