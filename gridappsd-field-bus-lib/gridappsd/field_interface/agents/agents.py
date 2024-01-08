@@ -17,6 +17,7 @@ from gridappsd.field_interface.context import LocalContext
 from gridappsd.field_interface.gridappsd_field_bus import GridAPPSDMessageBus
 from gridappsd.field_interface.interfaces import (FieldMessageBus,
                                                   MessageBusDefinition)
+                                                  
 
 CIM_PROFILE = None
 IEC61970_301 = None
@@ -25,7 +26,7 @@ cim = None
 _log = logging.getLogger(__name__)
 
 
-def set_cim_profile(cim_profile:str, iec61970_301:int):
+def set_cim_profile(cim_profile: str, iec61970_301: int):
     global CIM_PROFILE
     global IEC61970_301
     global cim
@@ -62,9 +63,10 @@ class DistributedAgent:
         self.simulation_id = simulation_id
         self.context = None
 
-        #TODO: Change params and connection to local connection
-        self.params = ConnectionParameters(cim_profile=CIM_PROFILE, iec61970_301=IEC61970_301)
-        
+        # TODO: Change params and connection to local connection
+        self.params = ConnectionParameters(cim_profile=CIM_PROFILE,
+                                           iec61970_301=IEC61970_301)
+
         self.connection = GridappsdConnection(self.params)
         self.connection.cim_profile = cim_profile
 
@@ -75,7 +77,7 @@ class DistributedAgent:
         if ('context_manager' not in self.app_id):
             self.agent_id = "da_" + self.app_id
         else:
-            self.agent_id = downstream_message_bus_def.id+'.context_manager'
+            self.agent_id = downstream_message_bus_def.id + '.context_manager'
 
         self.agent_area_dict = agent_area_dict
 
@@ -95,7 +97,7 @@ class DistributedAgent:
 
         # self.context = ContextManager.get(self.feeder_id, self.area_id)
 
-        #if agent_dict is not None:
+        # if agent_dict is not None:
         #    self.addressable_equipments = agent_dict['addressable_equipment']
         #    self.unaddressable_equipments = agent_dict['unaddressable_equipment']
 
@@ -111,7 +113,7 @@ class DistributedAgent:
 
         if ('context_manager' not in self.app_id):
             self.agent_id = "da_" + self.app_id + "_" + self.downstream_message_bus.id
-        
+
         if self.agent_area_dict is None:
             context = LocalContext.get_context_by_message_bus(
                 self.downstream_message_bus)
@@ -124,7 +126,7 @@ class DistributedAgent:
         if ('context_manager' not in self.app_id):
             LocalContext.register_agent(self.downstream_message_bus,
                                         self.upstream_message_bus, self)
-            
+
     def disconnect(self):
 
         if self.upstream_message_bus is not None:
@@ -165,7 +167,6 @@ class DistributedAgent:
             t.field_message_bus_app_topic(self.upstream_message_bus.id,
                                           self.app_id),
             self.on_upstream_message)
-
 
         if ('context_manager' not in self.app_id):
             _log.debug(
@@ -227,22 +228,26 @@ class DistributedAgent:
                                            self.upstream_message_bus.id,
                                            self.downstream_message_bus.id)
         return dataclasses.asdict(details)
-    
+
     def publish_downstream(self, message):
-        self.downstream_message_bus.send(t.field_message_bus_topic(self.downstream_message_bus.id), message)
-        
+        self.downstream_message_bus.send(
+            t.field_message_bus_topic(self.downstream_message_bus.id), message)
+
     def publish_upstream(self, message):
-        self.upstream_message_bus.send(t.field_message_bus_topic(self.upstream_message_bus.id), message)
+        self.upstream_message_bus.send(
+            t.field_message_bus_topic(self.upstream_message_bus.id), message)
 
-
-    def send_control_command(self, differenceBuilder : DifferenceBuilder):
+    def send_control_command(self, differenceBuilder: DifferenceBuilder):
         if self.simulation_id is not None:
-            LocalContext.send_control_command(self.downstream_message_bus, differenceBuilder)
+            LocalContext.send_control_command(self.downstream_message_bus,
+                                              differenceBuilder)
+
     '''
         TODO This block needs to be tested with device interface
         else:
         self.downstream_message_bus.send(devie_interface_topic, differenceBuilder)
-    '''  
+    '''
+
 
 '''  TODO this has not been implemented yet, so we are commented them out for now.
     # not all agent would use this    
@@ -261,20 +266,21 @@ class FeederAgent(DistributedAgent):
                  agent_config: Dict,
                  feeder_dict=None,
                  simulation_id=None):
-        super().__init__(upstream_message_bus_def,
-                             downstream_message_bus_def, agent_config,
-                             feeder_dict, simulation_id)
+        super().__init__(upstream_message_bus_def, downstream_message_bus_def,
+                         agent_config, feeder_dict, simulation_id)
         self.feeder_area = None
         self.downstream_message_bus_def = downstream_message_bus_def
 
         self._connect()
 
         if self.agent_area_dict is not None:
-            feeder = cim.EquipmentContainer(mRID=self.downstream_message_bus_def.id)
+            feeder = cim.EquipmentContainer(
+                mRID=self.downstream_message_bus_def.id)
             self.feeder_area = DistributedArea(connection=self.connection,
-                                                container=feeder,
-                                                distributed=True)
-            self.feeder_area.build_from_topo_message(topology_dict=self.agent_area_dict, centralized_graph=None)
+                                               container=feeder,
+                                               distributed=True)
+            self.feeder_area.build_from_topo_message(
+                topology_dict=self.agent_area_dict, centralized_graph=None)
 
 
 class SwitchAreaAgent(DistributedAgent):
@@ -293,11 +299,13 @@ class SwitchAreaAgent(DistributedAgent):
         self._connect()
 
         if self.agent_area_dict is not None:
-            container = cim.EquipmentContainer(mRID=self.downstream_message_bus_def.id)
+            container = cim.EquipmentContainer(
+                mRID=self.downstream_message_bus_def.id)
             self.switch_area = DistributedArea(container=container,
-                                          connection=self.connection,
-                                          distributed=True)
-            self.switch_area.build_from_topo_message(topology_dict=self.agent_area_dict, centralized_graph=None)
+                                               connection=self.connection,
+                                               distributed=True)
+            self.switch_area.build_from_topo_message(
+                topology_dict=self.agent_area_dict, centralized_graph=None)
 
 
 class SecondaryAreaAgent(DistributedAgent):
@@ -317,13 +325,16 @@ class SecondaryAreaAgent(DistributedAgent):
 
         if self.agent_area_dict is not None:
             if len(self.agent_area_dict['addressable_equipment']) == 0:
-                _log.warn(f"No addressable equipment in the secondary area with down stream message bus id: {self.downstream_message_bus.id}.")
-            container = cim.EquipmentContainer(mRID=self.downstream_message_bus_def.id)
+                _log.warning(
+                    f"No addressable equipment in the secondary area with down stream message bus id: {self.downstream_message_bus.id}."
+                )
+            container = cim.EquipmentContainer(
+                mRID=self.downstream_message_bus_def.id)
             self.secondary_area = DistributedArea(container=container,
-                                          connection=self.connection,
-                                          distributed=True)
-            self.secondary_area.build_from_topo_message(topology_dict=self.agent_area_dict, centralized_graph=None)
-            
+                                                  connection=self.connection,
+                                                  distributed=True)
+            self.secondary_area.build_from_topo_message(
+                topology_dict=self.agent_area_dict, centralized_graph=None)
 
 
 class CoordinatingAgent:
@@ -347,7 +358,7 @@ class CoordinatingAgent:
         self.system_message_bus = GridAPPSDMessageBus(system_message_bus_def)
         self.system_message_bus.connect()
 
-        #This will change when we have multiple feeders per system
+        # This will change when we have multiple feeders per system
         self.downstream_message_bus = self.system_message_bus
 
         # self.context = ContextManager.getContextByFeeder(self.feeder_id)
