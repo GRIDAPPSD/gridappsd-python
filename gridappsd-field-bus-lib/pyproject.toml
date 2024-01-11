@@ -24,7 +24,7 @@ packages = [
 [tool.poetry.scripts]
 # Add things in the form
 # myscript = 'my_package:main'
-context_manager = 'gridappsd.context_manager:main'
+context_manager = 'gridappsd.field_interface.context_manager:_main'
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4.0"
