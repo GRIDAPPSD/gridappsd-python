@@ -28,7 +28,7 @@ context_manager = 'gridappsd.field_interface.context_manager:_main'
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4.0"
-gridappsd-python = ">2023"
+gridappsd-python = { path="../gridappsd-python-lib", develop = true}
 cim-graph = ">=0.1.1a0"
 
 [tool.poetry.group.dev.dependencies]
