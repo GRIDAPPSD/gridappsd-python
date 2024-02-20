@@ -3,7 +3,12 @@ from gridappsd.field_interface.interfaces import FieldMessageBus
 import dataclasses
 import gridappsd.topics as t
 import json
+import logging
+from gridappsd.goss import TimeoutError
+import time
 
+
+_log = logging.getLogger(__name__)
 
 
 class LocalContext:
@@ -14,10 +19,16 @@ class LocalContext:
         request = {'request_type' : 'get_context',
                     'modelId': feeder_mrid,
                    'areaId': area_id}
-        print(t.context_request_queue(downstream_message_bus.id))
-        response = downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request, timeout=10)
-        return response
+        response = None
+        while response is None:
+                try:
+                    response = downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request, timeout=10)
+                except TimeoutError:
+                    _log.info("Context request timed out. Trying again...")
+                    time.sleep(5)
 
+        return response
+    
     @classmethod
     def get_context_by_message_bus(cls, downstream_message_bus: FieldMessageBus):
         """
@@ -27,7 +38,15 @@ class LocalContext:
         request = {'request_type' : 'get_context',
                    'areaId': downstream_message_bus.id
                    }
-        return downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request, timeout=10)
+        response = None
+        while response is None:
+            try:
+                response = downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request, timeout=10)
+            except TimeoutError:
+                _log.info("Context request timed out. Trying again...")
+                time.sleep(5)
+        
+        return response
     
     @classmethod
     def register_agent(cls, downstream_message_bus: FieldMessageBus, upstream_message_bus: FieldMessageBus, agent):
