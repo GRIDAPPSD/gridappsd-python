@@ -24,7 +24,7 @@ class LocalContext:
                 try:
                     response = downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request, timeout=10)
                 except TimeoutError:
-                    _log.warn("Context request timed out. Trying again...")
+                    _log.warning("Context request timed out. Trying again...")
                     time.sleep(5)
 
         return response
@@ -43,7 +43,7 @@ class LocalContext:
             try:
                 response = downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request, timeout=10)
             except TimeoutError:
-                _log.warn("Context request timed out. Trying again...")
+                _log.warning("Context request timed out. Trying again...")
                 time.sleep(5)
         
         return response
