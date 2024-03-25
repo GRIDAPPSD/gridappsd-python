@@ -242,7 +242,7 @@ class Simulation:
 
     def resume_pause_at(self, pause_in):
         """ Resume the simulation and have it automatically pause after specified amount of seconds later.
-        
+
         :param pause_in: number of seconds to run before pausing the simulation
         """
         _log.debug("Resuming simulation. Will pause after {} seconds".format(

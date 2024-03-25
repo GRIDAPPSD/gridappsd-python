@@ -104,11 +104,11 @@ class GridAPPSD(GOSS):
 
     def get_houses(self) -> Houses:
         return self._houses
-    
+
     def get_simulation_id(self):
-        """ 
+        """
         Return the simulation_id given to the GridAPPSD instance
-        
+
         :return:
         """
         if not self._simulation_id:
@@ -116,7 +116,7 @@ class GridAPPSD(GOSS):
             if self._simulation_id:
                 self._simulation_log_topic = t.simulation_log_topic(self._simulation_id)
         return self._simulation_id
-    
+
     def set_application_status(self, status):
         """
         Set the application status.
@@ -156,17 +156,17 @@ class GridAPPSD(GOSS):
 
     def get_application_id(self):
         return utils.get_gridappsd_application_id()
-    
+
     def get_service_status(self):
         """
         Return the service status
         :return:
         """
         return self._process_status.value
-    
+
     def query_object_types(self, model_id=None):
         """ Allows the caller to query the different object types.
-                
+
         :param model_id:
         :return:
         """
@@ -186,7 +186,7 @@ class GridAPPSD(GOSS):
     def query_model_info(self):
         payload = self._build_query_payload("QUERY_MODEL_INFO")
         return self.get_response(t.REQUEST_POWERGRID_DATA, payload, timeout=30)
-    
+
     def query_model(self, model_id=None, object_type=None, object_id=None, response_format='JSON'):
         args = {}
         if model_id is not None:
@@ -194,9 +194,9 @@ class GridAPPSD(GOSS):
         if object_type is not None:
             args["objectType"] = object_type
         if object_id is not None:
-            args["objectId"] = object_id   
+            args["objectId"] = object_id
         if response_format is not None:
-            args["resultFormat"] = response_format   
+            args["resultFormat"] = response_format
         payload = self._build_query_payload("QUERY_MODEL", **args)
         return self.get_response(t.REQUEST_POWERGRID_DATA, payload, timeout=30)
 
@@ -208,7 +208,7 @@ class GridAPPSD(GOSS):
             args["modelId"] = model_id
         payload = self._build_query_payload("QUERY_OBJECT", **args)
         return self.get_response(t.REQUEST_POWERGRID_DATA, payload, timeout=30)
-    
+
     def query_object_dictionary(self, model_id, object_type=None, object_id=None):
         if not model_id:
             raise ValueError("model_id is not specified.")
@@ -279,6 +279,3 @@ class GridAPPSD(GOSS):
         d = dict(requestType=request_type, resultFormat=response_format)
         d.update(**kwargs)
         return d
-
-
-
