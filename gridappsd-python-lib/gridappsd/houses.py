@@ -38,8 +38,8 @@ class Houses:
             query = """# list houses - DistHouse
 PREFIX r:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX c:  <http://iec.ch/TC57/CIM100#>
-SELECT ?fdrname ?name ?parent ?coolingSetpoint ?coolingSystem ?floorArea ?heatingSetpoint ?heatingSystem ?hvacPowerFactor ?numberOfStories ?thermalIntegrity ?id ?fdrid 
-WHERE { 
+SELECT ?fdrname ?name ?parent ?coolingSetpoint ?coolingSystem ?floorArea ?heatingSetpoint ?heatingSystem ?hvacPowerFactor ?numberOfStories ?thermalIntegrity ?id ?fdrid
+WHERE {
 #	VALUES ?fdrid {"_9CE150A8-8CC5-A0F9-B67E-BBD8C79D3095"}  # R2 12.47 3
 #	VALUES ?fdrid {"_4F76A5F9-271D-9EB8-5E31-AA362D86F2C3"}  # 8500-node
 # VALUES ?fdrid {"_E407CBB6-8C8D-9BC9-589C-AB83FBF0826D"}  # 123 PV/Triplex
@@ -54,7 +54,7 @@ WHERE {
    OPTIONAL{?h c:House.heatingSetpoint ?heatingSetpoint.}
    OPTIONAL{?h c:House.hvacPowerFactor ?hvacPowerFactor.}
    ?h c:House.coolingSystem ?coolingSystemRaw.
-   	bind(strafter(str(?coolingSystemRaw),"HouseCooling.") as ?coolingSystem) 
+   	bind(strafter(str(?coolingSystemRaw),"HouseCooling.") as ?coolingSystem)
    ?h c:House.heatingSystem ?heatingSystemRaw.
    	bind(strafter(str(?heatingSystemRaw),"HouseHeating.") as ?heatingSystem)
    ?h c:House.thermalIntegrity ?thermalIntegrityRaw.
@@ -94,4 +94,3 @@ WHERE {
 
     def __getattr__(self, name):
         return getattr(self.instance, name)
-

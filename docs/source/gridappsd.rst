@@ -40,5 +40,3 @@ gridappsd.topics module
     :members:
     :undoc-members:
     :show-inheritance:
-
-

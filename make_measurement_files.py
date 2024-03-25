@@ -44,4 +44,3 @@ wthread.start()
 sim.run_loop()
 
 output_queue.put("DONE")
-

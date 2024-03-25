@@ -89,13 +89,12 @@ class Logger:
             "logLevel": _levelToName[level],
             "storeToDb": True
         }
-        
+
         gridappsd_log_level = os.getenv('GRIDAPPSD_LOG_LEVEL')
         if gridappsd_log_level == None:
             gridappsd_log_level = level
         else:
             gridappsd_log_level = _nameToLevel[gridappsd_log_level]
-            
+
         if level >= gridappsd_log_level:
             self._gaps.send(topic, status_message)
-

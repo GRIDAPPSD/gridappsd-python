@@ -149,23 +149,23 @@ class GOSS(object):
         self._conn.send(body=message, destination=topic,
                         headers={'GOSS_HAS_SUBJECT': True,
                                   'GOSS_SUBJECT': self.__token})
-                                 
+
     def get_response(self, topic, message, timeout=5):
         id = datetime.now().strftime("%Y%m%d%h%M%S")
         reply_to = "/temp-queue/response.{}".format(id)
-        
+
         if isinstance(message, str):
             message = json.loads(message)
-        
+
         if 'resultFormat' in message:
-            self.result_format = message['resultFormat'] 
+            self.result_format = message['resultFormat']
 
         # Change message to string if we have a dictionary.
         if isinstance(message, dict):
             message = json.dumps(message)
         elif isinstance(message, list):
             message = json.dumps(message)
-            
+
         class ResponseListener(object):
             def __init__(self, topic, result_format):
                 self.response = None
@@ -181,7 +181,7 @@ class GOSS(object):
                             self.response = message
                         else:
                             self.response = json.loads(message)
-                    else:   
+                    else:
                         self.response = message
                 except ValueError:
                     self.response = dict(error="Invalid json returned",
@@ -297,7 +297,7 @@ class GOSS(object):
                 if self._override_thread_fc is not None:
                     tmpConn.transport.override_threading(self._override_thread_fc)
                 tmpConn.connect(self.__user__, self.__pass__, wait=True)
-                
+
                 class TokenResponseListener():
                     def __init__(self):
                         self.__token = None
@@ -307,7 +307,7 @@ class GOSS(object):
 
                     def on_message(self, header, message):
                         _log.debug("Internal on message is: {} {}".format(header, message))
-                        
+
                         self.__token = str(message)
 
                     def on_error(self, headers, message):

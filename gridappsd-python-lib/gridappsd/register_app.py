@@ -78,5 +78,3 @@ def main():
                     gap = None
 
             time.sleep(2)
-
-

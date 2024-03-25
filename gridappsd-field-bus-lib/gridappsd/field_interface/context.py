@@ -7,10 +7,10 @@ import json
 
 
 class LocalContext:
-    
+
     @classmethod
     def get_context_by_feeder(cls, downstream_message_bus: FieldMessageBus, feeder_mrid, area_id=None):
-        
+
         request = {'request_type' : 'get_context',
                     'modelId': feeder_mrid,
                    'areaId': area_id}
@@ -28,7 +28,7 @@ class LocalContext:
                    'areaId': downstream_message_bus.id
                    }
         return downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request, timeout=10)
-    
+
     @classmethod
     def register_agent(cls, downstream_message_bus: FieldMessageBus, upstream_message_bus: FieldMessageBus, agent):
         """
@@ -39,7 +39,7 @@ class LocalContext:
                    'agent' : agent.get_registration_details()}
         downstream_message_bus.send(t.context_request_queue(downstream_message_bus.id), request)
         upstream_message_bus.send(t.context_request_queue(upstream_message_bus.id), request)
-    
+
     @classmethod
     def get_agents(cls, downstream_message_bus: FieldMessageBus):
         """
@@ -48,7 +48,7 @@ class LocalContext:
         """
         request = {'request_type' : 'get_agents'}
         return downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request)
-    
+
     @classmethod
     def send_control_command(cls, downstream_message_bus: FieldMessageBus, difference_builder: DifferenceBuilder):
         """
@@ -57,7 +57,7 @@ class LocalContext:
         """
         request = {'request_type' : 'control_command',
                    'difference_builder': difference_builder.get_message()}
-        downstream_message_bus.send(t.context_request_queue(downstream_message_bus.id), 
+        downstream_message_bus.send(t.context_request_queue(downstream_message_bus.id),
                                     request)
 
 # Provide context based on router (ip trace) or PKI

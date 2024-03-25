@@ -44,7 +44,7 @@ for WHEELFILE in $WHEELFILES
 do
     rm -rf /tmp/version_update
     mkdir -p /tmp/version_update
-    unzip -d /tmp/version_update $curdir/$WHEELFILE 
+    unzip -d /tmp/version_update $curdir/$WHEELFILE
     cd /tmp/version_update
     # Replace the path dependencies (which are prefixed with '@')
     # with compatible version to the current monorepo, but at least at the current one.

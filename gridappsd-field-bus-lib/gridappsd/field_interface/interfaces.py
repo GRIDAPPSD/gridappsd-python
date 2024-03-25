@@ -58,7 +58,7 @@ class ProtocolTransformer(ABC):
         and return it.
 
         cim_data: string representing cim data structures/change structure
-        from_format: specifies the type 
+        from_format: specifies the type
         """
         pass
 
@@ -97,7 +97,7 @@ class MessageBusDefinition:
 
         """
         config = yaml.load(open(config_file),Loader=yaml.FullLoader)['connections']
-        
+
         required = ["id", "connection_type", "connection_args"]
         for k in required:
             if k not in config:
@@ -114,7 +114,7 @@ class MessageBusDefinition:
 
         if not hasattr(definition, "is_ot_bus"):
             setattr(definition, "is_ot_bus", False)
-            
+
         return definition
 
 
@@ -170,13 +170,13 @@ class FieldMessageBus:
         Publish device specific message to the concrete message bus.
         """
         pass
-    
+
     @abstractmethod
     def get_response(self, topic, message, timeout):
         """
         Sends a message on a specific queue, waits and returns the response
         """
-        
+
     def get_agent_response(self, agent_id, message, timeout):
         """
         Sends a message on a specific agent's request queue, waits and returns the response
@@ -281,6 +281,6 @@ class DeviceFieldInterface:
     def on_state_change(self):
         """
         This event should be triggered by the device/protocol that
-        is used.  
+        is used.
         """
         pass

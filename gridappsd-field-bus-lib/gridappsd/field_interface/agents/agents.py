@@ -104,7 +104,7 @@ class DistributedAgent:
 
         if ('context_manager' not in self.app_id):
             self.agent_id = "da_" + self.app_id + "_" + self.downstream_message_bus.id
-        
+
         if self.agent_area_dict is None:
             context = LocalContext.get_context_by_message_bus(
                 self.downstream_message_bus)
@@ -117,7 +117,7 @@ class DistributedAgent:
         if ('context_manager' not in self.app_id):
             LocalContext.register_agent(self.downstream_message_bus,
                                         self.upstream_message_bus, self)
-            
+
     def disconnect(self):
 
         if self.upstream_message_bus is not None:
@@ -220,10 +220,10 @@ class DistributedAgent:
                                            self.upstream_message_bus.id,
                                            self.downstream_message_bus.id)
         return dataclasses.asdict(details)
-    
+
     def publish_downstream(self, message):
         self.downstream_message_bus.send(t.field_message_bus_topic(self.downstream_message_bus.id), message)
-        
+
     def publish_upstream(self, message):
         self.upstream_message_bus.send(t.field_message_bus_topic(self.upstream_message_bus.id), message)
 
@@ -235,10 +235,10 @@ class DistributedAgent:
         TODO This block needs to be tested with device interface
         else:
         self.downstream_message_bus.send(devie_interface_topic, differenceBuilder)
-    '''  
+    '''
 
 '''  TODO this has not been implemented yet, so we are commented them out for now.
-    # not all agent would use this    
+    # not all agent would use this
     def on_control(self, control):
         device_id = control.get('device')
         command = control.get('command')
@@ -308,11 +308,11 @@ class SecondaryAreaAgent(DistributedAgent):
         if self.agent_area_dict is not None:
             if len(self.agent_area_dict['addressable_equipment']) == 0:
                 _log.warn(f"No addressable equipment in the secondary area with down stream message bus id: {self.downstream_message_bus.id}.")
-            
+
             self.secondary_area = SecondaryArea(self.downstream_message_bus_def.id,
                                                 self.connection)
             self.secondary_area.initialize_secondary_area(self.agent_area_dict)
-            
+
 
 
 class CoordinatingAgent:
