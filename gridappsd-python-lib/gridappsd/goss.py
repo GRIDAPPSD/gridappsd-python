@@ -151,7 +151,7 @@ class GOSS(object):
                                   'GOSS_SUBJECT': self.__token})
                                  
     def get_response(self, topic, message, timeout=5):
-        id = datetime.now().strftime("%Y%m%d%h%M%S")
+        id = datetime.now().strftime("%Y%m%d%h%M%S%f")[:-3]
         reply_to = "/temp-queue/response.{}".format(id)
         
         if isinstance(message, str):
