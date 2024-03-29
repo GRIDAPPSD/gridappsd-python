@@ -7,6 +7,7 @@ g = GridAPPSD()
 def cb(header, msg):
     print(f"header: {header} message: {msg}")
 
+
 g.subscribe("/topic/data", cb)
 
 houses = g.get_houses()

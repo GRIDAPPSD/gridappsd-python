@@ -5,6 +5,7 @@ from typing import Any
 
 
 class GridAPPSDMessageBus(FieldMessageBus):
+
     def __init__(self, definition: MessageBusDefinition):
         super(GridAPPSDMessageBus, self).__init__(definition)
         self._id = definition.id
@@ -14,7 +15,7 @@ class GridAPPSDMessageBus(FieldMessageBus):
         self._address = definition.conneciton_args["GRIDAPPSD_ADDRESS"]
 
         self.gridappsd_obj = None
-        
+
     def query_devices(self) -> dict:
         pass
 
@@ -43,14 +44,14 @@ class GridAPPSDMessageBus(FieldMessageBus):
         """
         if self.gridappsd_obj is not None:
             self.gridappsd_obj.send(topic, message)
-            
+
     def get_response(self, topic, message, timeout=5):
         """
         Sends a message on a specific concrete queue, waits and returns the response
         """
         if self.gridappsd_obj is not None:
             return self.gridappsd_obj.get_response(topic, message, timeout)
-        
+
     def disconnect(self):
         """
         Disconnect from the concrete message bus.

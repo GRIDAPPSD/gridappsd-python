@@ -17,7 +17,6 @@
 # logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 # _log = logging.getLogger(inspect.getmodulename(__file__))
 
-
 # def test_log_container(docker_dependencies):
 #     mypath = "/tmp/alphabetagamma.txt"
 #     stream_container_log_to_file("influxdb", mypath)
@@ -26,7 +25,6 @@
 #     assert os.path.exists(mypath)
 #     with open(mypath, 'rb') as rf:
 #         assert len(rf.readlines()) > 0
-
 
 # def test_can_reset_all_containers():
 #     Containers.reset_all_containers()
@@ -53,7 +51,6 @@
 #     Containers.reset_all_containers()
 #     assert not Containers.container_list()
 
-
 # def test_can_dependencies_continue_after_context_manager():
 #     my_config = DEFAULT_DOCKER_DEPENDENCY_CONFIG.copy()
 #     Containers.reset_all_containers()
@@ -75,7 +72,6 @@
 
 #     Containers.reset_all_containers()
 
-
 # def test_create_volume_container():
 #     Containers.create_volume_container("test_volume",
 #                                        "test_volume",
@@ -86,7 +82,6 @@
 #     client = docker.from_env()
 #     result = client.containers.get("test_volume").exec_run("ls -l /startup")
 #     assert True
-
 
 # def test_can_upload_files_to_container():
 #     Containers.reset_all_containers()
@@ -105,7 +100,6 @@
 #     results = test_container.exec_run("ls -l /conf")
 #     for f in os.listdir(conf_path):
 #         assert f in results.output.decode("utf-8"), f"{f} was not in /conf"
-
 
 # def test_multiple_runs_in_a_row_with_dependency_context_manager():
 
@@ -151,7 +145,6 @@
 #         assert gapps
 #         assert gapps.connected
 
-
 # def test_can_start_gridappsd_within_dependency_context_manager_all_cleanup():
 
 #     Containers.reset_all_containers()
@@ -181,14 +174,12 @@
 #     ]
 #     assert not len(containers)
 
-
 # def test_can_start_gridapps():
 #     Containers.reset_all_containers()
 #     with run_dependency_containers() as cont:
 #         with run_gridappsd_container() as cont2:
 #             g = GridAPPSD()
 #             assert g.connected
-
 
 # def test_mysql_setup():
 #     mysql_setup()

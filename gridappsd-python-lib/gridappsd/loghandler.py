@@ -35,6 +35,7 @@ class Logger:
     """
     The `Logger` class handles logging to the main gridappsd server.
     """
+
     def __init__(self, gaps, level=INFO):
         self._gaps = gaps
         self._level = level
@@ -71,8 +72,9 @@ class Logger:
             raise AttributeError(f"Log level must be one of {[x for x in _levelToName.values()]}")
 
         if not process_identifier:
-            raise AttributeError(f"Must have GRIDAPPSD_APPLICATION_ID or GRIDAPPSD_SERVICE_ID or GRIDAPPSD_PROCESS_ID "
-                                 "set in os environments.")
+            raise AttributeError(
+                f"Must have GRIDAPPSD_APPLICATION_ID or GRIDAPPSD_SERVICE_ID or GRIDAPPSD_PROCESS_ID "
+                "set in os environments.")
         status = self._gaps.get_application_status()
         sim_id = self._gaps.get_simulation_id()
 
@@ -89,13 +91,12 @@ class Logger:
             "logLevel": _levelToName[level],
             "storeToDb": True
         }
-        
+
         gridappsd_log_level = os.getenv('GRIDAPPSD_LOG_LEVEL')
         if gridappsd_log_level == None:
             gridappsd_log_level = level
         else:
             gridappsd_log_level = _nameToLevel[gridappsd_log_level]
-            
+
         if level >= gridappsd_log_level:
             self._gaps.send(topic, status_message)
-

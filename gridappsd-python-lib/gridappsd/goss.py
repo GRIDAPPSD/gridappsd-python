@@ -37,7 +37,6 @@
 # PACIFIC NORTHWEST NATIONAL LABORATORY operated by BATTELLE for the
 # UNITED STATES DEPARTMENT OF ENERGY under Contract DE-AC05-76RL01830
 # -------------------------------------------------------------------------------
-
 """
 Created on March 1, 2018
 
@@ -81,10 +80,14 @@ class GOSS(object):
     """ Base class providing connections to a GOSS instance via stomp protocol
     """
 
-    def __init__(self, username=None, password=None,
-                 stomp_address='localhost', stomp_port='61613',
+    def __init__(self,
+                 username=None,
+                 password=None,
+                 stomp_address='localhost',
+                 stomp_port='61613',
                  attempt_connection=True,
-                 override_threading=None, stomp_log_level=logging.WARNING,
+                 override_threading=None,
+                 stomp_log_level=logging.WARNING,
                  goss_log_level=logging.INFO):
 
         logging.getLogger('stomp.py').setLevel(stomp_log_level)
@@ -146,27 +149,31 @@ class GOSS(object):
         if isinstance(message, list) or isinstance(message, dict):
             message = json.dumps(message)
         _log.debug("Sending topic: {} body: {}".format(topic, message))
-        self._conn.send(body=message, destination=topic,
-                        headers={'GOSS_HAS_SUBJECT': True,
-                                  'GOSS_SUBJECT': self.__token})
-                                 
+        self._conn.send(body=message,
+                        destination=topic,
+                        headers={
+                            'GOSS_HAS_SUBJECT': True,
+                            'GOSS_SUBJECT': self.__token
+                        })
+
     def get_response(self, topic, message, timeout=5):
         id = datetime.now().strftime("%Y%m%d%h%M%S%f")[:-3]
         reply_to = "/temp-queue/response.{}".format(id)
-        
+
         if isinstance(message, str):
             message = json.loads(message)
-        
+
         if 'resultFormat' in message:
-            self.result_format = message['resultFormat'] 
+            self.result_format = message['resultFormat']
 
         # Change message to string if we have a dictionary.
         if isinstance(message, dict):
             message = json.dumps(message)
         elif isinstance(message, list):
             message = json.dumps(message)
-            
+
         class ResponseListener(object):
+
             def __init__(self, topic, result_format):
                 self.response = None
                 self._topic = topic
@@ -181,7 +188,7 @@ class GOSS(object):
                             self.response = message
                         else:
                             self.response = json.loads(message)
-                    else:   
+                    else:
                         self.response = message
                 except ValueError:
                     self.response = dict(error="Invalid json returned",
@@ -198,9 +205,13 @@ class GOSS(object):
         listener = ResponseListener(reply_to, self.result_format)
         self.subscribe(reply_to, listener)
 
-        self._conn.send(body=message, destination=topic,
-                        headers={'reply-to': reply_to, 'GOSS_HAS_SUBJECT': True,
-                                 'GOSS_SUBJECT': self.__token})
+        self._conn.send(body=message,
+                        destination=topic,
+                        headers={
+                            'reply-to': reply_to,
+                            'GOSS_HAS_SUBJECT': True,
+                            'GOSS_SUBJECT': self.__token
+                        })
         count = 0
 
         while count < timeout:
@@ -282,7 +293,7 @@ class GOSS(object):
 
                 # get token
                 # get initial connection
-                dt=datetime.now()
+                dt = datetime.now()
                 replyDest = f"temp.token_resp.{self.__user__}-{dt}"
 
                 # create token request string
@@ -297,8 +308,9 @@ class GOSS(object):
                 if self._override_thread_fc is not None:
                     tmpConn.transport.override_threading(self._override_thread_fc)
                 tmpConn.connect(self.__user__, self.__pass__, wait=True)
-                
+
                 class TokenResponseListener():
+
                     def __init__(self):
                         self.__token = None
 
@@ -307,7 +319,7 @@ class GOSS(object):
 
                     def on_message(self, header, message):
                         _log.debug("Internal on message is: {} {}".format(header, message))
-                        
+
                         self.__token = str(message)
 
                     def on_error(self, headers, message):
@@ -322,9 +334,10 @@ class GOSS(object):
                 listener = TokenResponseListener()
 
                 # self.subscribe(replyDest, listener)
-                tmpConn.subscribe('/queue/'+replyDest, 123)
+                tmpConn.subscribe('/queue/' + replyDest, 123)
                 tmpConn.set_listener('token_resp', listener)
-                tmpConn.send(body=base64Str, destination=tokenTopic,
+                tmpConn.send(body=base64Str,
+                             destination=tokenTopic,
                              headers={'reply-to': replyDest})
                 # while token is null or for x iterations
                 iter = 0

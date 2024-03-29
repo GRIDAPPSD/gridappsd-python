@@ -4,11 +4,10 @@ from typing import Optional
 
 from dateutil import parser
 import os
-try: # python2.7
+try:    # python2.7
     from urlparse import urlparse
 except ImportError:
     from urllib.parse import urlparse
-
 
 __GRIDAPPSD_URI__ = os.environ.get("GRIDAPPSD_URI", "localhost:61613")
 
@@ -68,8 +67,7 @@ def get_gridappsd_address():
 
         return address, port
 
-    return (__GRIDAPPSD_URI_PARSED__.hostname,
-            __GRIDAPPSD_URI_PARSED__.port)
+    return (__GRIDAPPSD_URI_PARSED__.hostname, __GRIDAPPSD_URI_PARSED__.port)
 
 
 def get_gridappsd_application_id():

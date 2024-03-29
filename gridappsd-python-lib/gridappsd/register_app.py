@@ -5,9 +5,11 @@ import time
 import stomp
 from gridappsd import ApplicationController, GridAPPSD, utils, json_extension as json
 
+
 def main():
     loglevel = logging.INFO
-    logging.basicConfig(stream=sys.stdout, level=loglevel,
+    logging.basicConfig(stream=sys.stdout,
+                        level=loglevel,
                         format="%(asctime)s - %(name)s;%(levelname)s|%(message)s",
                         datefmt="%Y-%m-%d %H:%M:%S")
     logging.getLogger('stomp.py').setLevel(logging.ERROR)
@@ -43,7 +45,7 @@ def main():
             if gap is None:
                 gap = GridAPPSD()
 
-        except ConnectionRefusedError:  # Python 3 specific error code
+        except ConnectionRefusedError:    # Python 3 specific error code
             _log.debug("Retry in 10 seconds")
             gap = appreg = None
             time.sleep(10)
@@ -57,6 +59,7 @@ def main():
             break
         else:
             if appreg is None:
+
                 def end_app():
                     sys.exit(0)
 
@@ -78,5 +81,3 @@ def main():
                     gap = None
 
             time.sleep(2)
-
-
