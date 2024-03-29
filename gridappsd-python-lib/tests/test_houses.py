@@ -1,4 +1,3 @@
-
 #
 # def test_multiple_calls_gets_same_houses_obj(gridappsd_client):
 #     gapps = gridappsd_client
@@ -6,7 +5,6 @@
 #     id_of_houses = id(houses)
 #     houses_again = gapps.get_houses()
 #     assert id_of_houses == id(houses_again)
-
 
 # def test_can_get_transactive_houses(gridappsd_client):
 #

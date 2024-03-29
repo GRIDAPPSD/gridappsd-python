@@ -120,10 +120,8 @@ class Simulation:
     add_onmeasurement_callback, add_oncomplete_callback or add_onstart_callback method respectively.
     """
 
-    def __init__(self, gapps: 'GridAPPSD',
-                 run_config: Union[Dict, SimulationConfig]):
-        assert type(
-            gapps).__name__ == 'GridAPPSD', "Must be an instance of GridAPPSD"
+    def __init__(self, gapps: 'GridAPPSD', run_config: Union[Dict, SimulationConfig]):
+        assert type(gapps).__name__ == 'GridAPPSD', "Must be an instance of GridAPPSD"
 
         self._run_config = run_config
         # if isinstance(run_config, SimulationConfig):
@@ -157,8 +155,7 @@ class Simulation:
         self._log_count = 0
         self._platform_log_count = 0
 
-        self._num_timesteps = round(
-            float(self._run_config["simulation_config"]["duration"]))
+        self._num_timesteps = round(float(self._run_config["simulation_config"]["duration"]))
 
         # self._num_timesteps = round(
         #     float(self._run_config.simulation_config.duration))
@@ -171,9 +168,7 @@ class Simulation:
     def start_simulation(self, timeout=30):
         """ Start the configured simulation by calling the REQUEST_SIMULATION endpoint.
         """
-        resp = self._gapps.get_response(t.REQUEST_SIMULATION,
-                                        self._run_config,
-                                        timeout=timeout)
+        resp = self._gapps.get_response(t.REQUEST_SIMULATION, self._run_config, timeout=timeout)
 
         if 'simulationId' not in resp:
             message = "Simulation was not able to run\n" + str(resp)
@@ -184,10 +179,8 @@ class Simulation:
 
         # Subscribe to the different components necessary to run and receive
         # simulated measurements and messages.
-        self._gapps.subscribe(t.simulation_log_topic(self.simulation_id),
-                              self.__on_simulation_log)
-        self._gapps.subscribe(t.simulation_output_topic(self.simulation_id),
-                              self.__onmeasurement)
+        self._gapps.subscribe(t.simulation_log_topic(self.simulation_id), self.__on_simulation_log)
+        self._gapps.subscribe(t.simulation_output_topic(self.simulation_id), self.__onmeasurement)
         self._gapps.subscribe(t.platform_log_topic(), self.__on_platformlog)
 
         for p in self.__on_start:
@@ -197,24 +190,21 @@ class Simulation:
         """ Pause simulation"""
         _log.debug("Pausing simulation")
         command = dict(command="pause")
-        self._gapps.send(t.simulation_input_topic(self.simulation_id),
-                         json.dumps(command))
+        self._gapps.send(t.simulation_input_topic(self.simulation_id), json.dumps(command))
         self._running_or_paused = True
 
     def stop(self):
         """ Stop the simulation"""
         _log.debug("Stopping simulation")
         command = dict(command="stop")
-        self._gapps.send(t.simulation_input_topic(self.simulation_id),
-                         json.dumps(command))
+        self._gapps.send(t.simulation_input_topic(self.simulation_id), json.dumps(command))
         self._running_or_paused = True
 
     def resume(self):
         """ Resume the simulation"""
         _log.debug("Resuming simulation")
         command = dict(command="resume")
-        self._gapps.send(t.simulation_input_topic(self.simulation_id),
-                         json.dumps(command))
+        self._gapps.send(t.simulation_input_topic(self.simulation_id), json.dumps(command))
         self._running_or_paused = True
 
     def run_loop(self):
@@ -242,14 +232,12 @@ class Simulation:
 
     def resume_pause_at(self, pause_in):
         """ Resume the simulation and have it automatically pause after specified amount of seconds later.
-        
+
         :param pause_in: number of seconds to run before pausing the simulation
         """
-        _log.debug("Resuming simulation. Will pause after {} seconds".format(
-            pause_in))
+        _log.debug("Resuming simulation. Will pause after {} seconds".format(pause_in))
         command = dict(command="resumePauseAt", input=dict(pauseIn=pause_in))
-        self._gapps.send(t.simulation_input_topic(self.simulation_id),
-                         json.dumps(command))
+        self._gapps.send(t.simulation_input_topic(self.simulation_id), json.dumps(command))
         self._running_or_paused = True
 
     def add_onmeasurement_callback(self, callback, device_filter=()):
@@ -271,8 +259,7 @@ class Simulation:
         :param device_filter: Future filter of measurements
         :return:
         """
-        self.__filterable_measurement_callback_set.add(
-            (callback, device_filter))
+        self.__filterable_measurement_callback_set.add((callback, device_filter))
 
     def add_onstart_callback(self, callback):
         """ registers a start callback that is called when the simulation is started

@@ -13,8 +13,8 @@ import shlex
 import sys
 import os
 
-from . gridappsd import GridAPPSD
-from . topics import REQUEST_REGISTER_APP
+from .gridappsd import GridAPPSD
+from .topics import REQUEST_REGISTER_APP
 from . import utils, json_extension as json
 
 _log = logging.getLogger(__name__)
@@ -26,6 +26,7 @@ if os.name == 'posix':
 
 
 class Job(threading.Thread):
+
     def __init__(self, args, out=sys.stdout, err=sys.stderr):
         threading.Thread.__init__(self)
         _log.debug("Creating job")
@@ -42,10 +43,7 @@ class Job(threading.Thread):
             self.running = True
             os.environ['GRIDAPPSD_APPLICATION_STATUS'] = 'RUNNING'
 
-            p = subprocess.Popen(args=self._args,
-                                 shell=False,
-                                 stdout=self._out,
-                                 stderr=self._err)
+            p = subprocess.Popen(args=self._args, shell=False, stdout=self._out, stderr=self._err)
 
             # Loop while process is executing
             while p.poll() is None and self.running:
@@ -112,13 +110,10 @@ class ApplicationController(object):
         return self._heartbeat_thread is not None
 
     def register_app(self, end_callback):
-        print("Sending {}\n\tto {}".format(self._configDict,
-                                           REQUEST_REGISTER_APP))
+        print("Sending {}\n\tto {}".format(self._configDict, REQUEST_REGISTER_APP))
         self._gapd.get_logger().debug("Started App Registration")
 
-        response = self._gapd.get_response(REQUEST_REGISTER_APP,
-                                           self._configDict,
-                                           60)
+        response = self._gapd.get_response(REQUEST_REGISTER_APP, self._configDict, 60)
         if 'message' in response:
             _log.error("An error regisering the application occured")
             _log.error(response.get('message'))
@@ -156,7 +151,8 @@ class ApplicationController(object):
                 # print("Seanding heartbeat {} {}".format(self._heartbeat_topic, self._application_id))
                 # print("Heartbeat period: {}".format(self._heartbeat_period))
                 self._gapd.send(self._heartbeat_topic, self._application_id)
-                time.sleep(self._heartbeat_period - ((time.time() - starttime) % self._heartbeat_period))
+                time.sleep(self._heartbeat_period -
+                           ((time.time() - starttime) % self._heartbeat_period))
         except:
             error_callback()
 

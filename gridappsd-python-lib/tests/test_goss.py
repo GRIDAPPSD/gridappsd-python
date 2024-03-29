@@ -14,7 +14,6 @@
 
 # _log = logging.getLogger(__name__)
 
-
 # def test_auth_raises_error_no_username_password(docker_dependencies):
 #     container = get_docker_in_docker()
 #     mockdict = {
@@ -33,7 +32,6 @@
 
 #         with pytest.raises(ValueError) as ex:
 #             goss = GOSS(password="bar")
-
 
 # def test_get_response(caplog, goss_client):
 #     caplog.set_level(logging.DEBUG)
@@ -85,7 +83,6 @@
 #     assert len(gen_sub[0]) == 2
 #     assert result['result'] == 11
 
-
 # def test_send_receive(goss_client):
 #     message_queue = Queue()
 
@@ -101,7 +98,6 @@
 #     header, message = message_queue.get()
 #     assert message == "I am a foo"
 
-
 # def test_callback_function(goss_client):
 #     message_queue1 = Queue()
 
@@ -114,7 +110,6 @@
 #     assert message_queue1.qsize() == 1
 #     header, message = message_queue1.get()
 #     assert message == "I am a foo"
-
 
 # def test_multi_subscriptions(goss_client):
 #     message_queue1 = Queue()
@@ -140,7 +135,6 @@
 #     assert message == "I am a foo"
 #     header, message = message_queue2.get()
 #     assert message == "I am a bar"
-
 
 # def test_multi_subscriptions_same_topic(goss_client):
 #     # pytest.xfail("Multiple topics can't be subscribed to the same topic at present.")
@@ -173,7 +167,6 @@
 #     header, message = message_queue2.get()
 #     assert message == "I am a bar"
 
-
 # def test_response_class(goss_client):
 #     message_queue = Queue()
 
@@ -192,7 +185,6 @@
 #     assert 2 == len(result)
 
 #     assert dict(abc="def") == result[1]
-
 
 # def test_replace_subscription(caplog, goss_client):
 #     caplog.set_level(logging.DEBUG)

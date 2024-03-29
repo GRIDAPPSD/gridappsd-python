@@ -5,7 +5,6 @@
 # from mock import Mock
 # import pytest
 
-
 # def init_gapps_mock(simulation_id=None, application_id=None, process_status=None, service_id=None):
 #     gapps = Mock()
 
@@ -16,7 +15,6 @@
 
 #     return gapps
 
-
 # #@mock.patch('gridappsd.utils.get_application_id')
 # def test_required_application_id_set():
 #     """ os.environ['GRIDAPPSD_APPLICATION_ID'] must be set to run."""
@@ -24,7 +22,6 @@
 
 #     with pytest.raises(AttributeError):
 #         log.debug("foo")
-
 
 # def test_no_simulation_id_topic_or_application_id():
 #     """If no simulation then the topic should be the platform log topic"""
@@ -41,7 +38,6 @@
 #     assert expected_topic == topic
 #     assert message['processStatus']  == ProcessStatusEnum.STARTING.value
 #     assert message['logMessage'] == 'A message'
-
 
 # def test_platform_log():
 
@@ -87,7 +83,6 @@
 #     assert 'WARN' == message['logLevel']
 #     assert 'baf' == message['logMessage']
 
-
 # def test_invalid_log_level():
 #     application_id = "my_app"
 #     gapps_mock = init_gapps_mock(application_id=application_id, process_status=ProcessStatusEnum.STOPPING.value)
@@ -95,7 +90,6 @@
 
 #     with pytest.raises(AttributeError):
 #         log.log("junk error", "BART")
-
 
 # def test_topic_and_status_set_correctly():
 
@@ -118,5 +112,3 @@
 #     assert message['source'] == application_id
 #     assert topic == expected_topic
 #     assert message['processStatus'] == "RUNNING"
-
-
