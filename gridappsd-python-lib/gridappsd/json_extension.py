@@ -21,13 +21,11 @@ def jsonDecoderExtension(obj: Any):
 
 
 class JsonEncoderExtension(_json.JSONEncoder):
+
     def default(self, obj: Any) -> Any:
         rv = None
         if isinstance(obj, complex):
-            jsonComplexInstance = JsonComplex(
-                real = obj.real,
-                imag = obj.imag
-            )
+            jsonComplexInstance = JsonComplex(real=obj.real, imag=obj.imag)
             rv = dataclasses.asdict(jsonComplexInstance)
         elif dataclasses.is_dataclass(obj):
             rv = dataclasses.asdict(obj)

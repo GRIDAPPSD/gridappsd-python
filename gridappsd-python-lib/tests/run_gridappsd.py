@@ -21,8 +21,8 @@ gapps = None
 while gapps is None:
     try:
         gapps = GridAPPSD()
-    except (ConnectionRefusedError, stomp.exception.ConnectFailedException,
-            socket.gaierror, OSError):
+    except (ConnectionRefusedError, stomp.exception.ConnectFailedException, socket.gaierror,
+            OSError):
         _log.debug("Not Connected")
         time.sleep(5)
     else:

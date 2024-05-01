@@ -56,7 +56,7 @@ ignore_patterns = [
     "dist/**",
     "docs/**"
 ]
- 
+
 [tool.yapf]
 based_on_style = "pep8"
 spaces_before_comment = 4
