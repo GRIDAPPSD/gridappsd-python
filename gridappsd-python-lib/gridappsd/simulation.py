@@ -56,6 +56,7 @@ class SimulationArgs(ConfigBase):
     timestep_frequency: str = "1000"
     timestep_increment: str = "1000"
     run_realtime: bool = True
+    pause_after_measurements: bool = False
     simulation_name: str = "ieee13nodeckt"
     power_flow_solver_method: str = "NR"
     model_creation_config: ModelCreationConfig = __default_model_creation_config__
