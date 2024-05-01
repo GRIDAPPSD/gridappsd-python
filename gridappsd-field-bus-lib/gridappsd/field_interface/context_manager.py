@@ -41,12 +41,11 @@ class FeederAreaContextManager(FeederAgent):
             request = {'request_type': 'get_context', 'modelId': downstream_message_bus_def.id}
             feeder_dict = None
             while feeder_dict is None:
-                self.ot_connection.get_logger().info(f"Requesting topology for {self.__class__}")
+                self.ot_connection.get_logger().debug(f"Requesting topology for {self.__class__}")
                 response = self.ot_connection.get_response(REQUEST_FIELD, request, timeout=10)
                 if 'data' in response:
                     feeder_dict = response['data']
-                    self.ot_connection.send_status("******RCVD FEEDER *************",
-                                                   '/topic/goss.gridappsd.platform.log', 'DEBUG')
+                    self.ot_connection.get_logger().debug("Topology received at Feeder Area Context Manager")
                 else:
                     time.sleep(5)
         super().__init__(upstream_message_bus_def, downstream_message_bus_def, agent_config,
@@ -63,6 +62,7 @@ class FeederAreaContextManager(FeederAgent):
         self.neighbouring_agents = {}
         self.upstream_agents = {}
         self.downstream_agents = {}
+        self.ot_connection.get_logger().info("Feeder Area Context Manager Created")
 
     def on_request(self, message_bus, headers: Dict, message):
 
@@ -117,6 +117,7 @@ class SwitchAreaContextManager(SwitchAreaAgent):
 
         self.registered_agents = {}
         self.registered_agents[self.agent_id] = self.get_registration_details()
+        self.ot_connection.get_logger().info("Switch Area "+self.agent_id+" Context Manager Created")
 
     def on_request(self, message_bus, headers: Dict, message):
 
@@ -175,6 +176,7 @@ class SecondaryAreaContextManager(SecondaryAreaAgent):
 
         self.registered_agents = {}
         self.registered_agents[self.agent_id] = self.get_registration_details()
+        self.ot_connection.get_logger().info("Secondary Area "+self.agent_id+" Context Manager Created")
 
     def on_request(self, message_bus, headers: Dict, message):
 
