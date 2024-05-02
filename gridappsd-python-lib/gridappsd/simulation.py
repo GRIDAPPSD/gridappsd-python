@@ -123,8 +123,12 @@ class Simulation:
 
     def __init__(self, gapps: 'GridAPPSD', run_config: Union[Dict, SimulationConfig]):
         assert type(gapps).__name__ == 'GridAPPSD', "Must be an instance of GridAPPSD"
-
-        self._run_config = run_config
+        if isinstance(run_config, SimulationConfig):
+            self._run_config = run_config.asdict()
+        elif isinstance(run_config, dict):
+            self._run_config = run_config
+        else:
+            raise TypeError("run_config must be a dictionary or a SimulationConfig")
         # if isinstance(run_config, SimulationConfig):
         #     self._run_config = run_config
         # else:
