@@ -115,7 +115,7 @@ def docker_compose_up() -> DockerClient:
 def gridappsd_client(request, docker_compose_up: DockerClient):
 
     dc = docker_compose_up
-    
+
 
     gappsd = GridAPPSD()
     assert gappsd.connected

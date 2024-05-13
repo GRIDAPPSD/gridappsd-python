@@ -118,5 +118,3 @@
 #     assert message['source'] == application_id
 #     assert topic == expected_topic
 #     assert message['processStatus'] == "RUNNING"
-
-

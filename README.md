@@ -178,9 +178,9 @@ integration tests available to be run.  In order to execute these, you must have
 as above with dev-dependencies.
 
 During the testing phase the docker containers required for the tests are downloaded from
-dockerhub and started.  By default the `develop` tag is used to test the library using pytest.  
+dockerhub and started.  By default the `develop` tag is used to test the library using pytest.
 One can customize the docker image tag by setting the environmental
-variable `GRIDAPPSD_TAG_ENV` either by `export GRIDAPPSD_TAG_ENV=other_tag` or by executing 
+variable `GRIDAPPSD_TAG_ENV` either by `export GRIDAPPSD_TAG_ENV=other_tag` or by executing
 pytest with the following:
 
 ```shell script
@@ -190,7 +190,7 @@ pytest with the following:
 export GRIDAPPSD_TAG_ENV=other_tag
 pytest
 
-# Tests also require the username and password to be avaialable as environmental variables 
+# Tests also require the username and password to be avaialable as environmental variables
 # in order for them to properly run these tests
 export GRIDAPPSD_USER=user
 export GRIDAPPSD_PASSWORD=pass
@@ -200,18 +200,18 @@ pytest
 
  ***NOTE: the first running the tests will download all of the docker images associated with the
  [GOSS-GridAPPS-D](http://github.com/GRIDAPPSD/GOSS-GridAPPS-D) repository.  This process may take some time.***
- 
+
 ### Running tests created in a new project
 
 The `gridappsd-python` library exposes a testing environment through the `gridappsd.docker_handler` module.  Including the following
 `conftest.py` in the root of your base test directory allows tests to reference these.  Using these fixtures will start all of the
-base containers required for `gridappsd` to run.  
+base containers required for `gridappsd` to run.
 
 ```python
 
 # conftest.py
-# Create a conftest.py file in the root of the tests directory to enable usage throughout the tests directory and below. 
-# 
+# Create a conftest.py file in the root of the tests directory to enable usage throughout the tests directory and below.
+#
 # Tested project structure an layout
 #
 # project-folder\
@@ -303,7 +303,7 @@ Using the above fixtures from inside a test module and test function looks like 
 
 ```python
 
-# Example test function using the gridappsd_client fixture 
+# Example test function using the gridappsd_client fixture
 
 @mock.patch.dict(os.environ, {"GRIDAPPSD_APPLICATION_ID": "helics_goss_bridge.py"})
 def test_gridappsd_status(gridappsd_client):
@@ -325,4 +325,3 @@ def test_gridappsd_status(gridappsd_client):
     assert gappsd.get_service_status() == ProcessStatusEnum.COMPLETE.value
     assert gappsd.get_application_status() == ProcessStatusEnum.COMPLETE.value
 ```
-
