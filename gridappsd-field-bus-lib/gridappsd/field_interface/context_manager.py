@@ -54,7 +54,7 @@ class FeederAreaContextManager(FeederAgent):
         #Override agent_id to a static value
         self.agent_id = downstream_message_bus_def.id + '.context_manager'
 
-        self.context = None
+        self.context = {'data':feeder_dict}
 
         self.registered_agents = {}
         self.registered_agents[self.agent_id] = self.get_registration_details()
@@ -113,7 +113,7 @@ class SwitchAreaContextManager(SwitchAreaAgent):
         #Override agent_id to a static value
         self.agent_id = downstream_message_bus_def.id + '.context_manager'
 
-        self.context = None
+        self.context = {'data':switch_area_dict}
 
         self.registered_agents = {}
         self.registered_agents[self.agent_id] = self.get_registration_details()
@@ -172,7 +172,7 @@ class SecondaryAreaContextManager(SecondaryAreaAgent):
         #Override agent_id to a static value
         self.agent_id = downstream_message_bus_def.id + '.context_manager'
 
-        self.context = None
+        self.context = {'data':secondary_area_dict}
 
         self.registered_agents = {}
         self.registered_agents[self.agent_id] = self.get_registration_details()
