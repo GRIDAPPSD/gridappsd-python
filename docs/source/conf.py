@@ -15,9 +15,8 @@
 import os
 import sys
 # insert top level of project to the path.
-print("PATH IS: "+os.path.abspath("../../"))
+print("PATH IS: " + os.path.abspath("../../"))
 sys.path.insert(0, os.path.abspath('../../'))
-
 
 # -- Project information -----------------------------------------------------
 
@@ -29,7 +28,6 @@ author = u'Craig Allwardt'
 version = u''
 # The full version, including alpha/beta/rc tags
 release = u'1.0'
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -80,7 +78,6 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -110,12 +107,10 @@ html_static_path = ['_static']
 #
 # html_sidebars = {}
 
-
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'GridAPPS-DPythondoc'
-
 
 # -- Options for LaTeX output ------------------------------------------------
 
@@ -145,16 +140,12 @@ latex_documents = [
      u'Craig Allwardt', 'manual'),
 ]
 
-
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'gridapps-dpython', u'GridAPPS-D Python Documentation',
-     [author], 1)
-]
-
+man_pages = [(master_doc, 'gridapps-dpython',
+              u'GridAPPS-D Python Documentation', [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -166,7 +157,6 @@ texinfo_documents = [
      author, 'GridAPPS-DPython', 'One line description of project.',
      'Miscellaneous'),
 ]
-
 
 # -- Options for Epub output -------------------------------------------------
 
@@ -195,7 +185,6 @@ epub_exclude_files = ['search.html']
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
 
-
 import subprocess
 
 
@@ -208,17 +197,21 @@ def setup(app):
     :param app:
     """
     app.connect('builder-inited', generate_apidoc)
+
+
 #    app.connect('build-finished', clean_apirst)
 
 
 def generate_apidoc(app):
-    print('BUILIDING api docs '+ __file__)
-    print('CWD: '+os.getcwd())
+    print('BUILIDING api docs ' + __file__)
+    print('CWD: ' + os.getcwd())
 
     gridappsd_src = '../gridappsd'
     if os.environ.get("READTHEDOCS"):
         gridappsd_src = '../../gridappsd'
-    cmd = ["sphinx-apidoc", '-M', '-d 4', '-o', 'source', '--force', gridappsd_src]
+    cmd = [
+        "sphinx-apidoc", '-M', '-d 4', '-o', 'source', '--force', gridappsd_src
+    ]
 
     subprocess.check_call(cmd)
     # print(path_to_src)

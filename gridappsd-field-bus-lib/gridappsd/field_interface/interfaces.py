@@ -9,9 +9,7 @@ from os import PathLike
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-
 import yaml
-
 
 _log = logging.getLogger(__name__)
 
@@ -37,6 +35,7 @@ class ConnectionType(Enum):
 
 
 class ProtocolTransformer(ABC):
+
     @staticmethod
     @abstractmethod
     def to_cim(data) -> str:
@@ -58,10 +57,9 @@ class ProtocolTransformer(ABC):
         and return it.
 
         cim_data: string representing cim data structures/change structure
-        from_format: specifies the type 
+        from_format: specifies the type
         """
         pass
-
 
 
 @dataclass
@@ -70,22 +68,18 @@ class MessageBusDefinition:
     A `MessageBusDefinition` class is used to define how to connect to the
     message bus.
     """
-
     """
     A global unique string representing a specific message bus.
     """
     id: str
-
     """
     connection_type describes how the agent/endpoint will connect to the message bus
     """
     connection_type: ConnectionType
-
     """
     connection_args allows dynamic key/value paired strings to be added to allow connections.
     """
     conneciton_args: Dict[str, str]
-
     """
     Determines whether or not this message bus has the role of ot bus.
     """
@@ -96,14 +90,15 @@ class MessageBusDefinition:
         """
 
         """
-        config = yaml.load(open(config_file),Loader=yaml.FullLoader)['connections']
-        
+        config = yaml.load(open(config_file), Loader=yaml.FullLoader)['connections']
+
         required = ["id", "connection_type", "connection_args"]
         for k in required:
             if k not in config:
                 raise ValueError(f"Missing keys for connection {k}")
 
-        definition = MessageBusDefinition(config[required[0]], config[required[1]], config[required[2]])
+        definition = MessageBusDefinition(config[required[0]], config[required[1]],
+                                          config[required[2]])
         for k in config:
             if k == "connection_args":
                 definition.conneciton_args = dict()
@@ -114,11 +109,12 @@ class MessageBusDefinition:
 
         if not hasattr(definition, "is_ot_bus"):
             setattr(definition, "is_ot_bus", False)
-            
+
         return definition
 
 
 class FieldMessageBus:
+
     def __init__(self, config: MessageBusDefinition):
         self._devices = dict()
         self._is_ot_bus = config.is_ot_bus
@@ -170,18 +166,18 @@ class FieldMessageBus:
         Publish device specific message to the concrete message bus.
         """
         pass
-    
+
     @abstractmethod
     def get_response(self, topic, message, timeout):
         """
         Sends a message on a specific queue, waits and returns the response
         """
-        
+
     def get_agent_response(self, agent_id, message, timeout):
         """
         Sends a message on a specific agent's request queue, waits and returns the response
         """
-        topic = "{}.request.{}.{}".format(t.BASE_FIELD_QUEUE,self.id, agent_id)
+        topic = "{}.request.{}.{}".format(t.BASE_FIELD_QUEUE, self.id, agent_id)
         self.get_response(topic, message, timeout)
 
     @abstractmethod
@@ -193,6 +189,7 @@ class FieldMessageBus:
 
 
 class MessageBusDefinitions:
+
     def __init__(
         self,
         config: Optional[Union[dict, str]] = None,
@@ -245,6 +242,7 @@ class MessageBusDefinitions:
 
 
 class DeviceFieldInterface:
+
     def __init__(
         self,
         id: str,
@@ -281,6 +279,6 @@ class DeviceFieldInterface:
     def on_state_change(self):
         """
         This event should be triggered by the device/protocol that
-        is used.  
+        is used.
         """
         pass

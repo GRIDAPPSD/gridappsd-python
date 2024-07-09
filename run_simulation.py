@@ -9,22 +9,44 @@ from stomp.exception import ConnectFailedException
 from gridappsd import GridAPPSD, topics as t
 from gridappsd.simulation import Simulation
 
-
 logging.basicConfig(level=logging.DEBUG)
 _log = logging.getLogger(__name__)
 
 logging.getLogger("gridappsd.simulation").setLevel(logging.INFO)
 
-
 sensor_test = {
-    "_9c4360bc-13ee-47f0-8a8c-0acb6c2a9930": {"class": "Breaker", "type": "A"},  # Breaker (Analog) (A)
-    "_9e76659c-c1e2-47d8-bd97-3a5d31c72bc1": {"class": "LoadBreakSwitch", "type": "A"},  # LoadBreakSwitch (Analog) (A)
-    "_8e46d152-edbe-4190-8dfc-d4322bbc6fb8": {"class": "ACLineSegment", "type": "PNV"},  # ACLineSegment (Analog) (PNV)
-    "_91c8096b-527e-4b17-9b60-608c2e89b0ef": {"class": "PowerTransformer", "type": "PNV"},  # PowerTransformer (Analog) (PNV)
-    "_7a5ce176-8185-4118-8f49-d1628692d783": {"class": "ACLineSegment", "type": "VA"},  # ACLineSegment (Analog) (VA)
-    "_d3fc08bf-ab76-4bba-a3c3-b8de144310f7": {"class": "PowerTransformer", "type": "VA"},  # PowerTransformer (Analog) (VA)
-    "_81ebcbfc-f8fe-4b7d-9735-0b00356b24dd": {"class": "Breaker", "type": "Pos"},  # Breaker (Discrete) (Pos)
-    "_9530188b-b0f6-4337-84ec-2fc9282740b3": {"class": "Recloser", "type": "Pos"},  # Recloser (Discrete) (Pos)
+    "_9c4360bc-13ee-47f0-8a8c-0acb6c2a9930": {
+        "class": "Breaker",
+        "type": "A"
+    },  # Breaker (Analog) (A)
+    "_9e76659c-c1e2-47d8-bd97-3a5d31c72bc1": {
+        "class": "LoadBreakSwitch",
+        "type": "A"
+    },  # LoadBreakSwitch (Analog) (A)
+    "_8e46d152-edbe-4190-8dfc-d4322bbc6fb8": {
+        "class": "ACLineSegment",
+        "type": "PNV"
+    },  # ACLineSegment (Analog) (PNV)
+    "_91c8096b-527e-4b17-9b60-608c2e89b0ef": {
+        "class": "PowerTransformer",
+        "type": "PNV"
+    },  # PowerTransformer (Analog) (PNV)
+    "_7a5ce176-8185-4118-8f49-d1628692d783": {
+        "class": "ACLineSegment",
+        "type": "VA"
+    },  # ACLineSegment (Analog) (VA)
+    "_d3fc08bf-ab76-4bba-a3c3-b8de144310f7": {
+        "class": "PowerTransformer",
+        "type": "VA"
+    },  # PowerTransformer (Analog) (VA)
+    "_81ebcbfc-f8fe-4b7d-9735-0b00356b24dd": {
+        "class": "Breaker",
+        "type": "Pos"
+    },  # Breaker (Discrete) (Pos)
+    "_9530188b-b0f6-4337-84ec-2fc9282740b3": {
+        "class": "Recloser",
+        "type": "Pos"
+    },  # Recloser (Discrete) (Pos)
 }
 config_file = "history_config.json"
 
@@ -51,7 +73,8 @@ try:
     os.environ['GRIDAPPSD_ADDRESS'] = 'gridappsd'
     gapps = GridAPPSD(goss_log_level=logging.INFO)
 except ConnectFailedException:
-    print("Failed to connect, possible system is not running or login invalid!")
+    print(
+        "Failed to connect, possible system is not running or login invalid!")
     sys.exit()
 
 if not gapps.connected:
@@ -86,8 +109,10 @@ def onmeasurment(sim, timestamp, measurements):
     #     # v['class'] = sensor_test[k]['class']
     #     # v['type'] = sensor_test[k]['type']
     #     measurement_output.append(v)
-    _log.info("{timestamp} publish number: {publish_number}".format(publish_number=publish_number,
-                                                                    timestamp=timestamp))
+    _log.info("{timestamp} publish number: {publish_number}".format(
+        publish_number=publish_number, timestamp=timestamp))
+
+
 #    fd.write(f"{json.dumps(measurements)}\n")
 
 
@@ -111,8 +136,9 @@ def on_simulated_output(header, message):
     global sim_publish_number
     sim_publish_number += 1
     timestamp = message['message']['timestamp']
-    _log.info("{timestamp} simulation publish number: {sim_publish_number} timestamp: {timestamp}".format(timestamp=timestamp,
-                                                                                                          sim_publish_number=sim_publish_number))
+    _log.info(
+        "{timestamp} simulation publish number: {sim_publish_number} timestamp: {timestamp}"
+        .format(timestamp=timestamp, sim_publish_number=sim_publish_number))
     # print('SIMULATED MESSAGE IS HERE!')
     # measurements = message['message']['measurements']
     # timestamp = message['message']['timestamp']
@@ -129,8 +155,10 @@ sim.add_onmeasurement_callback(onmeasurment)
 sim.add_ontimestep_callback(ontimestep)
 sim.add_oncomplete_callback(onfinishsimulation)
 sim.start_simulation()
-read_topic = t.service_output_topic("gridappsd-sensor-simulator", sim.simulation_id)
-_log.debug("Reading topic for sensor output {read_topic}".format(read_topic=read_topic))
+read_topic = t.service_output_topic("gridappsd-sensor-simulator",
+                                    sim.simulation_id)
+_log.debug("Reading topic for sensor output {read_topic}".format(
+    read_topic=read_topic))
 gapps.subscribe(read_topic, on_simulated_output)
 
 try:

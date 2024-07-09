@@ -65,9 +65,9 @@ class InvalidSimulationIdError(Exception):
 class GridAPPSD(GOSS):
     """ The main :class:`GridAPPSD` interface for connecting to a GridAPPSD instance
     """
+
     # TODO Get the caller from the traceback/inspect module.
-    def __init__(self, simulation_id=None,
-                 address=None, **kwargs):
+    def __init__(self, simulation_id=None, address=None, **kwargs):
 
         if address is None:
             address = utils.get_gridappsd_address()
@@ -78,10 +78,7 @@ class GridAPPSD(GOSS):
              'stomp_port' in kwargs and not 'stomp_address' in kwargs:
             raise ValueError("If stomp_address is specified the so should stomp_port")
 
-        super(GridAPPSD, self).__init__(
-            stomp_address=address[0],
-            stomp_port=address[1],
-            **kwargs)
+        super(GridAPPSD, self).__init__(stomp_address=address[0], stomp_port=address[1], **kwargs)
         self._houses = Houses(self)
         self._simulation_log_topic = None
         self._simulation_id = None
@@ -104,11 +101,11 @@ class GridAPPSD(GOSS):
 
     def get_houses(self) -> Houses:
         return self._houses
-    
+
     def get_simulation_id(self):
-        """ 
+        """
         Return the simulation_id given to the GridAPPSD instance
-        
+
         :return:
         """
         if not self._simulation_id:
@@ -116,7 +113,7 @@ class GridAPPSD(GOSS):
             if self._simulation_id:
                 self._simulation_log_topic = t.simulation_log_topic(self._simulation_id)
         return self._simulation_id
-    
+
     def set_application_status(self, status):
         """
         Set the application status.
@@ -125,8 +122,8 @@ class GridAPPSD(GOSS):
         try:
             self._process_status = ProcessStatusEnum(status)
         except ValueError:
-            self.get_logger().warning("Unsuccessful change of application status."
-                            + f"Valid statuses are {ProcessStatusEnum.__members__}.")
+            self.get_logger().warning("Unsuccessful change of application status." +
+                                      f"Valid statuses are {ProcessStatusEnum.__members__}.")
 
     def set_service_status(self, status):
         """
@@ -136,8 +133,8 @@ class GridAPPSD(GOSS):
         try:
             self._process_status = ProcessStatusEnum(status)
         except ValueError:
-            self.get_logger().warning("Unsuccessful change of service status."
-                                      + f"Valid statuses are {ProcessStatusEnum.__members__}.")
+            self.get_logger().warning("Unsuccessful change of service status." +
+                                      f"Valid statuses are {ProcessStatusEnum.__members__}.")
 
     def set_simulation_id(self, simulation_id):
         if simulation_id is None:
@@ -156,17 +153,17 @@ class GridAPPSD(GOSS):
 
     def get_application_id(self):
         return utils.get_gridappsd_application_id()
-    
+
     def get_service_status(self):
         """
         Return the service status
         :return:
         """
         return self._process_status.value
-    
+
     def query_object_types(self, model_id=None):
         """ Allows the caller to query the different object types.
-                
+
         :param model_id:
         :return:
         """
@@ -186,7 +183,7 @@ class GridAPPSD(GOSS):
     def query_model_info(self):
         payload = self._build_query_payload("QUERY_MODEL_INFO")
         return self.get_response(t.REQUEST_POWERGRID_DATA, payload, timeout=30)
-    
+
     def query_model(self, model_id=None, object_type=None, object_id=None, response_format='JSON'):
         args = {}
         if model_id is not None:
@@ -194,9 +191,9 @@ class GridAPPSD(GOSS):
         if object_type is not None:
             args["objectType"] = object_type
         if object_id is not None:
-            args["objectId"] = object_id   
+            args["objectId"] = object_id
         if response_format is not None:
-            args["resultFormat"] = response_format   
+            args["resultFormat"] = response_format
         payload = self._build_query_payload("QUERY_MODEL", **args)
         return self.get_response(t.REQUEST_POWERGRID_DATA, payload, timeout=30)
 
@@ -208,13 +205,13 @@ class GridAPPSD(GOSS):
             args["modelId"] = model_id
         payload = self._build_query_payload("QUERY_OBJECT", **args)
         return self.get_response(t.REQUEST_POWERGRID_DATA, payload, timeout=30)
-    
+
     def query_object_dictionary(self, model_id, object_type=None, object_id=None):
         if not model_id:
             raise ValueError("model_id is not specified.")
         if not object_id and not object_type:
             raise ValueError("No obejct_id or object_type specified.")
-        args={}
+        args = {}
         args["modelId"] = model_id
         if object_id is not None:
             args["objectId"] = object_id
@@ -235,9 +232,15 @@ class GridAPPSD(GOSS):
         request_topic = '.'.join((t.REQUEST_DATA, database_type))
         return self.get_response(request_topic, json.dumps(payload), timeout=timeout)
 
-    def get_platform_status(self, applications=True, services=True, appInstances=True, serviceInstances=True):
+    def get_platform_status(self,
+                            applications=True,
+                            services=True,
+                            appInstances=True,
+                            serviceInstances=True):
         _log.debug("Retrieving platform status from GridAPPSD")
-        msg = dict(appInstances=appInstances, applications=applications, services=services,
+        msg = dict(appInstances=appInstances,
+                   applications=applications,
+                   services=services,
                    serviceInstances=serviceInstances)
         return self.get_response(t.REQUEST_PLATFORM_STATUS, json.dumps(msg), timeout=30)
 
@@ -256,8 +259,7 @@ class GridAPPSD(GOSS):
 
     def send_status(self, status, topic, log_level=INFO):
         self.set_application_status(status)
-        status_message = self.build_message_json(self.get_application_status(),
-            "", log_level)
+        status_message = self.build_message_json(self.get_application_status(), "", log_level)
         self.send(topic, status_message)
 
     def build_message_json(self, status, message, log_level):
@@ -265,7 +267,7 @@ class GridAPPSD(GOSS):
         status_message = {
             "source": utils.get_gridappsd_application_id(),
             "processId": f"{self._simulation_id}",
-            "timestamp": int(time.mktime(t_now.timetuple()))*1000,
+            "timestamp": int(time.mktime(t_now.timetuple())) * 1000,
             "procesStatus": status,
             "logMessage": str(message),
             "logLevel": logging.getLevelName(log_level),
@@ -279,6 +281,3 @@ class GridAPPSD(GOSS):
         d = dict(requestType=request_type, resultFormat=response_format)
         d.update(**kwargs)
         return d
-
-
-

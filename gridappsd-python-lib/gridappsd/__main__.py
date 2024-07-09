@@ -49,19 +49,21 @@ from gridappsd import GridAPPSD
 
 assert sys.version_info >= (3, 6), "Minimum version is python 3.6"
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+logging.basicConfig(stream=sys.stdout,
+                    level=logging.INFO,
                     format="'%(asctime)s: %(name)-20s - %(levelname)-6s - %(message)s")
 
 logging.getLogger('stomp.py').setLevel(logging.WARNING)
 _log = logging.getLogger("gridappsd.__main__")
-
 
 if __name__ == '__main__':
 
     parser = ArgumentParser()
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-s", "--run-simulation", type=argparse.FileType('r'),
+    group.add_argument("-s",
+                       "--run-simulation",
+                       type=argparse.FileType('r'),
                        help="Start running a simulation from a passed simulation file.")
 
     opts = parser.parse_args()

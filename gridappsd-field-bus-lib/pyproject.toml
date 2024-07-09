@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gridappsd-field-bus"
-version = "2023.5.2a0"
+version = "2023.12.2a0"
 description = "GridAPPS-D Field Bus Implementation"
 authors = [
     "C. Allwardt <3979063+craig8@users.noreply.github.com>",
@@ -21,11 +21,15 @@ packages = [
     { include = 'gridappsd'}
 ]
 
+[tool.poetry.scripts]
+# Add things in the form
+# myscript = 'my_package:main'
+context_manager = 'gridappsd.field_interface.context_manager:_main'
 
 [tool.poetry.dependencies]
-python = ">=3.7.9,<4.0"
-gridappsd-python = {path="../gridappsd-python-lib", develop=true}
-cim-graph = "^2023.5.1a3"
+python = ">=3.8.1,<4.0"
+gridappsd-python = { path="../gridappsd-python-lib", develop = true}
+cim-graph = ">=0.1.1a0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^6.2.2"
@@ -37,3 +41,17 @@ yapf = "^0.32.0"
 [build-system]
 requires = ["poetry-core>=1.2.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.yapfignore]
+ignore_patterns = [
+    ".venv/**",
+    ".pytest_cache/**",
+    "dist/**",
+    "docs/**"
+]
+
+[tool.yapf]
+based_on_style = "pep8"
+spaces_before_comment = 4
+column_limit = 99
+split_before_logical_operator = true

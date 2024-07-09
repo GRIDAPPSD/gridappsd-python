@@ -15,14 +15,7 @@ from gridappsd import GOSS, GridAPPSD
 # from gridappsd.docker_handler import (Containers, run_dependency_containers,
 #                                       run_gridappsd_container)
 
-levels = dict(CRITICAL=50,
-              FATAL=50,
-              ERROR=40,
-              WARNING=30,
-              WARN=30,
-              INFO=20,
-              DEBUG=10,
-              NOTSET=0)
+levels = dict(CRITICAL=50, FATAL=50, ERROR=40, WARNING=30, WARN=30, INFO=20, DEBUG=10, NOTSET=0)
 
 # Get string representation of the log level passed
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "DEBUG")
@@ -43,8 +36,7 @@ logging.getLogger("docker.auth").setLevel(logging.INFO)
 
 _log = logging.getLogger(__name__)
 
-STOP_CONTAINER_AFTER_TEST = os.environ.get(
-    'GRIDAPPSD_STOP_CONTAINERS_AFTER_TESTS', False)
+STOP_CONTAINER_AFTER_TEST = os.environ.get('GRIDAPPSD_STOP_CONTAINERS_AFTER_TESTS', False)
 os.environ['GRIDAPPSD_USER'] = 'system'
 os.environ['GRIDAPPSD_PASSWORD'] = 'manager'
 os.environ['GRIDAPPSD_TAG'] = ':develop'
@@ -115,7 +107,6 @@ def docker_compose_up() -> DockerClient:
 def gridappsd_client(request, docker_compose_up: DockerClient):
 
     dc = docker_compose_up
-    
 
     gappsd = GridAPPSD()
     assert gappsd.connected

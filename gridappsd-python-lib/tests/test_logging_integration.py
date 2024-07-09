@@ -7,7 +7,6 @@
 # from gridappsd import GridAPPSD, topics as t
 # from gridappsd.loghandler import Logger
 
-
 # @pytest.fixture
 # def logger_and_gridapspd(gridappsd_client) -> (Logger, GridAPPSD):
 
@@ -16,7 +15,6 @@
 #     yield logger, gridappsd_client
 
 #     logger = None
-
 
 # @mock.patch.dict(os.environ,
 #                  dict(GRIDAPPSD_APPLICATION_ID='sample_app',
@@ -52,7 +50,6 @@
 #         expected = log_data_map.pop(0)
 #         assert expected[1] == x['log_message']
 #         assert expected[2] == x['log_level']
-
 
 # SIMULATION_ID='54321'
 

@@ -70,7 +70,7 @@ class DifferenceBuilder(object):
         self._forward = []
         self._reverse = []
 
-    def get_message(self, epoch = None):
+    def get_message(self, epoch=None):
         if epoch is None:
             epoch = calendar.timegm(time.gmtime())
         msg = dict(command="update",
