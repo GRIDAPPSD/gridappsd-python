@@ -16,6 +16,7 @@ from pathlib import Path
 from pprint import pformat
 from subprocess import PIPE
 from typing import Optional, Union
+from docker.models.containers import Container
 
 import stomp
 
@@ -29,7 +30,7 @@ logging.getLogger("docker.utils").setLevel(logging.INFO)
 _log = logging.getLogger("gridappsd.docker_handler")
 
 try:
-    from python_on_whales import docker
+    import docker
     HAS_DOCKER = True
 except ImportError:
     _log.warning(
