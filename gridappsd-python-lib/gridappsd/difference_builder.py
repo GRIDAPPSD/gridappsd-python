@@ -84,4 +84,3 @@ class DifferenceBuilder(object):
         if self._simulation_id is not None:
             msg['input']['simulation_id'] = self._simulation_id
         return msg.copy()
-
