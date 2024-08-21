@@ -80,7 +80,7 @@ def platform_log_topic():
     return "/topic/{}.{}".format(BASE_TOPIC_PREFIX, "platform.log")
 
 
-def service_input_topic(service_id, simulation_id):
+def service_input_topic(service_id: str, simulation_id: int | str | None = None):
     """ Utility method for getting the input topic for a specific service.
 
     The service id should be the registered service with the platform.  One
@@ -95,11 +95,14 @@ def service_input_topic(service_id, simulation_id):
     :return:
     """
     assert service_id, "service_id cannot be empty"
-    assert simulation_id, "simulation_id cannot be empty"
-    return "{}.{}.{}.input".format(BASE_SIMULATION_TOPIC, service_id, simulation_id)
+
+    if simulation_id:
+        return f"{BASE_SIMULATION_TOPIC}.{service_id}.{simulation_id}.input"
+
+    return f"{BASE_SIMULATION_TOPIC}.{service_id}.input"
 
 
-def service_output_topic(service_id, simulation_id):
+def service_output_topic(service_id: str, simulation_id: int | str | None = None):
     """ Utility method for getting the output topic for a specific service.
 
     The service id should be the registered service with the platform.  One
@@ -114,11 +117,14 @@ def service_output_topic(service_id, simulation_id):
     :return:str: Topic to subscribe to for service specific output.
     """
     assert service_id, "Service id cannot be empty"
-    assert simulation_id, "Simulation id cannot be empty"
-    return "{}.{}.{}.output".format(BASE_SIMULATION_TOPIC, service_id, simulation_id)
+
+    if simulation_id:
+        return f"{BASE_SIMULATION_TOPIC}.{service_id}.{simulation_id}.output"
+
+    return f"{BASE_SIMULATION_TOPIC}.{service_id}.output"
 
 
-def application_input_topic(application_id, simulation_id):
+def application_input_topic(application_id: str, simulation_id: int | str | None = None):
     """ Utility method for getting the input topic for a specific application.
 
     The application_id should be the registered service with the platform.  One
@@ -130,11 +136,14 @@ def application_input_topic(application_id, simulation_id):
     :return:str: Topic to publish to for a specific application.
     """
     assert application_id, "application_id cannot be empty"
-    assert simulation_id, "simulation_id cannot be empty"
-    return "{}.{}.{}.input".format(BASE_SIMULATION_TOPIC, application_id, simulation_id)
+
+    if simulation_id:
+        return f"{BASE_SIMULATION_TOPIC}.{application_id}.{simulation_id}.input"
+
+    return f"{BASE_TOPIC}.{application_id}.input"
 
 
-def application_output_topic(application_id, simulation_id):
+def application_output_topic(application_id: str, simulation_id: int | str | None = None):
     """ Utility method for getting the output topic for a specific application.
 
     The application_id should be the registered service with the platform.  One
@@ -146,11 +155,11 @@ def application_output_topic(application_id, simulation_id):
     :return: str: Topic to subscribe to for application specific output.
     """
     assert application_id, "application_id cannot be empty"
-    #assert simulation_id, "simulation_id cannot be empty"
-    if simulation_id is None:
-        return "{}.{}.output".format(BASE_TOPIC, application_id)
-    else:
-        return "{}.{}.{}.output".format(BASE_SIMULATION_TOPIC, application_id, simulation_id)
+
+    if simulation_id:
+        return f"{BASE_SIMULATION_TOPIC}.{application_id}.{simulation_id}.output"
+
+    return f"{BASE_TOPIC}.{application_id}.output"
 
 
 def simulation_output_topic(simulation_id):
