@@ -63,6 +63,10 @@ jobs:
       - name: Set SHOULD_UPDATE_VERSION environmental variable
         id: should_update_version
         run: |
+          set -x
+          set -u
+          set -e
+          
           has_python_code=$(git diff-index --name-only HEAD | grep '.py')
           echo "Has python code is ${{ has_python_code }}"
           
