@@ -1,3 +1,14 @@
+########################################################################################################
+# Deploys a develop release and commits pyproject.toml files with new versions.
+#
+# When will it run:
+#   This workflow will only run on push to develop when there is a python file change.
+#
+# How will it update:
+#   The script should update based upon the current version in the pyproject.toml file.  The workflow
+#   should run poetry version prerelease to create a new version file.  Since this
+#   repository houses multiple wheels we will be using the ./scripts/runoneach.sh to run this command.
+########################################################################################################
 name: Deploy Dev Release Artifacts
 
 on:
@@ -31,16 +42,26 @@ jobs:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - run: echo "The specified version is ${{ inputs.release-version }}."
 
       #----------------------------------------------
       #       check-out repo and set-up python
       #----------------------------------------------
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           # ref: develop
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set SHOULD_UPDATE_VERSION environmental variable
+        id: should_update_version
+        run: |
+          if ! $(git diff-index --name-only HEAD | grep "*.py") = ''; then
+            echo "::set-output name=value::false"
+          else
+            echo "::set-output name=value::true"
+          fi
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         id: setup-python
@@ -52,7 +73,7 @@ jobs:
       #  -----  install & configure poetry  -----
       #----------------------------------------------
       - name: Install Poetry
-        uses: snok/install-poetry@v1.3.3
+        uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
@@ -75,11 +96,27 @@ jobs:
       #   if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       #   run: poetry install --no-interaction --no-root
 
+      - name: Update version if necessary
+        if: ${{ steps.should_update_version.output.value == true}}
+        run: |
+          echo "Running update pyproject."
+          exit 1
+      - name: Not running update
+        if: ${{ steps.should_update_version.output.value == false}}
+        run: |
+          echo "Not running update pyproject"
+          exit 1
+
       #----------------------------------------------
       # install your root project, if required
       #----------------------------------------------
       - name: Install library
         run: |
+          
+          if ! $(git diff-index --name-only HEAD | grep "*.py") = ''; then
+            
+          else
+          ./scripts/run_on_each.sh poetry version prerelease
           ./scripts/poetry_install.sh
 
           # git checkout develop
