@@ -107,13 +107,15 @@ jobs:
       #   run: poetry install --no-interaction --no-root
 
       - name: Update version if necessary
-        if: ${{ steps.should_update_version.outputs.value }}
+        if: ${{ steps.should_update_version.outputs.value == 'true' }}
         run: |
+          echo "State is ${{ steps.should_update_version.outputs.value }}"
           echo "Running update pyproject."
           exit 1
       - name: Not running update
-        if: ${{ ! steps.should_update_version.outputs.value }}
+        if: ${{ steps.should_update_version.outputs.value != 'true' }}
         run: |
+          echo "State is ${{ steps.should_update_version.outputs.value }}"
           echo "Not running update pyproject"
           exit 1
 
