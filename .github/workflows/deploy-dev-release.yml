@@ -68,7 +68,7 @@ jobs:
           set -e
           
           has_python_code=$(git diff-index --name-only HEAD | grep '.py')
-          echo "Has python code is ${{ has_python_code }}"
+          echo "Has python code is $has_python_code"
           
           if [[ $has_python_code != '' || ${{ inputs.upgrade-version == true }} ]] ; then
             echo "value=true" >> "$GITHUB_OUTPUT"
