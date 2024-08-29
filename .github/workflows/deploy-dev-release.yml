@@ -17,11 +17,17 @@ on:
       - develop
   workflow_dispatch:
     inputs:
-      release-version:
-        description: "Version number to use. If provided bump-rule will be ignored"
+      upgrade-version:
+        description: "Upgrade version number regardless of whether a py file is altered."
         required: false
-        default: ""
-        type: string
+        default: false
+        type: boolean
+#
+#      release-version:
+#        description: "Version number to use. If provided bump-rule will be ignored"
+#        required: false
+#        default: ""
+#        type: string
 
 defaults:
   run:
@@ -57,10 +63,10 @@ jobs:
       - name: Set SHOULD_UPDATE_VERSION environmental variable
         id: should_update_version
         run: |
-          if ! $(git diff-index --name-only HEAD | grep "*.py") = ''; then
-            echo "::set-output name=value::false"
-          else
+          if $(git diff-index --name-only HEAD | grep "*.py") = '' or ${{ inputs.upgrade-version == true }} ; then
             echo "::set-output name=value::true"
+          else
+            echo "::set-output name=value::false"
           fi
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
