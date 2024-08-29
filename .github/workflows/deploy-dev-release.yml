@@ -107,12 +107,12 @@ jobs:
       #   run: poetry install --no-interaction --no-root
 
       - name: Update version if necessary
-        if: ${{ steps.should_update_version.outputs.value == true}}
+        if: ${{ steps.should_update_version.outputs.value }}
         run: |
           echo "Running update pyproject."
           exit 1
       - name: Not running update
-        if: ${{ steps.should_update_version.outputs.value == false}}
+        if: ${{ ! steps.should_update_version.outputs.value }}
         run: |
           echo "Not running update pyproject"
           exit 1
@@ -123,9 +123,6 @@ jobs:
       - name: Install library
         run: |
           
-          if ! $(git diff-index --name-only HEAD | grep "*.py") == ''; then
-            
-          else
           ./scripts/run_on_each.sh poetry version prerelease
           ./scripts/poetry_install.sh
 
