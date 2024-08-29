@@ -66,9 +66,9 @@ jobs:
           has_python_code=$(git diff-index --name-only HEAD | grep ".py")
           
           if [[ $has_python_code != '' || ${{ inputs.upgrade-version == true }} ]] ; then
-            echo "value=true" >> $GITHUB_OUTPUT
+            echo "value=true" >> "$GITHUB_OUTPUT"
           else
-            echo "value=false" >> $GITHUB_OUTPUT
+            echo "value=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
@@ -105,12 +105,12 @@ jobs:
       #   run: poetry install --no-interaction --no-root
 
       - name: Update version if necessary
-        if: ${{ steps.should_update_version.output.value == true}}
+        if: ${{ steps.should_update_version.outputs.value == true}}
         run: |
           echo "Running update pyproject."
           exit 1
       - name: Not running update
-        if: ${{ steps.should_update_version.output.value == false}}
+        if: ${{ steps.should_update_version.outputs.value == false}}
         run: |
           echo "Not running update pyproject"
           exit 1
