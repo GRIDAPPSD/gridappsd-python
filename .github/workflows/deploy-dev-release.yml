@@ -64,9 +64,9 @@ jobs:
         id: should_update_version
         run: |
           if $(git diff-index --name-only HEAD | grep "*.py") = '' or ${{ inputs.upgrade-version == true }} ; then
-            echo "::set-output name=value::true"
+            echo "value=true" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=value::false"
+            echo "value=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
@@ -119,7 +119,7 @@ jobs:
       - name: Install library
         run: |
           
-          if ! $(git diff-index --name-only HEAD | grep "*.py") = ''; then
+          if ! $(git diff-index --name-only HEAD | grep "*.py") == ''; then
             
           else
           ./scripts/run_on_each.sh poetry version prerelease
