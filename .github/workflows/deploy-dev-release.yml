@@ -63,7 +63,9 @@ jobs:
       - name: Set SHOULD_UPDATE_VERSION environmental variable
         id: should_update_version
         run: |
-          if $(git diff-index --name-only HEAD | grep "*.py") = '' or ${{ inputs.upgrade-version == true }} ; then
+          has_python_code=$(git diff-index --name-only HEAD | grep "*.py")
+          
+          if [[ $has_python_code != '' || ${{ inputs.upgrade-version == true }} ]] ; then
             echo "value=true" >> $GITHUB_OUTPUT
           else
             echo "value=false" >> $GITHUB_OUTPUT
