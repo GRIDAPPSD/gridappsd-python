@@ -67,7 +67,9 @@ jobs:
           set -u
           set -e
           
-          if [[ $(git diff-index --name-only HEAD | grep '.py') || ${{ inputs.upgrade-version == true }} ]] ; then
+          [ $(git diff-index --name-only HEAD | grep '.py') ] && has_python_code=true || has_python_code=false      
+          
+          if [[ ${{ has_python_code }} || ${{ inputs.upgrade-version == true }} ]] ; then
             echo "value=true" >> "$GITHUB_OUTPUT"
           else
             echo "value=false" >> "$GITHUB_OUTPUT"
