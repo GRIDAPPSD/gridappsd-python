@@ -151,7 +151,7 @@ jobs:
       - name: Update version
         if: ${{ steps.should_update_version.outputs.value == 'true' }}
         run: |
-          ./scripts/run_on_each.sh poetry prerelease
+          ./scripts/run_on_each.sh poetry version prerelease
 
   push-to-repository:
     runs-on: ubuntu-22.04
