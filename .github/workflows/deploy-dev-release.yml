@@ -63,17 +63,19 @@ jobs:
       - name: Set SHOULD_UPDATE_VERSION environmental variable
         id: should_update_version
         run: |
-          set -x
+          # set -x
           set -u
           set -e
           
           [ $(git diff-index --name-only HEAD | grep '.py') ] && has_python_code=true || has_python_code=false      
           
-          if [ $has_python_code == true ||  ${{ inputs.upgrade-version == true }} ] ; then
-            echo "value=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "value=false" >> "$GITHUB_OUTPUT"
-          fi
+          echo "value=${{ has_python_code }} >> "$GITHUB_OUTPUT"
+
+#          if [ $has_python_code == true ||  ${{ inputs.upgrade-version == true }} ] ; then
+#            echo "value=true" >> "$GITHUB_OUTPUT"
+#          else
+#            echo "value=false" >> "$GITHUB_OUTPUT"
+#          fi
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         id: setup-python
