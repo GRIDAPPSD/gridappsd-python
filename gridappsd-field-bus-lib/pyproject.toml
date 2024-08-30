@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gridappsd-field-bus"
-version = "2023.12.2a0"
+version = "2023.12.2a1"
 description = "GridAPPS-D Field Bus Implementation"
 authors = [
     "C. Allwardt <3979063+craig8@users.noreply.github.com>",
