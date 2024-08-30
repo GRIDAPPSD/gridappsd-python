@@ -78,6 +78,11 @@ jobs:
             break
           done
           
+          # handle input required update.
+          if ${{ inputs.upgrade-version }} ; then
+            should_update=true
+          fi
+          
           echo "Should update == ${should_update}"
           echo "value=${should_update}" >> "$GITHUB_OUTPUT"
           
@@ -110,6 +115,7 @@ jobs:
 #          fi
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
+        if: ${{ steps.should_update_version.outputs.value == 'true' }}
         id: setup-python
         uses: actions/setup-python@v5
         with:
