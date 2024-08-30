@@ -45,6 +45,7 @@ main GridAPPSD executable.
 """
 import pathlib
 import typing
+
 StrPath = typing.Union[str, pathlib.Path]
 
 from gridappsd.goss import GOSS
