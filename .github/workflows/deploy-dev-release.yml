@@ -225,12 +225,17 @@ jobs:
 #          echo "NEW_TAG=$(echo ${NEW_TAG})" >> $GITHUB_ENV
 
       - name: Create build artifacts
+        id: version
         if: ${{ steps.should_update_version.outputs.value == 'true' }}
         run: |
           # set the right version in pyproject.toml before build and publish
           ./scripts/poetry_build.sh
+          
+          echo "value=v$(poetry version --short)" >> "$GITHUB_OUTPUT"
 
       - name: Push artifacts to github
+        env:
+          TAG: ${{ steps.version.outputs.value }}
         if: ${{ steps.should_update_version.outputs.value == 'true' }}
         uses: ncipollo/release-action@v1
         with:
@@ -240,7 +245,7 @@ jobs:
           commit: ${{ github.ref }}
           # check bump-rule and set accordingly
           prerelease: true
-          tag: ${{ env.NEW_TAG }}
+          tag: ${{ env.TAG }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to pypi
