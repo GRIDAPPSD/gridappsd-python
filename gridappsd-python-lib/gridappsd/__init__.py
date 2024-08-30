@@ -47,6 +47,7 @@ import pathlib
 import typing
 StrPath = typing.Union[str, pathlib.Path]
 
+
 from gridappsd.goss import GOSS
 from gridappsd.utils import ProcessStatusEnum
 from gridappsd.gridappsd import GridAPPSD
