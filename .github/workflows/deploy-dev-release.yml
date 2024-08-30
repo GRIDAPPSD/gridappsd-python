@@ -39,7 +39,7 @@ env:
   PYTHON_VERSION: "3.10"
 
 jobs:
-  deploy-dev-release:
+  perform-version-update:
     runs-on: ubuntu-22.04
     permissions:
       contents: write # To push a branch
@@ -49,7 +49,10 @@ jobs:
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - run: echo "The specified version is ${{ inputs.release-version }}."
-
+      - run: |
+          set -x
+          set -u
+          set -e
       #----------------------------------------------
       #       check-out repo and set-up python
       #----------------------------------------------
@@ -74,11 +77,7 @@ jobs:
         id: should_update_version
         env:
           PYTHON_FILES_CHANGED: ${{ steps.changed-files.outputs.all_changed_files }}
-        run: |
-          set -x
-          set -u
-          set -e
-          
+        run: |          
           should_update=false
           for file in ${PYTHON_FILES_CHANGED}; do
             should_update=true
@@ -149,26 +148,24 @@ jobs:
       #   if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       #   run: poetry install --no-interaction --no-root
 
-      - name: Update version if necessary
+      - name: Update version
         if: ${{ steps.should_update_version.outputs.value == 'true' }}
         run: |
-          echo "State is ${{ steps.should_update_version.outputs.value }}"
-          echo "Running update pyproject."
-          exit 1
-      - name: Not running update
-        if: ${{ steps.should_update_version.outputs.value != 'true' }}
-        run: |
-          echo "State is ${{ steps.should_update_version.outputs.value }}"
-          echo "Not running update pyproject"
-          exit 1
+          ./scripts/run_on_each.sh poetry prerelease
 
+  push-to-repository:
+    runs-on: ubuntu-22.04
+    needs: perform-version-update
+    permissions:
+      contents: write # To push a branch
+      pull-requests: write # To create a PR from that branch
+    steps:
       #----------------------------------------------
       # install your root project, if required
       #----------------------------------------------
       - name: Install library
         run: |
           
-          ./scripts/run_on_each.sh poetry version prerelease
           ./scripts/poetry_install.sh
 
           # git checkout develop
@@ -193,53 +190,49 @@ jobs:
       #----------------------------------------------
       # bump version number for patch
       #----------------------------------------------
-      - name: Bump Version
-        run: |
-          # current_tag is the last tagged release in the repository.   From there
-          # we need to remove the v from the beginning of the tag.
-          #   echo "Bump rule is ${{ inputs.bump-rule }}"
-          #   echo "Given release version is ${{ inputs.release-version }}"
-          # dt=$(date +%Y.%-m.0)
-          # if ! $(git tag -l "v*" = ''); then
-          #   # uses -V which is version sort to keep it monotonically increasing.
-          #   current_tag=$(git tag -l "v*" | grep --invert-match '-' | sort --reverse -V  | sed -n 1p)
-          #   echo "current git tag is ${current_tag}"
-          #   current_tag=${current_tag#?}
-          #   if [[ "$current_tag" < "$dt" ]]; then
-          #       current_tag=$dt
-          #   fi
-          #   # current_tag is now the version we want to set our poetry version so
-          #   # that we can bump the version
-          #   ./scripts/run_on_each.sh poetry version ${current_tag}
-          #   ./scripts/run_on_each.sh poetry version prerelease
-
-          #   # poetry version ${current_tag}
-          #   # poetry version prerelease --no-interaction
-
-          # else
-          #   # very first release. start with inputs.release-version
-
-          #   echo "First release. Setting tag as 0.1.0rc0"
-          #   current_tag=$(date +%Y.%-m.1)
-          #   ./scripts/run_on_each.sh poetry version ${current_tag}
-
-          #   # poetry version ${current_tag}
-          # fi
-          version=$(poetry version --short)
-          ./scripts/run_on_each.sh poetry version ${version}
-
-          NEW_TAG=v$(poetry version --short)
-
-          # Finally because we want to be able to use the variable in later
-          # steps we set a NEW_TAG environmental variable
-          echo "NEW_TAG=$(echo ${NEW_TAG})" >> $GITHUB_ENV
+#      - name: Bump Version
+#        run: |
+#          # current_tag is the last tagged release in the repository.   From there
+#          # we need to remove the v from the beginning of the tag.
+#          #   echo "Bump rule is ${{ inputs.bump-rule }}"
+#          #   echo "Given release version is ${{ inputs.release-version }}"
+#          # dt=$(date +%Y.%-m.0)
+#          # if ! $(git tag -l "v*" = ''); then
+#          #   # uses -V which is version sort to keep it monotonically increasing.
+#          #   current_tag=$(git tag -l "v*" | grep --invert-match '-' | sort --reverse -V  | sed -n 1p)
+#          #   echo "current git tag is ${current_tag}"
+#          #   current_tag=${current_tag#?}
+#          #   if [[ "$current_tag" < "$dt" ]]; then
+#          #       current_tag=$dt
+#          #   fi
+#          #   # current_tag is now the version we want to set our poetry version so
+#          #   # that we can bump the version
+#          #   ./scripts/run_on_each.sh poetry version ${current_tag}
+#          #   ./scripts/run_on_each.sh poetry version prerelease
+#
+#          #   # poetry version ${current_tag}
+#          #   # poetry version prerelease --no-interaction
+#
+#          # else
+#          #   # very first release. start with inputs.release-version
+#
+#          #   echo "First release. Setting tag as 0.1.0rc0"
+#          #   current_tag=$(date +%Y.%-m.1)
+#          #   ./scripts/run_on_each.sh poetry version ${current_tag}
+#
+#          #   # poetry version ${current_tag}
+#          # fi
+#          version=$(poetry version --short)
+#          ./scripts/run_on_each.sh poetry version ${version}
+#
+#          NEW_TAG=v$(poetry version --short)
+#
+#          # Finally because we want to be able to use the variable in later
+#          # steps we set a NEW_TAG environmental variable
+#          echo "NEW_TAG=$(echo ${NEW_TAG})" >> $GITHUB_ENV
 
       - name: Create build artifacts
         run: |
-          set -x
-          set -u
-          set -e
-
           # set the right version in pyproject.toml before build and publish
           ./scripts/poetry_build.sh
 
@@ -259,10 +252,7 @@ jobs:
         id: publish-to-pypi
         if: github.repository_owner == 'GRIDAPPSD' || github.repository_owner == 'PNNL-CIM-Tools'
         run: |
-          set -x
-          set -u
-          set -e
-
+          
           # This is needed, because the poetry publish will fail at the top level of the project
           # so ./scripts/run_on_each.sh fails for that.
           echo "POETRY_PUBLISH_OPTIONS=''" >> $GITHUB_ENV
