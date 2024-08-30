@@ -252,8 +252,9 @@ jobs:
       - name: Publish to pypi
         id: publish-to-pypi
         if: |
-          ${{ steps.should_update_version.outputs.value == 'true' }} &&
-          (github.repository_owner == 'GRIDAPPSD' || github.repository_owner == 'PNNL-CIM-Tools')
+          ${{ steps.should_update_version.outputs.value == 'true' && 
+            (github.repository_owner == 'GRIDAPPSD' || github.repository_owner == 'PNNL-CIM-Tools')
+          }}
         run: |
           
           # This is needed, because the poetry publish will fail at the top level of the project
