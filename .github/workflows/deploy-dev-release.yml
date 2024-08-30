@@ -69,7 +69,7 @@ jobs:
           
           [ $(git diff-index --name-only HEAD | grep '.py') ] && has_python_code=true || has_python_code=false      
           
-          echo "value=${has_python_code} >> "$GITHUB_OUTPUT"
+          echo "value=${has_python_code}" >> "$GITHUB_OUTPUT"
 
 #          if [ $has_python_code == true ||  ${{ inputs.upgrade-version == true }} ] ; then
 #            echo "value=true" >> "$GITHUB_OUTPUT"
