@@ -70,26 +70,45 @@ jobs:
           files: |
             **.py
 
-      - name: List all changed files
+      - name: Should change version
+        id: should_update_version
         env:
           PYTHON_FILES_CHANGED: ${{ steps.changed-files.outputs.all_changed_files }}
-        run: |
-          for file in ${PYTHON_FILES_CHANGED}; do
-            echo "$file was changed"
-          done
-
-      - name: Set SHOULD_UPDATE_VERSION environmental variable
-        id: should_update_version
         run: |
           set -x
           set -u
           set -e
           
-          echo "$(git diff-index --name-only HEAD | grep '.py')"
-          [ $(git diff-index --name-only HEAD | grep '.py') ] && has_python_code=true || has_python_code=false      
+          should_update=false
+          for file in ${PYTHON_FILES_CHANGED}; do
+            should_update=true
+            break
+          done
           
-          echo "value=$has_python_code" >> "$GITHUB_OUTPUT"
-          echo "value is set to ${has_python_code}"
+          echo "Should update == ${should_update}"
+          echo "value=${should_update}" >> "$GITHUB_OUTPUT"
+          
+
+#      - name: List all changed files
+#        env:
+#          PYTHON_FILES_CHANGED: ${{ steps.changed-files.outputs.all_changed_files }}
+#        run: |
+#          for file in ${PYTHON_FILES_CHANGED}; do
+#            echo "$file was changed"
+#          done
+#
+#      - name: Set SHOULD_UPDATE_VERSION environmental variable
+#        id: should_update_version
+#        run: |
+#          set -x
+#          set -u
+#          set -e
+#
+#          echo "$(git diff-index --name-only HEAD | grep '.py')"
+#          [ $(git diff-index --name-only HEAD | grep '.py') ] && has_python_code=true || has_python_code=false
+#
+#          echo "value=$has_python_code" >> "$GITHUB_OUTPUT"
+#          echo "value is set to ${has_python_code}"
 
 #          if [ $has_python_code == true ||  ${{ inputs.upgrade-version == true }} ] ; then
 #            echo "value=true" >> "$GITHUB_OUTPUT"
