@@ -119,6 +119,7 @@ jobs:
       #  -----  install & configure poetry  -----
       #----------------------------------------------
       - name: Install Poetry
+        if: ${{ steps.should_update_version.outputs.value == 'true' }}
         uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
@@ -251,10 +252,7 @@ jobs:
 
       - name: Publish to pypi
         id: publish-to-pypi
-        if: |
-          ${{ steps.should_update_version.outputs.value == 'true' && 
-            (github.repository_owner == 'GRIDAPPSD' || github.repository_owner == 'PNNL-CIM-Tools')
-          }}
+        if: ${{ steps.should_update_version.outputs.value == 'true' }}
         run: |
           
           # This is needed, because the poetry publish will fail at the top level of the project
