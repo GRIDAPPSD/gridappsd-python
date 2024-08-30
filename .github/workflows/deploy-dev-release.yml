@@ -85,34 +85,6 @@ jobs:
           
           echo "Should update == ${should_update}"
           echo "value=${should_update}" >> "$GITHUB_OUTPUT"
-          
-
-#      - name: List all changed files
-#        env:
-#          PYTHON_FILES_CHANGED: ${{ steps.changed-files.outputs.all_changed_files }}
-#        run: |
-#          for file in ${PYTHON_FILES_CHANGED}; do
-#            echo "$file was changed"
-#          done
-#
-#      - name: Set SHOULD_UPDATE_VERSION environmental variable
-#        id: should_update_version
-#        run: |
-#          set -x
-#          set -u
-#          set -e
-#
-#          echo "$(git diff-index --name-only HEAD | grep '.py')"
-#          [ $(git diff-index --name-only HEAD | grep '.py') ] && has_python_code=true || has_python_code=false
-#
-#          echo "value=$has_python_code" >> "$GITHUB_OUTPUT"
-#          echo "value is set to ${has_python_code}"
-
-#          if [ $has_python_code == true ||  ${{ inputs.upgrade-version == true }} ] ; then
-#            echo "value=true" >> "$GITHUB_OUTPUT"
-#          else
-#            echo "value=false" >> "$GITHUB_OUTPUT"
-#          fi
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         if: ${{ steps.should_update_version.outputs.value == 'true' }}
@@ -132,23 +104,6 @@ jobs:
           virtualenvs-in-project: true
           installer-parallel: true
 
-      # #----------------------------------------------
-      # #       load cached venv if cache exists
-      # #----------------------------------------------
-      # - name: Load cached venv
-      #   id: cached-poetry-dependencies
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: .venv
-      #     key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-      # #----------------------------------------------
-      # # install dependencies if cache does not exist
-      # #----------------------------------------------
-      # - name: Install dependencies
-      #   if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      #   run: poetry install --no-interaction --no-root
-
       - name: Update version and commit pyproject.toml file
         if: ${{ steps.should_update_version.outputs.value == 'true' }}
         run: |
@@ -160,77 +115,10 @@ jobs:
           git commit -m "Auto Update Version Number"
           git push          
 
-      #----------------------------------------------
-      # install your root project, if required
-      #----------------------------------------------
       - name: Install library
         if: ${{ steps.should_update_version.outputs.value == 'true' }}
-        run: |
-          
+        run: |         
           ./scripts/poetry_install.sh
-
-          # git checkout develop
-          # poetry lock --no-update
-          # poetry install --no-interaction
-
-      #   - name: Use given release-version number
-      #     if: inputs.release-version != ''
-      #     run: |
-      #       echo "Using given release version is ${{ inputs.release-version }}"
-      #       poetry version ${{ inputs.release-version }}
-
-      #       NEW_TAG=v$(poetry version --short)
-
-      #       # we want to be able to use the variable in later
-      #       # steps we set a NEW_TAG environmental variable
-      #       echo "NEW_TAG=$(echo ${NEW_TAG})" >> $GITHUB_ENV
-      #       # we don't want to update pyproject.toml yet. don't want this change to create merge conflict.
-      #       # we don't really persist right version in pyproject.toml to figure out the next version. we use git tags.
-      #       git restore pyproject.toml
-
-      #----------------------------------------------
-      # bump version number for patch
-      #----------------------------------------------
-#      - name: Bump Version
-#        run: |
-#          # current_tag is the last tagged release in the repository.   From there
-#          # we need to remove the v from the beginning of the tag.
-#          #   echo "Bump rule is ${{ inputs.bump-rule }}"
-#          #   echo "Given release version is ${{ inputs.release-version }}"
-#          # dt=$(date +%Y.%-m.0)
-#          # if ! $(git tag -l "v*" = ''); then
-#          #   # uses -V which is version sort to keep it monotonically increasing.
-#          #   current_tag=$(git tag -l "v*" | grep --invert-match '-' | sort --reverse -V  | sed -n 1p)
-#          #   echo "current git tag is ${current_tag}"
-#          #   current_tag=${current_tag#?}
-#          #   if [[ "$current_tag" < "$dt" ]]; then
-#          #       current_tag=$dt
-#          #   fi
-#          #   # current_tag is now the version we want to set our poetry version so
-#          #   # that we can bump the version
-#          #   ./scripts/run_on_each.sh poetry version ${current_tag}
-#          #   ./scripts/run_on_each.sh poetry version prerelease
-#
-#          #   # poetry version ${current_tag}
-#          #   # poetry version prerelease --no-interaction
-#
-#          # else
-#          #   # very first release. start with inputs.release-version
-#7
-#          #   echo "First release. Setting tag as 0.1.0rc0"
-#          #   current_tag=$(date +%Y.%-m.1)
-#          #   ./scripts/run_on_each.sh poetry version ${current_tag}
-#
-#          #   # poetry version ${current_tag}
-#          # fi
-#          version=$(poetry version --short)
-#          ./scripts/run_on_each.sh poetry version ${version}
-#
-#          NEW_TAG=v$(poetry version --short)
-#
-#          # Finally because we want to be able to use the variable in later
-#          # steps we set a NEW_TAG environmental variable
-#          echo "NEW_TAG=$(echo ${NEW_TAG})" >> $GITHUB_ENV
 
       - name: Create build artifacts
         id: version
@@ -240,6 +128,8 @@ jobs:
           ./scripts/poetry_build.sh
           
           echo "value=v$(poetry version --short)" >> "$GITHUB_OUTPUT"
+
+      # TODO: Check for pipy token and only release to github if we have it.
 
       - name: Push artifacts to github
         env:
