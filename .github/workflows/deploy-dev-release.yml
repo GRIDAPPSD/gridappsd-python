@@ -22,12 +22,6 @@ on:
         required: false
         default: false
         type: boolean
-#
-#      release-version:
-#        description: "Version number to use. If provided bump-rule will be ignored"
-#        required: false
-#        default: ""
-#        type: string
 
 defaults:
   run:
@@ -39,7 +33,7 @@ env:
   PYTHON_VERSION: "3.10"
 
 jobs:
-  perform-version-update:
+  deploy-dev-release:
     runs-on: ubuntu-22.04
     permissions:
       contents: write # To push a branch
@@ -148,18 +142,17 @@ jobs:
       #   if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       #   run: poetry install --no-interaction --no-root
 
-      - name: Update version
+      - name: Update version and commit pyproject.toml file
         if: ${{ steps.should_update_version.outputs.value == 'true' }}
         run: |
           ./scripts/run_on_each.sh poetry version prerelease
+          
+          git config --global user.name 'Commit Bot'
+          git config --global user.email '3979063+craig8@users.noreply.github.com'
+          git add **/pyproject.toml
+          git commit -m "Auto Update Version Number"
+          git push          
 
-  push-to-repository:
-    runs-on: ubuntu-22.04
-    needs: perform-version-update
-    permissions:
-      contents: write # To push a branch
-      pull-requests: write # To create a PR from that branch
-    steps:
       #----------------------------------------------
       # install your root project, if required
       #----------------------------------------------
@@ -232,11 +225,13 @@ jobs:
 #          echo "NEW_TAG=$(echo ${NEW_TAG})" >> $GITHUB_ENV
 
       - name: Create build artifacts
+        if: ${{ steps.should_update_version.outputs.value == 'true' }}
         run: |
           # set the right version in pyproject.toml before build and publish
           ./scripts/poetry_build.sh
 
       - name: Push artifacts to github
+        if: ${{ steps.should_update_version.outputs.value == 'true' }}
         uses: ncipollo/release-action@v1
         with:
           artifacts: "dist/*.gz,dist/*.whl"
@@ -250,7 +245,7 @@ jobs:
 
       - name: Publish to pypi
         id: publish-to-pypi
-        if: github.repository_owner == 'GRIDAPPSD' || github.repository_owner == 'PNNL-CIM-Tools'
+        if: (github.repository_owner == 'GRIDAPPSD' || github.repository_owner == 'PNNL-CIM-Tools') && ${{ steps.should_update_version.outputs.value == 'true' }}
         run: |
           
           # This is needed, because the poetry publish will fail at the top level of the project
