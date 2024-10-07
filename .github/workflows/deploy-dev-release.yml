@@ -71,18 +71,18 @@ jobs:
         id: should_update_version
         env:
           PYTHON_FILES_CHANGED: ${{ steps.changed-files.outputs.all_changed_files }}
-        run: |          
+        run: |
           should_update=false
           for file in ${PYTHON_FILES_CHANGED}; do
             should_update=true
             break
           done
-          
+
           # handle input required update.
           if ${{ inputs.upgrade-version }} ; then
             should_update=true
           fi
-          
+
           echo "Should update == ${should_update}"
           echo "value=${should_update}" >> "$GITHUB_OUTPUT"
 
@@ -108,16 +108,16 @@ jobs:
         if: ${{ steps.should_update_version.outputs.value == 'true' }}
         run: |
           ./scripts/run_on_each.sh poetry version prerelease
-          
+
           git config --global user.name 'Commit Bot'
           git config --global user.email '3979063+craig8@users.noreply.github.com'
           git add **/pyproject.toml
           git commit -m "Auto Update Version Number"
-          git push          
+          git push
 
       - name: Install library
         if: ${{ steps.should_update_version.outputs.value == 'true' }}
-        run: |         
+        run: |
           ./scripts/poetry_install.sh
 
       - name: Create build artifacts
@@ -126,7 +126,7 @@ jobs:
         run: |
           # set the right version in pyproject.toml before build and publish
           ./scripts/poetry_build.sh
-          
+
           echo "value=v$(poetry version --short)" >> "$GITHUB_OUTPUT"
 
       # TODO: Check for pipy token and only release to github if we have it.
@@ -150,7 +150,7 @@ jobs:
         id: publish-to-pypi
         if: ${{ steps.should_update_version.outputs.value == 'true' }}
         run: |
-          
+
           # This is needed, because the poetry publish will fail at the top level of the project
           # so ./scripts/run_on_each.sh fails for that.
           echo "POETRY_PUBLISH_OPTIONS=''" >> $GITHUB_ENV
