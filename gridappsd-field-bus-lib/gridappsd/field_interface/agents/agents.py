@@ -233,7 +233,28 @@ class DistributedAgent:
         self.control_device(device_id, command)
 '''
 
+class SubstationAgent(DistributedAgent):
 
+    def __init__(self,
+                 upstream_message_bus_def: MessageBusDefinition,
+                 downstream_message_bus_def: MessageBusDefinition,
+                 agent_config: Dict,
+                 substation_dict=None,
+                 simulation_id=None):
+        super().__init__(upstream_message_bus_def, downstream_message_bus_def, agent_config,
+                         substation_dict, simulation_id)
+        self.substation_area = None
+        self.downstream_message_bus_def = downstream_message_bus_def
+
+        self._connect()
+
+        if self.agent_area_dict is not None:
+            substation = cim.EquipmentContainer(mRID=self.downstream_message_bus_def.id)
+            self.substation_area = DistributedArea(connection=self.connection,
+                                               container=substation,
+                                               distributed=True)
+            self.substation_area.build_from_topo_message(topology_dict=self.agent_area_dict,
+                                                     centralized_graph=None)
 class FeederAgent(DistributedAgent):
 
     def __init__(self,
