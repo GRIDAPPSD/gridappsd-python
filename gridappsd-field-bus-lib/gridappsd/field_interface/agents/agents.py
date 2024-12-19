@@ -249,12 +249,13 @@ class SubstationAgent(DistributedAgent):
         self._connect()
 
         if self.agent_area_dict is not None:
-            substation = cim.EquipmentContainer(mRID=self.downstream_message_bus_def.id)
+            substation = cim.Substation(mRID=self.downstream_message_bus_def.id)
             self.substation_area = DistributedArea(connection=self.connection,
                                                container=substation,
                                                distributed=True)
             self.substation_area.build_from_topo_message(topology_dict=self.agent_area_dict,
-                                                     centralized_graph=None)
+                                                   centralized_graph=None)
+
 class FeederAgent(DistributedAgent):
 
     def __init__(self,
@@ -271,7 +272,7 @@ class FeederAgent(DistributedAgent):
         self._connect()
 
         if self.agent_area_dict is not None:
-            feeder = cim.EquipmentContainer(mRID=self.downstream_message_bus_def.id)
+            feeder = cim.FeederArea(mRID=self.downstream_message_bus_def.id)
             self.feeder_area = DistributedArea(connection=self.connection,
                                                container=feeder,
                                                distributed=True)
@@ -295,7 +296,7 @@ class SwitchAreaAgent(DistributedAgent):
         self._connect()
 
         if self.agent_area_dict is not None:
-            container = cim.EquipmentContainer(mRID=self.downstream_message_bus_def.id)
+            container = cim.SwitchArea(mRID=self.downstream_message_bus_def.id)
             self.switch_area = DistributedArea(container=container,
                                                connection=self.connection,
                                                distributed=True)
@@ -323,7 +324,7 @@ class SecondaryAreaAgent(DistributedAgent):
                 _log.warning(
                     f"No addressable equipment in the secondary area with down stream message bus id: {self.downstream_message_bus.id}."
                 )
-            container = cim.EquipmentContainer(mRID=self.downstream_message_bus_def.id)
+            container = cim.SecondaryArea(mRID=self.downstream_message_bus_def.id)
             self.secondary_area = DistributedArea(container=container,
                                                   connection=self.connection,
                                                   distributed=True)

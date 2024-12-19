@@ -10,8 +10,8 @@ from gridappsd.field_interface.interfaces import MessageBusDefinition
 from gridappsd.field_interface.context_managers.context_manager_agents import SubstationAreaContextManager
 
 
-cim_profile = CIM_PROFILE.RC4_2021.value
-agents_mod.set_cim_profile(cim_profile=cim_profile, iec61970_301=7)
+cim_profile = "cimhub_2023"
+agents_mod.set_cim_profile(cim_profile=cim_profile, iec61970_301=8)
 cim = agents_mod.cim
 
 logging.basicConfig(level=logging.DEBUG)
@@ -29,18 +29,22 @@ def _main():
                         If simulation_id is not provided then Context Manager assumes to run on deployed field with real devices.",
         required=False)
     parser.add_argument(
-        "--system_message_bus",
+        "-u",
+        "--upstream_system_message_bus",
         help="Yaml file to connect with upstream system(OT) message bus.",
         required=True)
 
     parser.add_argument(
-        "--substation_message_bus",
+        "-d",
+        "--downstream_substation_message_bus",
         help="Yaml file to connect with downstream substation area message bus.",
+        type=str,
         required=True)
     
     parser.add_argument(
         "--substation_dict",
         help="JSON file containing substation topology dictionary. If this file is not provided then disctionary is requested by Field Bus Manager using upstream message bus.",
+        type=str,
         required=False)
 
     opts = parser.parse_args()
@@ -54,8 +58,8 @@ def _main():
     }
 
 
-    system_message_bus_def = MessageBusDefinition.load(opts.system_message_bus)   
-    substation_message_bus_def = MessageBusDefinition.load(opts.substation_message_bus)
+    system_message_bus_def = MessageBusDefinition.load(opts.upstream_system_message_bus)   
+    substation_message_bus_def = MessageBusDefinition.load(opts.downstream_substation_message_bus)
 
     with open(opts.substation_dict,encoding="utf-8") as f:
         substation_dict = json.load(f)

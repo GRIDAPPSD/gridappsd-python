@@ -42,7 +42,7 @@ def _main():
         "This agent provides topological context information like neighboring agents and devices to other distributed agents"
     }
 
-    gapps = GridAPPSD()
+    '''gapps = GridAPPSD()
     response = gapps.get_response(t.PLATFORM_STATUS, {"isField": True})
     field_model_mrid = response['fieldModelMrid']
 
@@ -53,6 +53,9 @@ def _main():
         print(response)
         is_field_initialized = response['data']['initialized']
         time.sleep(1)
+    '''
+
+    field_model_mrid = "49AD8E07-3BF9-A4E2-CB8F-C3722F837B62"
 
     system_message_bus_def = get_MessageBusDefinition(field_model_mrid)
     feeder_message_bus_def = get_MessageBusDefinition(field_model_mrid)
