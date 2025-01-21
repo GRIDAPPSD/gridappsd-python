@@ -253,8 +253,7 @@ class SubstationAgent(DistributedAgent):
             self.substation_area = DistributedArea(connection=self.connection,
                                                container=substation,
                                                distributed=True)
-            self.substation_area.build_from_topo_message(topology_dict=self.agent_area_dict,
-                                                   centralized_graph=None)
+            self.substation_area.build_from_topo_message(topology_dict=self.agent_area_dict)
 
 class FeederAgent(DistributedAgent):
 
@@ -276,8 +275,7 @@ class FeederAgent(DistributedAgent):
             self.feeder_area = DistributedArea(connection=self.connection,
                                                container=feeder,
                                                distributed=True)
-            self.feeder_area.build_from_topo_message(topology_dict=self.agent_area_dict,
-                                                     centralized_graph=None)
+            self.feeder_area.build_from_topo_message(topology_dict=self.agent_area_dict)
 
 
 class SwitchAreaAgent(DistributedAgent):
@@ -300,8 +298,7 @@ class SwitchAreaAgent(DistributedAgent):
             self.switch_area = DistributedArea(container=container,
                                                connection=self.connection,
                                                distributed=True)
-            self.switch_area.build_from_topo_message(topology_dict=self.agent_area_dict,
-                                                     centralized_graph=None)
+            self.switch_area.build_from_topo_message(topology_dict=self.agent_area_dict)
 
 
 class SecondaryAreaAgent(DistributedAgent):
@@ -320,7 +317,7 @@ class SecondaryAreaAgent(DistributedAgent):
         self._connect()
 
         if self.agent_area_dict is not None:
-            if len(self.agent_area_dict['addressable_equipment']) == 0:
+            if len(self.agent_area_dict['AddressableEquipment']) == 0:
                 _log.warning(
                     f"No addressable equipment in the secondary area with down stream message bus id: {self.downstream_message_bus.id}."
                 )
@@ -328,8 +325,7 @@ class SecondaryAreaAgent(DistributedAgent):
             self.secondary_area = DistributedArea(container=container,
                                                   connection=self.connection,
                                                   distributed=True)
-            self.secondary_area.build_from_topo_message(topology_dict=self.agent_area_dict,
-                                                        centralized_graph=None)
+            self.secondary_area.build_from_topo_message(topology_dict=self.agent_area_dict)
 
 
 class CoordinatingAgent:

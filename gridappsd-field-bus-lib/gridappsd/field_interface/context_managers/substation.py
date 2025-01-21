@@ -62,13 +62,16 @@ def _main():
     substation_message_bus_def = MessageBusDefinition.load(opts.downstream_substation_message_bus)
 
     with open(opts.substation_dict,encoding="utf-8") as f:
-        substation_dict = json.load(f)
+        substation_dict = json.load(f)["DistributionArea"]["Substations"][0]
+
 
     substation_agent = SubstationAreaContextManager(system_message_bus_def,
                                             substation_message_bus_def,
                                             agent_config,
                                             substation_dict = substation_dict,
                                             simulation_id=simulation_id)
+
+    print(substation_agent.context)
 
     while True:
         try:

@@ -13,7 +13,7 @@ import gridappsd.field_interface.agents.agents as agents_mod
 from gridappsd.field_interface.context_managers.utils import REQUEST_FIELD, get_MessageBusDefinition
 from gridappsd.field_interface.context_managers.context_manager_agents import FeederAreaContextManager, SwitchAreaContextManager, SecondaryAreaContextManager
 
-cim_profile = CIM_PROFILE.RC4_2021.value
+cim_profile = CIM_PROFILE.CIMHUB_2023.value
 agents_mod.set_cim_profile(cim_profile=cim_profile, iec61970_301=7)
 cim = agents_mod.cim
 
@@ -42,7 +42,7 @@ def _main():
         "This agent provides topological context information like neighboring agents and devices to other distributed agents"
     }
 
-    '''gapps = GridAPPSD()
+    gapps = GridAPPSD()
     response = gapps.get_response(t.PLATFORM_STATUS, {"isField": True})
     field_model_mrid = response['fieldModelMrid']
 
@@ -53,36 +53,44 @@ def _main():
         print(response)
         is_field_initialized = response['data']['initialized']
         time.sleep(1)
-    '''
+    
 
     field_model_mrid = "49AD8E07-3BF9-A4E2-CB8F-C3722F837B62"
 
     system_message_bus_def = get_MessageBusDefinition(field_model_mrid)
     feeder_message_bus_def = get_MessageBusDefinition(field_model_mrid)
 
+    #TODO: Remove after topology service test
+    # with open("ieee13_topo_msg.json",encoding="utf-8") as f:
+    #    feeder_dict = json.load(f)["DistributionArea"]["Substations"][0]["NormalEnergizedFeeder"][0]['FeederArea']
+
+
     #TODO: create access control for agents for different layers
     feeder_agent = FeederAreaContextManager(system_message_bus_def,
                                             feeder_message_bus_def,
                                             agent_config,
-                                            simulation_id=simulation_id)
-
-    for switch_area in feeder_agent.agent_area_dict['switch_areas']:
-        switch_area_message_bus_def = get_MessageBusDefinition(str(switch_area['message_bus_id']))
-        print("Creating switch area agent " + str(switch_area['message_bus_id']))
+                                            simulation_id=simulation_id,
+                                            feeder_dict=feeder_dict)
+    #print(feeder_agent.agent_area_dict)
+    for switch_area in feeder_agent.agent_area_dict['SwitchAreas']:
+        switch_area_message_bus_def = get_MessageBusDefinition(str(switch_area['@id']))
+        print("Creating switch area agent " + str(switch_area['@id']))
         switch_area_agent = SwitchAreaContextManager(feeder_message_bus_def,
                                                      switch_area_message_bus_def,
                                                      agent_config,
-                                                     simulation_id=simulation_id)
+                                                     simulation_id=simulation_id,
+                                                     switch_area_dict=switch_area)
 
         # create secondary area distributed agents
-        for secondary_area in switch_area['secondary_areas']:
+        for secondary_area in switch_area['SecondaryAreas']:
             secondary_area_message_bus_def = get_MessageBusDefinition(
-                str(secondary_area['message_bus_id']))
-            print("Creating secondary area agent " + str(secondary_area['message_bus_id']))
+                str(secondary_area['@id']))
+            print("Creating secondary area agent " + str(secondary_area['@id']))
             secondary_area_agent = SecondaryAreaContextManager(switch_area_message_bus_def,
                                                                secondary_area_message_bus_def,
                                                                agent_config,
-                                                               simulation_id=simulation_id)
+                                                               simulation_id=simulation_id,
+                                                               secondary_area_dict=secondary_area)
 
     while True:
         try:
