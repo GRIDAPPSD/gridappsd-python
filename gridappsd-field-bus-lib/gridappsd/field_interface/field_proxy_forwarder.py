@@ -6,10 +6,10 @@ from gridappsd import topics
 
 class FieldProxyForwarder():
     """
-    FieldProxyForwarder acts as a bridge between field bus and OT bus 
-    when direct connection is not possible. 
+    FieldProxyForwarder acts as a bridge between field bus and OT bus
+    when direct connection is not possible.
     """
-   
+
     def __init__(self, connection_url: str, username: str, password: str):
 
         #Connect to proxy
@@ -18,15 +18,15 @@ class FieldProxyForwarder():
         self.password = password
         self.proxy_connection = stomp.Connection([(self.broker_url.split(":")[0], int(self.broker_url.split(":")[1]))])
         self.proxy_connection.connect(self.username, self.password, wait=True)
-        
-        
+
+
         #Connect to OT
         self.ot_connection = GridAPPSD()
 
         #Subscribe to messages from field
         self.proxy_connection.set_listener('', self.on_message_from_field)
         self.proxy_connection.subscribe(destination=topics.BASE_FIELD_TOPIC, id=1, ack="auto")
-        
+
         #Subscribe to messages on OT bus
         self.ot_connection.subscribe(topics.BASE_FIELD_TOPIC, self.on_message_from_ot)
 
@@ -37,7 +37,7 @@ class FieldProxyForwarder():
 
             if headers["destination"] == topics.field_input_topic():
                 self.proxy_connection.send(topics.field_input_topic, message)
-        
+
             elif "goss.gridappsd.field.simulation.output." in headers["destination"]:
                 print("Simulation output received at OT. Ignoring.")
 
@@ -56,7 +56,7 @@ class FieldProxyForwarder():
 
             if headers["destination"] == topics.field_output_topic():
                 self.ot_connection.send(topics.field_output_topic, message)
-        
+
             elif "context_manager" in headers["destination"]:
                 request_data = json.loads(message)
                 request_type = request_data.get("request_type")

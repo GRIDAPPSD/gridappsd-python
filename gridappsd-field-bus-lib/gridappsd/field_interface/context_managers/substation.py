@@ -40,7 +40,7 @@ def _main():
         help="Yaml file to connect with downstream substation area message bus.",
         type=str,
         required=True)
-    
+
     parser.add_argument(
         "--substation_dict",
         help="JSON file containing substation topology dictionary. If this file is not provided then disctionary is requested by Field Bus Manager using upstream message bus.",
@@ -58,7 +58,7 @@ def _main():
     }
 
 
-    system_message_bus_def = MessageBusDefinition.load(opts.upstream_system_message_bus)   
+    system_message_bus_def = MessageBusDefinition.load(opts.upstream_system_message_bus)
     substation_message_bus_def = MessageBusDefinition.load(opts.downstream_substation_message_bus)
 
     with open(opts.substation_dict,encoding="utf-8") as f:

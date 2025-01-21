@@ -53,7 +53,7 @@ def _main():
         print(response)
         is_field_initialized = response['data']['initialized']
         time.sleep(1)
-    
+
 
     field_model_mrid = "49AD8E07-3BF9-A4E2-CB8F-C3722F837B62"
 
