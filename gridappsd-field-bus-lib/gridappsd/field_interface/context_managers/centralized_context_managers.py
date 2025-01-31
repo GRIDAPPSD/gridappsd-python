@@ -53,24 +53,19 @@ def _main():
         print(response)
         is_field_initialized = response['data']['initialized']
         time.sleep(1)
-    
+
 
     field_model_mrid = "49AD8E07-3BF9-A4E2-CB8F-C3722F837B62"
 
     system_message_bus_def = get_MessageBusDefinition(field_model_mrid)
     feeder_message_bus_def = get_MessageBusDefinition(field_model_mrid)
 
-    #TODO: Remove after topology service test
-    # with open("ieee13_topo_msg.json",encoding="utf-8") as f:
-    #    feeder_dict = json.load(f)["DistributionArea"]["Substations"][0]["NormalEnergizedFeeder"][0]['FeederArea']
-
-
     #TODO: create access control for agents for different layers
     feeder_agent = FeederAreaContextManager(system_message_bus_def,
                                             feeder_message_bus_def,
                                             agent_config,
-                                            simulation_id=simulation_id,
-                                            feeder_dict=feeder_dict)
+                                            simulation_id=simulation_id)
+                                            
     #print(feeder_agent.agent_area_dict)
     for switch_area in feeder_agent.agent_area_dict['SwitchAreas']:
         switch_area_message_bus_def = get_MessageBusDefinition(str(switch_area['@id']))

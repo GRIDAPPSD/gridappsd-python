@@ -6,7 +6,7 @@ from gridappsd.field_interface.interfaces import MessageBusDefinition
 #FieldBusManager's request topics. To be used only by context manager user role only.
 REQUEST_FIELD = ".".join((t.PROCESS_PREFIX, "request.field"))
 
-def get_MessageBusDefinition(area_id: str) -> MessageBusDefinition:
+def get_message_bus_definition(area_id: str) -> MessageBusDefinition:
 
     connection_args = {
         "GRIDAPPSD_ADDRESS": os.environ.get('GRIDAPPSD_ADDRESS', "tcp://gridappsd:61613"),

@@ -9,6 +9,10 @@ REQUEST_FIELD = ".".join((topics.PROCESS_PREFIX, "request.field"))
 
 class FieldListener():
 
+    def __init__(self, ot_connection: GridAPPSD, proxy_connection: stomp.Connection):
+        self.ot_connection = ot_connection
+        self.proxy_connection = proxy_connection
+
     def on_message(self, headers, message):
         "Receives messages coming from Proxy bus (e.g. ARTEMIS) and forwards to OT bus"
         try:
@@ -41,17 +45,19 @@ class FieldProxyForwarder():
 
     def __init__(self, connection_url: str, username: str, password: str):
 
+        #Connect to OT
+        self.ot_connection = GridAPPSD()
+
         #Connect to proxy
         self.broker_url = connection_url
         self.username = username
         self.password = password
         self.proxy_connection = stomp.Connection([(self.broker_url.split(":")[0], int(self.broker_url.split(":")[1]))],keepalive=True)
-        self.proxy_connection.set_listener('', FieldListener())
+        self.proxy_connection.set_listener('', FieldListener(self.ot_connection, self.proxy_connection))
         self.proxy_connection.connect(self.username, self.password, wait=True)
         print('Connected to Proxy')
 
-        #Connect to OT
-        self.ot_connection = GridAPPSD()
+        
 
         #Subscribe to messages from field
         self.proxy_connection.subscribe(destination=topics.BASE_FIELD_TOPIC+'.*', id=1, ack="auto")
@@ -76,7 +82,7 @@ class FieldProxyForwarder():
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(prog="TestForwarder") 
+    parser = argparse.ArgumentParser(prog="TestForwarder")
     parser.add_argument("username")
     parser.add_argument("passwd")
     parser.add_argument("connection_url")
