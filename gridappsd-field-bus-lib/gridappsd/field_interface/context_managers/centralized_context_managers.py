@@ -65,7 +65,7 @@ def _main():
                                             feeder_message_bus_def,
                                             agent_config,
                                             simulation_id=simulation_id)
-                                            
+
     #print(feeder_agent.agent_area_dict)
     for switch_area in feeder_agent.agent_area_dict['SwitchAreas']:
         switch_area_message_bus_def = get_MessageBusDefinition(str(switch_area['@id']))

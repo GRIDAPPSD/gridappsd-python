@@ -20,7 +20,7 @@ class FieldListener():
 
             if headers["destination"] == topics.field_output_topic():
                 self.ot_connection.send(topics.field_output_topic(), message)
-            
+
             elif headers["destination"] == topics.field_input_topic():
                 pass
 
@@ -57,11 +57,11 @@ class FieldProxyForwarder():
         self.proxy_connection.connect(self.username, self.password, wait=True)
         print('Connected to Proxy')
 
-        
+
 
         #Subscribe to messages from field
         self.proxy_connection.subscribe(destination=topics.BASE_FIELD_TOPIC+'.*', id=1, ack="auto")
-        
+
         #Subscribe to messages on OT bus
         self.ot_connection.subscribe(topics.field_input_topic(), self.on_message_from_ot)
 
@@ -78,7 +78,7 @@ class FieldProxyForwarder():
 
         except Exception as e:
             print(f"Error processing message: {e}")
-       
+
 
 if __name__ == "__main__":
     import argparse
