@@ -233,6 +233,27 @@ class DistributedAgent:
         self.control_device(device_id, command)
 '''
 
+class SubstationAgent(DistributedAgent):
+
+    def __init__(self,
+                 upstream_message_bus_def: MessageBusDefinition,
+                 downstream_message_bus_def: MessageBusDefinition,
+                 agent_config: Dict,
+                 substation_dict=None,
+                 simulation_id=None):
+        super().__init__(upstream_message_bus_def, downstream_message_bus_def, agent_config,
+                         substation_dict, simulation_id)
+        self.substation_area = None
+        self.downstream_message_bus_def = downstream_message_bus_def
+
+        self._connect()
+
+        if self.agent_area_dict is not None:
+            substation = cim.Substation(mRID=self.downstream_message_bus_def.id)
+            self.substation_area = DistributedArea(connection=self.connection,
+                                               container=substation,
+                                               distributed=True)
+            self.substation_area.build_from_topo_message(topology_dict=self.agent_area_dict)
 
 class FeederAgent(DistributedAgent):
 
@@ -250,12 +271,11 @@ class FeederAgent(DistributedAgent):
         self._connect()
 
         if self.agent_area_dict is not None:
-            feeder = cim.EquipmentContainer(mRID=self.downstream_message_bus_def.id)
+            feeder = cim.FeederArea(mRID=self.downstream_message_bus_def.id)
             self.feeder_area = DistributedArea(connection=self.connection,
                                                container=feeder,
                                                distributed=True)
-            self.feeder_area.build_from_topo_message(topology_dict=self.agent_area_dict,
-                                                     centralized_graph=None)
+            self.feeder_area.build_from_topo_message(topology_dict=self.agent_area_dict)
 
 
 class SwitchAreaAgent(DistributedAgent):
@@ -274,12 +294,11 @@ class SwitchAreaAgent(DistributedAgent):
         self._connect()
 
         if self.agent_area_dict is not None:
-            container = cim.EquipmentContainer(mRID=self.downstream_message_bus_def.id)
+            container = cim.SwitchArea(mRID=self.downstream_message_bus_def.id)
             self.switch_area = DistributedArea(container=container,
                                                connection=self.connection,
                                                distributed=True)
-            self.switch_area.build_from_topo_message(topology_dict=self.agent_area_dict,
-                                                     centralized_graph=None)
+            self.switch_area.build_from_topo_message(topology_dict=self.agent_area_dict)
 
 
 class SecondaryAreaAgent(DistributedAgent):
@@ -298,16 +317,15 @@ class SecondaryAreaAgent(DistributedAgent):
         self._connect()
 
         if self.agent_area_dict is not None:
-            if len(self.agent_area_dict['addressable_equipment']) == 0:
+            if len(self.agent_area_dict['AddressableEquipment']) == 0:
                 _log.warning(
                     f"No addressable equipment in the secondary area with down stream message bus id: {self.downstream_message_bus.id}."
                 )
-            container = cim.EquipmentContainer(mRID=self.downstream_message_bus_def.id)
+            container = cim.SecondaryArea(mRID=self.downstream_message_bus_def.id)
             self.secondary_area = DistributedArea(container=container,
                                                   connection=self.connection,
                                                   distributed=True)
-            self.secondary_area.build_from_topo_message(topology_dict=self.agent_area_dict,
-                                                        centralized_graph=None)
+            self.secondary_area.build_from_topo_message(topology_dict=self.agent_area_dict)
 
 
 class CoordinatingAgent:
