@@ -1,6 +1,6 @@
 from gridappsd import GridAPPSD
-from gridappsd.field_interface.interfaces import FieldMessageBus
-from gridappsd.field_interface.interfaces import MessageBusDefinition
+from gridappsd_field_bus.field_interface.interfaces import FieldMessageBus
+from gridappsd_field_bus.field_interface.interfaces import MessageBusDefinition
 from typing import Any
 
 

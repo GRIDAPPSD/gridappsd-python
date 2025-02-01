@@ -13,9 +13,9 @@ from cimgraph.models.distributed_area import DistributedArea
 
 from gridappsd import DifferenceBuilder
 import gridappsd.topics as t
-from gridappsd.field_interface.context import LocalContext
-from gridappsd.field_interface.gridappsd_field_bus import GridAPPSDMessageBus
-from gridappsd.field_interface.interfaces import (FieldMessageBus, MessageBusDefinition)
+from gridappsd_field_bus.field_interface.context import LocalContext
+from gridappsd_field_bus.field_interface.gridappsd_field_bus import GridAPPSDMessageBus
+from gridappsd_field_bus.field_interface.interfaces import (FieldMessageBus, MessageBusDefinition)
 
 CIM_PROFILE = None
 IEC61970_301 = None
