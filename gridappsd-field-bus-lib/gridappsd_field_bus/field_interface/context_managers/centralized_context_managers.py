@@ -5,7 +5,6 @@ import os
 import time
 from typing import Dict
 
-
 from cimgraph.data_profile import CIM_PROFILE
 from gridappsd import GridAPPSD
 import gridappsd.topics as t
@@ -22,6 +21,7 @@ logging.getLogger('goss').setLevel(logging.ERROR)
 logging.getLogger('stomp.py').setLevel(logging.ERROR)
 
 _log = logging.getLogger(__name__)
+
 
 def _main():
 
@@ -54,7 +54,6 @@ def _main():
         is_field_initialized = response['data']['initialized']
         time.sleep(1)
 
-
     field_model_mrid = "49AD8E07-3BF9-A4E2-CB8F-C3722F837B62"
 
     system_message_bus_def = get_MessageBusDefinition(field_model_mrid)
@@ -63,7 +62,6 @@ def _main():
     #TODO: Remove after topology service test
     # with open("ieee13_topo_msg.json",encoding="utf-8") as f:
     #    feeder_dict = json.load(f)["DistributionArea"]["Substations"][0]["NormalEnergizedFeeder"][0]['FeederArea']
-
 
     #TODO: create access control for agents for different layers
     feeder_agent = FeederAreaContextManager(system_message_bus_def,
@@ -83,8 +81,7 @@ def _main():
 
         # create secondary area distributed agents
         for secondary_area in switch_area['SecondaryAreas']:
-            secondary_area_message_bus_def = get_MessageBusDefinition(
-                str(secondary_area['@id']))
+            secondary_area_message_bus_def = get_MessageBusDefinition(str(secondary_area['@id']))
             print("Creating secondary area agent " + str(secondary_area['@id']))
             secondary_area_agent = SecondaryAreaContextManager(switch_area_message_bus_def,
                                                                secondary_area_message_bus_def,

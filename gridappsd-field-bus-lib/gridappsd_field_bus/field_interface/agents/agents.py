@@ -233,6 +233,7 @@ class DistributedAgent:
         self.control_device(device_id, command)
 '''
 
+
 class SubstationAgent(DistributedAgent):
 
     def __init__(self,
@@ -251,9 +252,10 @@ class SubstationAgent(DistributedAgent):
         if self.agent_area_dict is not None:
             substation = cim.Substation(mRID=self.downstream_message_bus_def.id)
             self.substation_area = DistributedArea(connection=self.connection,
-                                               container=substation,
-                                               distributed=True)
+                                                   container=substation,
+                                                   distributed=True)
             self.substation_area.build_from_topo_message(topology_dict=self.agent_area_dict)
+
 
 class FeederAgent(DistributedAgent):
 

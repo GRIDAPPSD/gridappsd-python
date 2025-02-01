@@ -27,9 +27,11 @@ packages = [
 register_app = 'gridappsd.register_app:main'
 gridappsd-cli = 'gridappsd.cli:_main'
 
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
 
 [tool.poetry.dependencies]
-python = ">=3.7.9,<4.0"
+python = ">=3.10,<4.0"
 PyYAML = "^6.0"
 pytz = "^2022.7"
 dateutils = "^0.6.7"
@@ -46,7 +48,7 @@ python-on-whales = "^0.60.1"
 gitpython = "^3.1.31"
 
 [build-system]
-requires = ["poetry-core>=1.2.0"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.yapfignore]

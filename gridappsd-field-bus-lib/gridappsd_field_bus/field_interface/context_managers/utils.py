@@ -6,6 +6,7 @@ from gridappsd_field_bus.field_interface.interfaces import MessageBusDefinition
 #FieldBusManager's request topics. To be used only by context manager user role only.
 REQUEST_FIELD = ".".join((t.PROCESS_PREFIX, "request.field"))
 
+
 def get_MessageBusDefinition(area_id: str) -> MessageBusDefinition:
 
     connection_args = {

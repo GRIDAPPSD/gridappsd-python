@@ -17,5 +17,5 @@ for p in $_projects
 do
   cd "${DIR}/../${p}" || exit
   poetry env use $(which python3) || poetry env use 3.8
-  poetry lock --no-update && poetry install --sync
+  poetry lock && poetry sync
 done
