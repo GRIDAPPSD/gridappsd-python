@@ -4,12 +4,12 @@ import os
 import time
 from typing import Dict
 
-import gridappsd.field_interface.agents.agents as agents_mod
+import gridappsd_field_bus.field_interface.agents.agents as agents_mod
 import gridappsd.topics as t
 from cimgraph.data_profile import CIM_PROFILE
 from gridappsd import GridAPPSD
-from gridappsd.field_interface.agents import (FeederAgent, SecondaryAreaAgent, SwitchAreaAgent)
-from gridappsd.field_interface.interfaces import MessageBusDefinition
+from gridappsd_field_bus.field_interface.agents import (FeederAgent, SecondaryAreaAgent, SwitchAreaAgent)
+from gridappsd_field_bus.field_interface.interfaces import MessageBusDefinition
 
 cim_profile = CIM_PROFILE.RC4_2021.value
 

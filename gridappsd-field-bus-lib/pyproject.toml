@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gridappsd-field-bus"
-version = "2024.8.1a1"
+version = "2025.0.1a1"
 description = "GridAPPS-D Field Bus Implementation"
 authors = [
     "C. Allwardt <3979063+craig8@users.noreply.github.com>",
@@ -12,13 +12,13 @@ license = "BSD-3-Clause"
 repository = "https://github.com/GRIDAPPSD/gridappsd-python"
 homepage = "https://gridappsd.readthedocs.io"
 
-keywords = ["gridappsd", "grid", "activmq", "powergrid", "simulation", "library"]
+keywords = ["gridappsd", "grid", "activemq", "powergrid", "simulation", "library"]
 
 readme = "README.md"
 
 
 packages = [
-    { include = 'gridappsd'}
+    { include = 'gridappsd_field_bus'}
 ]
 
 [tool.poetry.scripts]
@@ -27,16 +27,17 @@ packages = [
 context_manager = 'gridappsd.field_interface.context_manager:_main'
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<4.0"
+python = ">=3.10,<4.0"
 gridappsd-python = { path="../gridappsd-python-lib", develop = true}
 cim-graph = ">=0.1.1a0"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^6.2.2"
+pytest = "^8.3.4"
 pytest-html = "^3.1.1"
 mock = "^4.0.3"
 docker = "^4.4.4"
 yapf = "^0.32.0"
+pre-commit = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core>=1.2.0"]
