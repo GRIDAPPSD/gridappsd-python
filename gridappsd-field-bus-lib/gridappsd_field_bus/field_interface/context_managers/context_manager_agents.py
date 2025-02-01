@@ -4,9 +4,9 @@ from typing import Dict
 
 import gridappsd.topics as t
 from gridappsd import GridAPPSD
-from gridappsd.field_interface.agents import (SubstationAgent, FeederAgent, SecondaryAreaAgent, SwitchAreaAgent)
-from gridappsd.field_interface.interfaces import MessageBusDefinition
-from gridappsd.field_interface.context_managers.utils import REQUEST_FIELD
+from gridappsd_field_bus.field_interface.agents import (SubstationAgent, FeederAgent, SecondaryAreaAgent, SwitchAreaAgent)
+from gridappsd_field_bus.field_interface.interfaces import MessageBusDefinition
+from gridappsd_field_bus.field_interface.context_managers.utils import REQUEST_FIELD
 
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('goss').setLevel(logging.ERROR)

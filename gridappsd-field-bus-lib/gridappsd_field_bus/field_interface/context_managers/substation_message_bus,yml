@@ -1,0 +1,8 @@
+connections:
+  id: 067248c5-53c4-43e8-8720-f0c605c05b84
+  is_ot_bus: true
+  connection_type: CONNECTION_TYPE_VOLTTRON
+  connection_args:
+    ADDRESS: tcp://10.15.223.37:22916
+    serverkey:
+    storage_file: connected_keypairs.yml

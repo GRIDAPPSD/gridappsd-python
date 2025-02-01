@@ -1,6 +1,6 @@
 from typing import List
 
-from gridappsd.field_interface.context_managers.context_manager_agents import (SubstationAreaContextManager,
+from gridappsd_field_bus.field_interface.context_managers.context_manager_agents import (SubstationAreaContextManager,
                                                                 FeederAreaContextManager,
                                                                 SwitchAreaContextManager,
                                                                 SecondaryAreaContextManager)

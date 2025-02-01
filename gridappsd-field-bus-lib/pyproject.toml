@@ -18,17 +18,20 @@ readme = "README.md"
 
 
 packages = [
-    { include = 'gridappsd'}
+    { include = 'gridappsd_field_bus'}
 ]
 
 [tool.poetry.scripts]
 # Add things in the form
 # myscript = 'my_package:main'
-context_manager = 'gridappsd.field_interface.context_manager:_main'
+context_manager = 'gridappsd_field_bus.field_interface.context_manager:_main'
+
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<4.0"
-gridappsd-python = { path="../gridappsd-python-lib", develop = true}
+python = ">=3.10,<4.0"
+gridappsd-python = "^2024.8.1a0"
 cim-graph = ">=0.1.1a0"
 
 [tool.poetry.group.dev.dependencies]
@@ -39,7 +42,7 @@ docker = "^4.4.4"
 yapf = "^0.32.0"
 
 [build-system]
-requires = ["poetry-core>=1.2.0"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.yapfignore]
