@@ -18,6 +18,3 @@ def test_modules_are_the_same():
     assert context == field_context
     assert agents == field_agents
     assert gridappsd_field_bus == field_gridappsd_field_bus
-
-
-
