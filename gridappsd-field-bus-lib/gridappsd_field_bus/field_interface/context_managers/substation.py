@@ -5,9 +5,9 @@ import time
 
 from cimgraph.data_profile import CIM_PROFILE
 
-import gridappsd.field_interface.agents.agents as agents_mod
-from gridappsd.field_interface.interfaces import MessageBusDefinition
-from gridappsd.field_interface.context_managers.context_manager_agents import SubstationAreaContextManager
+import gridappsd_field_bus.field_interface.agents.agents as agents_mod
+from gridappsd_field_bus.field_interface.interfaces import MessageBusDefinition
+from gridappsd_field_bus.field_interface.context_managers.context_manager_agents import SubstationAreaContextManager
 
 
 cim_profile = "cimhub_2023"
