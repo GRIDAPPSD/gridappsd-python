@@ -1,7 +1,7 @@
 import os
 
 import gridappsd.topics as t
-from gridappsd.field_interface.interfaces import MessageBusDefinition
+from gridappsd_field_bus.field_interface.interfaces import MessageBusDefinition
 
 #FieldBusManager's request topics. To be used only by context manager user role only.
 REQUEST_FIELD = ".".join((t.PROCESS_PREFIX, "request.field"))

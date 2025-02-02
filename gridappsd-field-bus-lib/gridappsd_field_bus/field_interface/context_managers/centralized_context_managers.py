@@ -9,9 +9,9 @@ from typing import Dict
 from cimgraph.data_profile import CIM_PROFILE
 from gridappsd import GridAPPSD
 import gridappsd.topics as t
-import gridappsd.field_interface.agents.agents as agents_mod
-from gridappsd.field_interface.context_managers.utils import REQUEST_FIELD, get_MessageBusDefinition
-from gridappsd.field_interface.context_managers.context_manager_agents import FeederAreaContextManager, SwitchAreaContextManager, SecondaryAreaContextManager
+import gridappsd_field_bus.field_interface.agents.agents as agents_mod
+from gridappsd_field_bus.field_interface.context_managers.utils import REQUEST_FIELD, get_MessageBusDefinition
+from gridappsd_field_bus.field_interface.context_managers.context_manager_agents import FeederAreaContextManager, SwitchAreaContextManager, SecondaryAreaContextManager
 
 cim_profile = CIM_PROFILE.CIMHUB_2023.value
 agents_mod.set_cim_profile(cim_profile=cim_profile, iec61970_301=7)
