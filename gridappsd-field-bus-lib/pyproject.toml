@@ -32,7 +32,7 @@ click = "^8.1.8"
 # Add things in the form
 # myscript = 'my_package:main'
 start-field-bus-forwarder = 'gridappsd_field_bus.forwarder:start_forwarder'
-context_manager = 'gridappsd_field_bus.field_interface.context_manager:_main'
+context_manager = 'gridappsd_field_bus.field_interface.context_managers.centralized_context_managers:_main'
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"
