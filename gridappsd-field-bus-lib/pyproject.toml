@@ -21,15 +21,18 @@ packages = [
     { include = 'gridappsd_field_bus'}
 ]
 
-[tool.poetry.scripts]
-# Add things in the form
-# myscript = 'my_package:main'
-context_manager = 'gridappsd.field_interface.context_manager:_main'
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
 gridappsd-python = { path="../gridappsd-python-lib", develop = true}
 cim-graph = ">=0.1.1a0"
+click = "^8.1.8"
+
+[tool.poetry.scripts]
+# Add things in the form
+# myscript = 'my_package:main'
+start-field-bus-forwarder = 'gridappsd_field_bus.forwarder:start_forwarder'
+context_manager = 'gridappsd_field_bus.field_interface.context_manager:_main'
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"

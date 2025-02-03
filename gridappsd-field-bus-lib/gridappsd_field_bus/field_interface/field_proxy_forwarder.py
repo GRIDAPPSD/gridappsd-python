@@ -7,7 +7,7 @@ from gridappsd import topics
 
 REQUEST_FIELD = ".".join((topics.PROCESS_PREFIX, "request.field"))
 
-class FieldListener():
+class FieldListener:
 
     def __init__(self, ot_connection: GridAPPSD, proxy_connection: stomp.Connection):
         self.ot_connection = ot_connection
@@ -37,7 +37,7 @@ class FieldListener():
         except Exception as e:
             print(f"Error processing message: {e}")
 
-class FieldProxyForwarder():
+class FieldProxyForwarder:
     """
     FieldProxyForwarder acts as a bridge between field bus and OT bus
     when direct connection is not possible.
