@@ -36,6 +36,62 @@ class TestFieldMessageBus(unittest.TestCase):
 
 class TestMessageBusDefinitionSingle(unittest.TestCase):
 
+    def test_load_from_json_missing_keys(self):
+        # Missing "connection_type"
+        json_obj_missing_connection_type = {
+            "id": "test_id",
+            "connection_args": {
+                "arg1": "value1",
+                "arg2": "value2"
+            }
+        }
+        with self.assertRaises(ValueError) as context:
+            MessageBusDefinition.load_from_json(json_obj_missing_connection_type)
+        self.assertTrue("Missing keys for connection connection_type" in str(context.exception))
+
+        # Missing "id"
+        json_obj_missing_id = {
+            "connection_type": "test_type",
+            "connection_args": {
+                "arg1": "value1",
+                "arg2": "value2"
+            }
+        }
+        with self.assertRaises(ValueError) as context:
+            MessageBusDefinition.load_from_json(json_obj_missing_id)
+        self.assertTrue("Missing keys for connection id" in str(context.exception))
+
+        # Missing "connection_args"
+        json_obj_missing_connection_args = {
+            "id": "test_id",
+            "connection_type": "test_type"
+        }
+        with self.assertRaises(ValueError) as context:
+            MessageBusDefinition.load_from_json(json_obj_missing_connection_args)
+        self.assertTrue("Missing keys for connection connection_args" in str(context.exception))
+
+    def test_load_from_json(self):
+        json_obj = {
+            "id": "test_id",
+            "connection_type": "test_type",
+            "connection_args": {
+                "arg1": "value1",
+                "arg2": "value2"
+            }
+        }
+
+        definition = MessageBusDefinition.load_from_json(json_obj)
+
+        self.assertEqual(definition.id, "test_id")
+        self.assertEqual(definition.connection_type, "test_type")
+        self.assertEqual(definition.connection_args, {"arg1": "value1", "arg2": "value2"})
+        self.assertFalse(definition.is_ot_bus)
+
+        json_obj["is_ot_bus"] = True
+        definition = MessageBusDefinition.load_from_json(json_obj)
+        self.assertTrue(definition.is_ot_bus)
+
+
     @patch("builtins.open", new_callable=mock_open, read_data="""
 connections:
   id: test_id
