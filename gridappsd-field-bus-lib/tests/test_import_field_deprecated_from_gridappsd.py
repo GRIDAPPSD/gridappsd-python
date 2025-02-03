@@ -1,6 +1,9 @@
 
 
 def test_modules_are_the_same():
+    import sys
+
+    # Note these are dynamically loaded please use gridappsd_field_bus packages instead.
     from gridappsd.field_interface import interfaces
     from gridappsd.field_interface import context
     from gridappsd.field_interface import context_managers
@@ -13,8 +16,13 @@ def test_modules_are_the_same():
     from gridappsd_field_bus.field_interface import agents as field_agents
     from gridappsd_field_bus.field_interface import gridappsd_field_bus as field_gridappsd_field_bus
 
+    from gridappsd.field_interface.interfaces import FieldMessageBus
+    from gridappsd_field_bus.field_interface.interfaces import FieldMessageBus as field_FieldMessageBus
+
+
     assert interfaces == field_bus_interfaces
     assert context_managers == field_context_managers
     assert context == field_context
     assert agents == field_agents
     assert gridappsd_field_bus == field_gridappsd_field_bus
+    assert FieldMessageBus == field_FieldMessageBus
