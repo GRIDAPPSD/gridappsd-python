@@ -10,9 +10,9 @@ class GridAPPSDMessageBus(FieldMessageBus):
         super(GridAPPSDMessageBus, self).__init__(definition)
         self._id = definition.id
 
-        self._user = definition.conneciton_args["GRIDAPPSD_USER"]
-        self._password = definition.conneciton_args["GRIDAPPSD_PASSWORD"]
-        self._address = definition.conneciton_args["GRIDAPPSD_ADDRESS"]
+        self._user = definition.connection_args["GRIDAPPSD_USER"]
+        self._password = definition.connection_args["GRIDAPPSD_PASSWORD"]
+        self._address = definition.connection_args["GRIDAPPSD_ADDRESS"]
 
         self.gridappsd_obj = None
 

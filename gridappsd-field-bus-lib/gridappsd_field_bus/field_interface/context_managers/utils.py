@@ -18,6 +18,6 @@ def get_message_bus_definition(area_id: str) -> MessageBusDefinition:
     bus = MessageBusDefinition(id=area_id,
                                is_ot_bus=True,
                                connection_type="GRIDAPPSD_TYPE_GRIDAPPSD",
-                               conneciton_args=connection_args)
+                               connection_args=connection_args)
 
     return bus
