@@ -79,7 +79,8 @@ class MessageBusDefinition:
     """
     connection_args allows dynamic key/value paired strings to be added to allow connections.
     """
-    conneciton_args: Dict[str, str]
+    connection_args: Dict[str, str]
+
     """
     Determines whether or not this message bus has the role of ot bus.
     """
@@ -101,9 +102,9 @@ class MessageBusDefinition:
                                           config[required[2]])
         for k in config:
             if k == "connection_args":
-                definition.conneciton_args = dict()
+                definition.connection_args = dict()
                 for k1, v1 in config[k].items():
-                    definition.conneciton_args[k1] = v1
+                    definition.connection_args[k1] = v1
             else:
                 setattr(definition, k, config[k])
 
