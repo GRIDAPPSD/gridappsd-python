@@ -55,7 +55,7 @@ def _main():
         time.sleep(1)
 
 
-    field_model_mrid = "49AD8E07-3BF9-A4E2-CB8F-C3722F837B62"
+    
 
     system_message_bus_def = get_MessageBusDefinition(field_model_mrid)
     feeder_message_bus_def = get_MessageBusDefinition(field_model_mrid)
