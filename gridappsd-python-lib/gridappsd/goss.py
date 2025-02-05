@@ -88,7 +88,8 @@ class GOSS(object):
                  attempt_connection=True,
                  override_threading=None,
                  stomp_log_level=logging.WARNING,
-                 goss_log_level=logging.INFO):
+                 goss_log_level=logging.INFO,
+                 use_auth_token=True):
 
         logging.getLogger('stomp.py').setLevel(stomp_log_level)
         logging.getLogger('goss').setLevel(goss_log_level)
@@ -97,6 +98,7 @@ class GOSS(object):
         self.__pass__ = password
         self.stomp_address = stomp_address
         self.stomp_port = stomp_port
+        self.use_auth_token = use_auth_token
 
         # Environmental variables should overrule the passed arguments.
         if os.environ.get(GRIDAPPSD_ENV_ENUM.GRIDAPPSD_USER.value):
@@ -289,7 +291,7 @@ class GOSS(object):
     def _make_connection(self):
         if self._conn is None or not self._conn.is_connected():
             _log.debug("Creating connection")
-            if not self.__token:
+            if self.use_auth_token is True and not self.__token:
 
                 # get token
                 # get initial connection
@@ -351,7 +353,10 @@ class GOSS(object):
             if self._override_thread_fc is not None:
                 self._conn.transport.override_threading(self._override_thread_fc)
             try:
-                self._conn.connect(self.__token, "", wait=True)
+                if self.use_auth_token and self.__token is not None:
+                    self._conn.connect(self.__token, "", wait=True)
+                else:
+                    self._conn.connect(self.__user__,self.__pass__, wait=True)
             except TypeError as e:
                 _log.error("TypeError: {e}".format(e=e))
             except NotConnectedException as e:
