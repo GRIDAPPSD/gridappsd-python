@@ -1,5 +1,5 @@
 from gridappsd import DifferenceBuilder
-from gridappsd.field_interface.interfaces import FieldMessageBus
+from gridappsd_field_bus.field_interface.interfaces import FieldMessageBus
 import dataclasses
 import gridappsd.topics as t
 import json
