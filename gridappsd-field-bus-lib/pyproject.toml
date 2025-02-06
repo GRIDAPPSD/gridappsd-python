@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gridappsd-field-bus"
-version = "2024.12.0.a1"
+version = "2025.2.1"
 description = "GridAPPS-D Field Bus Implementation"
 authors = [
     "C. Allwardt <3979063+craig8@users.noreply.github.com>",
@@ -24,8 +24,8 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
-gridappsd-python = { path="../gridappsd-python-lib", develop = true}
-cim-graph = ">=0.1.1a0"
+gridappsd-python = "^2025.2.1"
+cim-graph = "^0.1.8a0"
 click = "^8.1.8"
 
 [tool.poetry.scripts]
@@ -43,7 +43,7 @@ yapf = "^0.32.0"
 pre-commit = "^4.1.0"
 
 [build-system]
-requires = ["poetry-core>=1.2.0"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.yapfignore]
