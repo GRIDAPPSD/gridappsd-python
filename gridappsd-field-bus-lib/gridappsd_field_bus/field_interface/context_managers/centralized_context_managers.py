@@ -1,16 +1,12 @@
 import argparse
 import logging
-import json
-import os
 import time
-from typing import Dict
-
 
 from cimgraph.data_profile import CIM_PROFILE
 from gridappsd import GridAPPSD
 import gridappsd.topics as t
 import gridappsd_field_bus.field_interface.agents.agents as agents_mod
-from gridappsd_field_bus.field_interface.context_managers.utils import REQUEST_FIELD, get_MessageBusDefinition
+from gridappsd_field_bus.field_interface.context_managers.utils import REQUEST_FIELD, get_message_bus_definition
 from gridappsd_field_bus.field_interface.context_managers.context_manager_agents import FeederAreaContextManager, SwitchAreaContextManager, SecondaryAreaContextManager
 
 cim_profile = CIM_PROFILE.CIMHUB_2023.value
@@ -57,8 +53,8 @@ def _main():
 
     
 
-    system_message_bus_def = get_MessageBusDefinition(field_model_mrid)
-    feeder_message_bus_def = get_MessageBusDefinition(field_model_mrid)
+    system_message_bus_def = get_message_bus_definition(field_model_mrid)
+    feeder_message_bus_def = get_message_bus_definition(field_model_mrid)
 
     #TODO: create access control for agents for different layers
     feeder_agent = FeederAreaContextManager(system_message_bus_def,
@@ -68,7 +64,7 @@ def _main():
 
     #print(feeder_agent.agent_area_dict)
     for switch_area in feeder_agent.agent_area_dict['SwitchAreas']:
-        switch_area_message_bus_def = get_MessageBusDefinition(str(switch_area['@id']))
+        switch_area_message_bus_def = get_message_bus_definition(str(switch_area['@id']))
         print("Creating switch area agent " + str(switch_area['@id']))
         switch_area_agent = SwitchAreaContextManager(feeder_message_bus_def,
                                                      switch_area_message_bus_def,
@@ -78,7 +74,7 @@ def _main():
 
         # create secondary area distributed agents
         for secondary_area in switch_area['SecondaryAreas']:
-            secondary_area_message_bus_def = get_MessageBusDefinition(
+            secondary_area_message_bus_def = get_message_bus_definition(
                 str(secondary_area['@id']))
             print("Creating secondary area agent " + str(secondary_area['@id']))
             secondary_area_agent = SecondaryAreaContextManager(switch_area_message_bus_def,
