@@ -1,15 +1,4 @@
-########################################################################################################
-# Deploys a develop release and commits pyproject.toml files with new versions.
-#
-# When will it run:
-#   This workflow will only run on push to develop when there is a python file change.
-#
-# How will it update:
-#   The script should update based upon the current version in the pyproject.toml file.  The workflow
-#   should run poetry version prerelease to create a new version file.  Since this
-#   repository houses multiple wheels we will be using the ./scripts/runoneach.sh to run this command.
-########################################################################################################
-name: Deploy Dev Release Artifacts
+name: Development Artifacts
 
 on:
   push:
@@ -17,140 +6,86 @@ on:
       - develop
   workflow_dispatch:
     inputs:
-      upgrade-version:
-        description: "Upgrade version number regardless of whether a py file is altered."
+      force:
+        description: 'Force deploy'
         required: false
         default: false
         type: boolean
-
-defaults:
-  run:
-    shell: bash
-
-env:
-  LANG: en_US.utf-8
-  LC_ALL: en_US.utf-8
-  PYTHON_VERSION: "3.10"
-
 jobs:
-  deploy-dev-release:
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: write # To push a branch
-      pull-requests: write # To create a PR from that branch
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      any_changed: ${{ steps.changed-files.outputs.any_changed }}
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - run: echo "The specified version is ${{ inputs.release-version }}."
-      - run: |
-          set -x
-          set -u
-          set -e
-      #----------------------------------------------
-      #       check-out repo and set-up python
-      #----------------------------------------------
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          # ref: develop
-          token: ${{ secrets.GITHUB_TOKEN }}
-
+      
       - name: Get changed files
         id: changed-files
         uses: tj-actions/changed-files@v45
-          # To compare changes between the current commit and the last pushed remote commit set `since_last_remote_commit: true`. e.g
-          # with:
-          #   since_last_remote_commit: true
         with:
           files: |
             **.py
 
-      - name: Should change version
-        id: should_update_version
-        env:
-          PYTHON_FILES_CHANGED: ${{ steps.changed-files.outputs.all_changed_files }}
-        run: |          
-          should_update=false
-          for file in ${PYTHON_FILES_CHANGED}; do
-            should_update=true
-            break
-          done
-          
-          # handle input required update.
-          if ${{ inputs.upgrade-version }} ; then
-            should_update=true
-          fi
-          
-          echo "Should update == ${should_update}"
-          echo "value=${should_update}" >> "$GITHUB_OUTPUT"
-
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        if: ${{ steps.should_update_version.outputs.value == 'true' }}
-        id: setup-python
-        uses: actions/setup-python@v5
+  build:
+    runs-on: ubuntu-latest
+    needs: check-changes
+    if: needs.check-changes.outputs.any_changed == 'true' || github.event.inputs.force == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          fetch-depth: 0
+            
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-      #----------------------------------------------
-      #  -----  install & configure poetry  -----
-      #----------------------------------------------
       - name: Install Poetry
-        if: ${{ steps.should_update_version.outputs.value == 'true' }}
-        uses: snok/install-poetry@v1
+        uses: snok/install-poetry@v1.4.1
         with:
-          virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
-
-      - name: Update version and commit pyproject.toml file
-        if: ${{ steps.should_update_version.outputs.value == 'true' }}
+          
+      - name: Bump version
+        id: bump-version
         run: |
+          echo "Bumping version..."
           ./scripts/run_on_each.sh poetry version prerelease
+          echo "Version bumped to $(poetry version -s)"
           
-          git config --global user.name 'Commit Bot'
-          git config --global user.email '3979063+craig8@users.noreply.github.com'
-          git add **/pyproject.toml
-          git commit -m "Auto Update Version Number"
-          git push          
+      - name: Install dependencies
+        run: ./scripts/poetry_install.sh
 
-      - name: Install library
-        if: ${{ steps.should_update_version.outputs.value == 'true' }}
-        run: |         
-          ./scripts/poetry_install.sh
-
-      - name: Create build artifacts
-        id: version
-        if: ${{ steps.should_update_version.outputs.value == 'true' }}
+      - name: Build project
+        run: ./scripts/poetry_build.sh
+          
+      - name: Commit bumped version
         run: |
-          # set the right version in pyproject.toml before build and publish
-          ./scripts/poetry_build.sh
-          
-          echo "value=v$(poetry version --short)" >> "$GITHUB_OUTPUT"
+          git config --global user.name 'gridappsd[bot]'
+          git config --global user.email 'gridappsd[bot]@users.noreply.github.com'
+          git commit -am "Bump version to $(poetry version -s)"
+          git push origin develop
 
-      # TODO: Check for pipy token and only release to github if we have it.
-
-      - name: Push artifacts to github
+      - name: Create Release
+        uses: ncipollo/release-action@v1.15.0
         env:
-          TAG: ${{ steps.version.outputs.value }}
-        if: ${{ steps.should_update_version.outputs.value == 'true' }}
-        uses: ncipollo/release-action@v1
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          artifacts: "dist/*.gz,dist/*.whl"
-          artifactErrorsFailBuild: true
+          tag: v$(poetry version -s)
+          name: Release v$(poetry version -s)
+          draft: false
+          prerelease: true
           generateReleaseNotes: true
           commit: ${{ github.ref }}
-          # check bump-rule and set accordingly
-          prerelease: true
-          tag: ${{ env.TAG }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish to pypi
+          artifacts: "dist/*.gz,dist/*.whl"
+          artifactErrorsFailBuild: true
+      - name: Publish to PyPI
         id: publish-to-pypi
-        if: ${{ steps.should_update_version.outputs.value == 'true' }}
         run: |
-          
           # This is needed, because the poetry publish will fail at the top level of the project
           # so ./scripts/run_on_each.sh fails for that.
           echo "POETRY_PUBLISH_OPTIONS=''" >> $GITHUB_ENV

@@ -7,7 +7,7 @@ import gridappsd.topics as t
 import logging
 from os import PathLike
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Any
 
 import yaml
 
@@ -31,6 +31,7 @@ class ConnectionType(Enum):
     # CONNECTION_TYPE_WS = "WS"
     # CONNECTION_TYPE_HTTP = "HTTP"
     # CONNECTION_TYPE_TCP = "TCP"
+    CONNECTION_TYPE = "STOMP"
     CONNECTION_TYPE_GRIDAPPSD = "CONNECTION_TYPE_GRIDAPPSD"
 
 
@@ -79,38 +80,40 @@ class MessageBusDefinition:
     """
     connection_args allows dynamic key/value paired strings to be added to allow connections.
     """
-    conneciton_args: Dict[str, str]
+    connection_args: Dict[str, str | int]
+
     """
     Determines whether or not this message bus has the role of ot bus.
     """
     is_ot_bus: bool = False
 
     @staticmethod
+    def __validate_loader__(json_obj: dict[str, Any]) -> bool:
+        required = ["id", "connection_type", "connection_args"]
+        for k in required:
+            if k not in json_obj:
+                raise ValueError(f"Missing keys for connection {k}")
+
+        return True
+
+    @staticmethod
+    def load_from_json(json_obj: dict[str, str | dict]) -> MessageBusDefinition:
+        MessageBusDefinition.__validate_loader__(json_obj)
+
+        mb_def = MessageBusDefinition(**json_obj)
+        if not hasattr(mb_def, "is_ot_bus"):
+            setattr(mb_def, "is_ot_bus", False)
+
+        return mb_def
+
+    @staticmethod
     def load(config_file) -> MessageBusDefinition:
         """
-
+        Load a single message bus definition from a YAML file.
         """
         config = yaml.load(open(config_file), Loader=yaml.FullLoader)['connections']
 
-        required = ["id", "connection_type", "connection_args"]
-        for k in required:
-            if k not in config:
-                raise ValueError(f"Missing keys for connection {k}")
-
-        definition = MessageBusDefinition(config[required[0]], config[required[1]],
-                                          config[required[2]])
-        for k in config:
-            if k == "connection_args":
-                definition.conneciton_args = dict()
-                for k1, v1 in config[k].items():
-                    definition.conneciton_args[k1] = v1
-            else:
-                setattr(definition, k, config[k])
-
-        if not hasattr(definition, "is_ot_bus"):
-            setattr(definition, "is_ot_bus", False)
-
-        return definition
+        return MessageBusDefinition.load_from_json(config)
 
 
 class FieldMessageBus:
