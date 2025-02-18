@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gridappsd-python-workspace"
-version = "2024.12.0.a1"
+version = "2025.2.1a1"
 description = "A GridAPPS-D Python Adapter"
 authors = [
     "C. Allwardt <3979063+craig8@users.noreply.github.com>",
@@ -23,3 +23,6 @@ python = ">=3.10,<4.0"
 [build-system]
 requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"q
