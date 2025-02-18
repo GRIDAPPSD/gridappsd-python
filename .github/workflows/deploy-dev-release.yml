@@ -58,7 +58,9 @@ jobs:
           echo "Version bumped to $(poetry version -s)"
           
       - name: Install dependencies
-        run: ./scripts/poetry_install.sh
+        run: |
+          ./scripts/run_on_each.sh poetry self add poetry-plugin-export
+          ./scripts/poetry_install.sh
 
       - name: Build project
         run: ./scripts/poetry_build.sh
