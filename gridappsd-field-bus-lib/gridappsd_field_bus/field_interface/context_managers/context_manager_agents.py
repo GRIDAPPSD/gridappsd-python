@@ -25,7 +25,7 @@ class SubstationAreaContextManager(SubstationAgent):
 
         self.ot_connection = GridAPPSD()
         if substation_dict is None:
-            request = {'request_type': 'get_context', 'modelId': downstream_message_bus_def.id}
+            request = {'request_type': 'get_context', 'areaId': downstream_message_bus_def.id}
             substation_dict = None
             while substation_dict is None:
                 self.ot_connection.get_logger().debug(f"Requesting topology for {self.__class__}")
@@ -63,7 +63,7 @@ class FeederAreaContextManager(FeederAgent):
 
         self.ot_connection = GridAPPSD()
         if feeder_dict is None:
-            request = {'request_type': 'get_context', 'modelId': downstream_message_bus_def.id}
+            request = {'request_type': 'get_context', 'areaId': downstream_message_bus_def.id}
             feeder_dict = None
             while feeder_dict is None:
                 self.ot_connection.get_logger().debug(f"Requesting topology for {self.__class__}")
