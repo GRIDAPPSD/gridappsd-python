@@ -7,7 +7,7 @@ from typing import Any
 class GridAPPSDMessageBus(FieldMessageBus):
 
     def __init__(self, definition: MessageBusDefinition):
-        super(GridAPPSDMessageBus, self).__init__(definition)
+        super().__init__(definition)
         self._id = definition.id
 
         self._user = definition.connection_args["GRIDAPPSD_USER"]

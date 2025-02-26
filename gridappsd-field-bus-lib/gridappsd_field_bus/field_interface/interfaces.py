@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
+import importlib
 import gridappsd.topics as t
 import logging
 from os import PathLike
@@ -32,7 +33,7 @@ class ConnectionType(Enum):
     # CONNECTION_TYPE_HTTP = "HTTP"
     # CONNECTION_TYPE_TCP = "TCP"
     CONNECTION_TYPE = "STOMP"
-    CONNECTION_TYPE_GRIDAPPSD = "CONNECTION_TYPE_GRIDAPPSD"
+    CONNECTION_TYPE_GRIDAPPSD = "gridappsd_field_bus.field_interface.gridappsd_field_bus.GridAPPSDMessageBus"
 
 
 class ProtocolTransformer(ABC):
@@ -189,6 +190,26 @@ class FieldMessageBus:
         Disconnect the device from the concrete message bus.
         """
         pass
+
+
+class MessageBusFactory(ABC):
+    """
+    A factory class for creating message bus objects.
+    """
+
+    def create(self, config: MessageBusDefinition) -> FieldMessageBus:
+        """
+        Create a message bus based upon the configuration passed.
+        """
+        try:
+            module_name, class_name = config.connection_type.value.rsplit('.', 1)
+        except AttributeError:
+            module_name, class_name = config.connection_type.rsplit('.', 1)
+
+        module = importlib.import_module(module_name)
+        bus_class = getattr(module, class_name)
+        return bus_class(config)
+        
 
 
 class MessageBusDefinitions:
