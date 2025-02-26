@@ -15,7 +15,7 @@ from gridappsd import DifferenceBuilder
 import gridappsd.topics as t
 from gridappsd_field_bus.field_interface.context import LocalContext
 from gridappsd_field_bus.field_interface.gridappsd_field_bus import GridAPPSDMessageBus
-from gridappsd_field_bus.field_interface.interfaces import (FieldMessageBus, MessageBusDefinition)
+from gridappsd_field_bus.field_interface.interfaces import (FieldMessageBus, MessageBusDefinition, MessageBusFactory)
 
 CIM_PROFILE = None
 IEC61970_301 = None
@@ -80,13 +80,13 @@ class DistributedAgent:
 
         if upstream_message_bus_def is not None:
             if upstream_message_bus_def.is_ot_bus:
-                self.upstream_message_bus = GridAPPSDMessageBus(upstream_message_bus_def)
+                self.upstream_message_bus = MessageBusFactory.create(upstream_message_bus_def)
         #            else:
         #                self.upstream_message_bus = VolttronMessageBus(upstream_message_bus_def)
 
         if downstream_message_bus_def is not None:
             if downstream_message_bus_def.is_ot_bus:
-                self.downstream_message_bus = GridAPPSDMessageBus(downstream_message_bus_def)
+                self.downstream_message_bus = MessageBusFactory.create(downstream_message_bus_def)
         #            else:
         #                self.downstream_message_bus = VolttronMessageBus(downstream_message_bus_def)
 
@@ -346,7 +346,7 @@ class CoordinatingAgent:
         self.feeder_id = feeder_id
         self.distributed_agents = []
 
-        self.system_message_bus = GridAPPSDMessageBus(system_message_bus_def)
+        self.system_message_bus = MessageBusFactory.create(system_message_bus_def)
         self.system_message_bus.connect()
 
         # This will change when we have multiple feeders per system
