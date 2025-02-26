@@ -27,6 +27,7 @@ python = ">=3.10,<4.0"
 gridappsd-python = "^2025.2.1a2"
 cim-graph = "^0.1.8a0"
 click = "^8.1.8"
+"python-dotenv" = "^1.0.1"
 
 [tool.poetry.scripts]
 # Add things in the form
