@@ -80,13 +80,13 @@ class DistributedAgent:
 
         if upstream_message_bus_def is not None:
             if upstream_message_bus_def.is_ot_bus:
-                self.upstream_message_bus = MessageBusFactory.create(upstream_message_bus_def)
+                self.upstream_message_bus = MessageBusFactory.create(config=upstream_message_bus_def)
         #            else:
         #                self.upstream_message_bus = VolttronMessageBus(upstream_message_bus_def)
 
         if downstream_message_bus_def is not None:
             if downstream_message_bus_def.is_ot_bus:
-                self.downstream_message_bus = MessageBusFactory.create(downstream_message_bus_def)
+                self.downstream_message_bus = MessageBusFactory.create(config=downstream_message_bus_def)
         #            else:
         #                self.downstream_message_bus = VolttronMessageBus(downstream_message_bus_def)
 

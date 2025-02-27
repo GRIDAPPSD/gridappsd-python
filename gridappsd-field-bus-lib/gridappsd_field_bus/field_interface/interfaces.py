@@ -197,7 +197,7 @@ class MessageBusFactory(ABC):
     A factory class for creating message bus objects.
     """
 
-    def create(self, config: MessageBusDefinition) -> FieldMessageBus:
+    def create(config: MessageBusDefinition) -> FieldMessageBus:
         """
         Create a message bus based upon the configuration passed.
         """
