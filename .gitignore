@@ -110,3 +110,4 @@ ENV/
 # pytest cache
 .pytest_cache
 /gridappsd-python.code-workspace
+.qodo
