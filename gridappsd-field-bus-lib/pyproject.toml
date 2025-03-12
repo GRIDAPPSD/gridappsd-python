@@ -25,7 +25,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
 gridappsd-python = ">=2025.2,<2025.3"
-cim-graph = ">=0.2,<0.3"
+cim-graph = ">=0.2.2a4"
 click = "^8.1.8"
 "python-dotenv" = "^1.0.1"
 
