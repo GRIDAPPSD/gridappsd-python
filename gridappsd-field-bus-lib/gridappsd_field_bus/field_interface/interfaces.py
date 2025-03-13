@@ -198,7 +198,7 @@ class MessageBusFactory(ABC):
     """
 
     @staticmethod
-    def create(self, config: MessageBusDefinition) -> FieldMessageBus:
+    def create(config: MessageBusDefinition) -> FieldMessageBus:
         """
         Create a message bus based upon the configuration passed.
         """
