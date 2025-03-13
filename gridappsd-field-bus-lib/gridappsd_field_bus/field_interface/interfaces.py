@@ -197,6 +197,7 @@ class MessageBusFactory(ABC):
     A factory class for creating message bus objects.
     """
 
+    @staticmethod
     def create(self, config: MessageBusDefinition) -> FieldMessageBus:
         """
         Create a message bus based upon the configuration passed.
@@ -209,7 +210,7 @@ class MessageBusFactory(ABC):
         module = importlib.import_module(module_name)
         bus_class = getattr(module, class_name)
         return bus_class(config)
-        
+
 
 
 class MessageBusDefinitions:
