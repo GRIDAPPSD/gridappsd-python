@@ -16,7 +16,7 @@ class TestMessageBusFactory(unittest.TestCase):
         subprocess.run(["docker", "rm", "artemis"])
 
     def setUp(self):
-        self.factory = MessageBusFactory()
+        #self.factory = MessageBusFactory()
         self.config = MessageBusDefinition(
             id="test_bus",
             connection_type=ConnectionType.CONNECTION_TYPE_GRIDAPPSD,
@@ -25,7 +25,7 @@ class TestMessageBusFactory(unittest.TestCase):
         )
 
     def test_create_message_bus(self):
-        message_bus = self.factory.create(self.config)
+        message_bus = MessageBusFactory.create(self.config)
         self.assertIsNotNone(message_bus)
         self.assertEqual(message_bus.id, "test_bus")
         self.assertEqual(message_bus.is_ot_bus, False)
