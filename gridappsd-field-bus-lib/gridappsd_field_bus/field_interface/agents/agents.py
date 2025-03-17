@@ -87,14 +87,11 @@ class DistributedAgent:
         if downstream_message_bus_def is not None:
             if downstream_message_bus_def.is_ot_bus:
                 self.downstream_message_bus = MessageBusFactory.create(downstream_message_bus_def)
-        #            else:
-        #                self.downstream_message_bus = VolttronMessageBus(downstream_message_bus_def)
 
-        # self.context = ContextManager.get(self.feeder_id, self.area_id)
+        if self.downstream_message_bus is None and self.upstream_message_bus is None:
+            raise ValueError("Must have at least a downstream and/or upstream message bus specified")
 
-        # if agent_dict is not None:
-        #    self.addressable_equipments = agent_dict['addressable_equipment']
-        #    self.unaddressable_equipments = agent_dict['unaddressable_equipment']
+        self._connect()
 
     def _connect(self):
 
