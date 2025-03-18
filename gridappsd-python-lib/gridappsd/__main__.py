@@ -44,10 +44,12 @@ import argparse
 from argparse import ArgumentParser
 from time import sleep
 import yaml
+from dotenv import load_dotenv
+from pathlib import Path
 
 from gridappsd import GridAPPSD
 
-assert sys.version_info >= (3, 6), "Minimum version is python 3.6"
+assert sys.version_info >= (3, 10), "Minimum version is python 3.10"
 
 logging.basicConfig(stream=sys.stdout,
                     level=logging.INFO,
@@ -65,7 +67,9 @@ if __name__ == '__main__':
                        "--run-simulation",
                        type=argparse.FileType('r'),
                        help="Start running a simulation from a passed simulation file.")
-
+    group.add_argument("--env", required=False, type=str,
+                       default=".env",
+                       help="Load environment variables from a .env file.")
     opts = parser.parse_args()
 
     if opts.run_simulation:
@@ -74,6 +78,15 @@ if __name__ == '__main__':
             simulation.pause()
             sleep(1)
             simulation.resume()
+
+        if opts.env:
+            _log.info(f"Loading environment variables from {opts.env}")
+            env_path = Path(opts.env).expanduser()
+            if env_path.is_file():
+                load_dotenv(opts.env)
+            else:
+                _log.error(f"Environment file {opts.env} not found. Skipping loading.")
+                sys.exit(1)
 
         gappsd = GridAPPSD()
         run_args = yaml.safe_load(opts.run_simulation)
