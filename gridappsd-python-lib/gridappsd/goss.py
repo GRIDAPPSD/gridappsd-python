@@ -58,6 +58,10 @@ from queue import Queue
 from stomp import Connection12 as Connection
 from stomp.exception import NotConnectedException
 from time import sleep
+try:    # python2.7
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 from gridappsd import json_extension as json
 
@@ -119,6 +123,22 @@ class GOSS(object):
 
         if not self.__user__ or not self.__pass__:
             raise ValueError("Invalid username/password specified.")
+        
+        if self.stomp_address is None or self.stomp_address == '':
+            raise ValueError("Invalid stomp address specified.")
+        
+        if not self.stomp_address.startswith("tcp://"):
+            self.stomp_address = "tcp://" + self.stomp_address
+        
+        parsed_address = urlparse(self.stomp_address)
+
+        if self.stomp_port is None or self.stomp_port == '':
+            if parsed_address.port is not None:
+                self.stomp_port = parsed_address.port
+            else:   
+                raise ValueError("Invalid stomp port specified.")
+            
+        self._connection_tuple = [(parsed_address.hostname, int(self.stomp_port))]
         self._conn = None
         self._ids = set()
         self._topic_set = set()
@@ -306,7 +326,7 @@ class GOSS(object):
                 # send request to token topic
                 tokenTopic = "/topic/pnnl.goss.token.topic"
 
-                tmpConn = Connection([(self.stomp_address, self.stomp_port)])
+                tmpConn = Connection([*self._connection_tuple])
                 if self._override_thread_fc is not None:
                     tmpConn.transport.override_threading(self._override_thread_fc)
                 tmpConn.connect(self.__user__, self.__pass__, wait=True)
@@ -349,7 +369,7 @@ class GOSS(object):
                     sleep(1)
                     iter += 1
 
-            self._conn = Connection([(self.stomp_address, self.stomp_port)])
+            self._conn = Connection([*self._connection_tuple])
             if self._override_thread_fc is not None:
                 self._conn.transport.override_threading(self._override_thread_fc)
             try:
