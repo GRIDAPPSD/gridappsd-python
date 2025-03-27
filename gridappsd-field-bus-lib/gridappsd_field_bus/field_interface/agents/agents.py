@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict
 
-from cimgraph.databases import ConnectionParameters
 from cimgraph.databases.gridappsd import GridappsdConnection
 from cimgraph.models import FeederModel
 from cimgraph.models.distributed_area import DistributedArea
