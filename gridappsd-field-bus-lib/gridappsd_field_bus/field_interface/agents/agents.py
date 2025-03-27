@@ -62,9 +62,9 @@ class DistributedAgent:
         self.context = None
 
         # TODO: Change params and connection to local connection
-        self.params = ConnectionParameters(cim_profile=CIM_PROFILE, iec61970_301=IEC61970_301)
+        #self.params = ConnectionParameters(cim_profile=CIM_PROFILE, iec61970_301=IEC61970_301)
 
-        self.connection = GridappsdConnection(self.params)
+        self.connection = GridappsdConnection()
         self.connection.cim_profile = cim_profile
 
         self.app_id = agent_config['app_id']
