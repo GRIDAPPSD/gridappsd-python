@@ -44,10 +44,10 @@ Created on March 1, 2018
 """
 import base64
 import inspect
-#import json
 import logging
 import os
 import random
+import re
 import threading
 from collections import defaultdict
 from datetime import datetime
@@ -389,8 +389,8 @@ class CallbackRouter(object):
 
     def __init__(self):
         self.callbacks = {}
-        self._topics_callback_map = defaultdict(list)
-        self._queue_callerback = Queue()
+        self._topic_callbacks = defaultdict(list)
+        self._queue_callback = Queue()
         self._thread = threading.Thread(target=self.run_callbacks)
         self._thread.daemon = True
         self._thread.start()
@@ -398,40 +398,53 @@ class CallbackRouter(object):
     def run_callbacks(self):
         _log.debug("Starting thread queue")
         while True:
-            cb, hdrs, msg = self._queue_callerback.get()
+            callbacks, headers, msg = self._queue_callback.get()
             try:
-                msg = json.loads(msg)
-            except:
-                pass
-                # msg = message
-
-            for c in cb:
-                c(hdrs, msg)
+                for callback in callbacks:
+                    callback(headers, msg)
+            except Exception as e:
+                _log.error(f"Error in callback execution: {e}")
             sleep(0.01)
 
-    def add_callback(self, topic, callback):
-        if not topic.startswith('/topic/') and not topic.startswith('/temp-queue/'):
-            topic = "/queue/{topic}".format(topic=topic)
-        if callback in self._topics_callback_map[topic]:
-            raise ValueError("Callbacks can only be used one time per topic")
-        _log.debug("Added callbac using topic {topic}".format(topic=topic))
-        self._topics_callback_map[topic].append(callback)
+    def add_callback(self, topic_pattern, callback):
+        """ Add a callback for a topic, supporting wildcards.
 
-    def remove_callback(self, topic, callback):
-        if topic in self._topics_callback_map:
-            callbacks = self._topics_callback_map[topic]
+        The topic can contain wildcards (based upon activmeq artemis 
+        https://activemq.apache.org/components/classic/documentation/stomp-manual):
+        
+        - '*' matches any level (e.g., `/topic/goss.gridappsd.field.heartbeat.*`)
+        - '**' matches multiple levels (e.g., `/topic/goss.gridappsd.**`)
+
+        :param topic_pattern: Topic string, allowing `*` or `**` as wildcards.
+        :param callback: Function to call when a matching message is received.
+        """
+        regex_pattern = re.escape(topic_pattern).replace(r'\*', '[^/]+').replace(r'\*\*', '.*')
+        self._topic_callbacks[regex_pattern].append(callback)
+        _log.debug(f"Added callback for topic pattern: {topic_pattern} (Regex: {regex_pattern})")
+
+    def remove_callback(self, topic_pattern, callback):
+        regex_pattern = re.escape(topic_pattern).replace(r'\*', '[^/]+').replace(r'\*\*', '.*')
+        if regex_pattern in self._topic_callbacks:
             try:
-                callbacks.remove(callback)
+                self._topic_callbacks[regex_pattern].remove(callback)
+                if not self._topic_callbacks[regex_pattern]:
+                    del self._topic_callbacks[regex_pattern]
             except ValueError:
                 pass
 
     def on_message(self, headers, message):
-        destination = headers['destination']
-        # _log.debug("Topic map keys are: {keys}".format(keys=self._topics_callback_map.keys()))
-        if destination in self._topics_callback_map:
-            self._queue_callerback.put((self._topics_callback_map[destination], headers, message))
+        """ Handles incoming messages by checking if any subscribed wildcard matches the topic. """
+        topic = headers.get("destination")
+        matching_callbacks = []
+
+        for pattern, callbacks in self._topic_callbacks.items():
+            if re.fullmatch(pattern, topic):
+                matching_callbacks.extend(callbacks)
+
+        if matching_callbacks:
+            self._queue_callback.put((matching_callbacks, headers, message))
         else:
-            _log.error("INVALID DESTINATION {destination}".format(destination=destination))
+            _log.warning(f"No matching callback for topic: {topic}")
 
     def on_error(self, header, message):
         _log.error("Error in callback router")
