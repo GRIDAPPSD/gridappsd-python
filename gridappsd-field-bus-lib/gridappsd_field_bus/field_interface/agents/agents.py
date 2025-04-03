@@ -60,9 +60,6 @@ class DistributedAgent:
         self.simulation_id = simulation_id
         self.context = None
 
-        # TODO: Change params and connection to local connection
-        #self.params = ConnectionParameters(cim_profile=CIM_PROFILE, iec61970_301=IEC61970_301)
-
         self.connection = GridappsdConnection()
         self.connection.cim_profile = cim_profile
 
@@ -78,14 +75,10 @@ class DistributedAgent:
         self.agent_area_dict = agent_area_dict
 
         if upstream_message_bus_def is not None:
-            if upstream_message_bus_def.is_ot_bus:
-                self.upstream_message_bus = MessageBusFactory.create(upstream_message_bus_def)
-        #            else:
-        #                self.upstream_message_bus = VolttronMessageBus(upstream_message_bus_def)
-
+            self.upstream_message_bus = MessageBusFactory.create(upstream_message_bus_def)
+        
         if downstream_message_bus_def is not None:
-            if downstream_message_bus_def.is_ot_bus:
-                self.downstream_message_bus = MessageBusFactory.create(downstream_message_bus_def)
+            self.downstream_message_bus = MessageBusFactory.create(downstream_message_bus_def)
 
         if self.downstream_message_bus is None and self.upstream_message_bus is None:
             raise ValueError("Must have at least a downstream and/or upstream message bus specified")
@@ -96,11 +89,23 @@ class DistributedAgent:
 
         if self.upstream_message_bus is not None:
             self.upstream_message_bus.connect()
+            assert self.upstream_message_bus.is_connected(), "Failed to connect to upstream message bus"
+            _log.debug(f"Connected to upstream message bus: {self.upstream_message_bus.id}")
+        else:
+            _log.debug("No upstream message bus specified, skipping connection.")
         if self.downstream_message_bus is not None:
             self.downstream_message_bus.connect()
+            assert self.downstream_message_bus.is_connected(), "Failed to connect to downstream message bus"
+            _log.debug(f"Connected to downstream message bus: {self.downstream_message_bus.id}")
+        else:
+            _log.debug("No downstream message bus specified, skipping connection.")
+
         if self.downstream_message_bus is None and self.upstream_message_bus is None:
             raise ValueError("Either upstream or downstream bus must be specified!")
 
+        _log.debug(f"Upstream: {self.upstream_message_bus} downstream: {self.downstream_message_bus}")
+        _log.debug(f"Connected to message bus: {self.downstream_message_bus.id} and {self.upstream_message_bus.id}")
+        _log.debug(f"Agent ID: {self.agent_id} and App ID: {self.app_id}")
         if ('context_manager' not in self.app_id):
             self.agent_id = "da_" + self.app_id + "_" + self.downstream_message_bus.id
 
