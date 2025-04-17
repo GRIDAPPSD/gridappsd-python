@@ -16,7 +16,7 @@ class FieldListener:
     def on_message(self, headers, message):
         "Receives messages coming from Proxy bus (e.g. ARTEMIS) and forwards to OT bus"
         try:
-            print(f"Received message at Proxy: {message}")
+            print(f"Received message at Proxy. destination: {headers['destination']}, message: {headers}")
 
             if headers["destination"] == topics.field_output_topic():
                 self.ot_connection.send(topics.field_output_topic(), message)
@@ -30,6 +30,11 @@ class FieldListener:
                 if request_type == "get_context":
                     response = self.ot_connection.get_response(headers["destination"],message)
                     self.proxy_connection.send(headers["reply_to"],response)
+            
+            elif 'goss.gridappsd.process.request' in headers["destination"]:
+                response = self.ot_connection.get_response(headers["destination"],message)
+                #print(response)
+                self.proxy_connection.send(headers["reply-to"],json.dumps(response))
 
             else:
                 print(f"Unrecognized message received by Proxy: {message}")
@@ -52,15 +57,17 @@ class FieldProxyForwarder:
         self.broker_url = connection_url
         self.username = username
         self.password = password
-        self.proxy_connection = stomp.Connection([(self.broker_url.split(":")[0], int(self.broker_url.split(":")[1]))],keepalive=True)
+        self.proxy_connection = stomp.Connection([(self.broker_url.split(":")[0], int(self.broker_url.split(":")[1]))],keepalive=True, heartbeats=(10000,10000))
         self.proxy_connection.set_listener('', FieldListener(self.ot_connection, self.proxy_connection))
         self.proxy_connection.connect(self.username, self.password, wait=True)
+        
         print('Connected to Proxy')
 
 
 
         #Subscribe to messages from field
         self.proxy_connection.subscribe(destination=topics.BASE_FIELD_TOPIC+'.*', id=1, ack="auto")
+        self.proxy_connection.subscribe(destination='goss.gridappsd.process.request.data.powergridmodel', id=2, ack="auto")
 
         #Subscribe to messages on OT bus
         self.ot_connection.subscribe(topics.field_input_topic(), self.on_message_from_ot)
@@ -71,7 +78,7 @@ class FieldProxyForwarder:
             print(f"Received message from OT: {message}")
 
             if headers["destination"] == topics.field_input_topic():
-                self.proxy_connection.send(topics.field_input_topic(), message)
+                self.proxy_connection.send(topics.field_input_topic(),json.dumps(message))
 
             else:
                 print(f"Unrecognized message received by OT: {message}")
