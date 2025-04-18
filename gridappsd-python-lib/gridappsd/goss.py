@@ -121,7 +121,7 @@ class GOSS(object):
         if not self.__user__ or not self.__pass__:
             raise ValueError("Invalid username/password specified.")
 
-        self._heartbeat = int(os.environ.get(GRIDAPPSD_ENV_ENUM.GRIDAPPSD_HEARTBEAT.value, 4000))
+        self._heartbeat = int(os.environ.get(GRIDAPPSD_ENV_ENUM.GRIDAPPSD_HEARTBEAT.value, 10000))
         self._conn = None
         self._ids = set()
         self._topic_set = set()
@@ -420,3 +420,14 @@ class CallbackRouter(object):
         _log.error("Error in callback router")
         _log.error(header)
         _log.error(message)
+
+        def on_error(self, header, message):
+        _log.error("Error in callback router")
+        _log.error(header)
+        _log.error(message)
+
+    def on_heartbeat_timeout(self):
+        _log.error("Heartbeat timeout")
+        
+    def on_disconnected(self):
+        _log.info("Disconnected")
