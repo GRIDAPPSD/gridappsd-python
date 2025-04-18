@@ -421,7 +421,7 @@ class CallbackRouter(object):
         _log.error(header)
         _log.error(message)
 
-        def on_error(self, header, message):
+    def on_error(self, header, message):
         _log.error("Error in callback router")
         _log.error(header)
         _log.error(message)
