@@ -113,7 +113,7 @@ class FieldProxyForwarder:
             if headers["destination"] == topics.field_input_topic():
                 self.proxy_connection.send(topics.field_input_topic(),json.dumps(message))
 
-            if 'goss.gridappsd.field' in headers["destination"]:
+            elif 'goss.gridappsd.field' in headers["destination"]:
 
                 self.proxy_connection.send(headers["destination"],json.dumps(message))
             else:
