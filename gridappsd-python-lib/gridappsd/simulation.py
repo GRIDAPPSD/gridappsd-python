@@ -1,9 +1,5 @@
-from dataclasses import dataclass, field, fields
-from pathlib import Path
-import sys
+from dataclasses import dataclass, field,
 import time
-from copy import deepcopy
-#import json
 import logging
 from typing import Dict, List, Union
 
@@ -36,33 +32,33 @@ class ConfigBase:
 
 @dataclass
 class ModelCreationConfig(ConfigBase):
-    load_scaling_factor: str = "1"
-    schedule_name: str = "ieeezipload"
-    z_fraction: str = "0"
-    i_fraction: str = "1"
-    p_fraction: str = "0"
-    randomize_zipload_fractions: bool = False
-    use_houses: bool = False
+    load_scaling_factor: str = field(default = "1")
+    schedule_name: str = field(default = "ieeezipload")
+    z_fraction: str = field(default = "0")
+    i_fraction: str = field(default = "1")
+    p_fraction: str = field(default = "0")
+    randomize_zipload_fractions: bool = field(default = False)
+    use_houses: bool = field(default = False)
 
 
-__default_model_creation_config__ = ModelCreationConfig()
+# __default_model_creation_config__ = ModelCreationConfig()
 
 
 @dataclass
 class SimulationArgs(ConfigBase):
-    start_time: str = "1655321830"
-    duration: str = "300"
-    simulator: str = "GridLAB-D"
-    timestep_frequency: str = "1000"
-    timestep_increment: str = "1000"
-    run_realtime: bool = True
-    pause_after_measurements: bool = False
-    simulation_name: str = "ieee13nodeckt"
-    power_flow_solver_method: str = "NR"
-    model_creation_config: ModelCreationConfig = __default_model_creation_config__
+    start_time: str = field(default = "1655321830")
+    duration: str = field(default = "300")
+    simulator: str = field(default = "GridLAB-D")
+    timestep_frequency: str = field(default = "1000")
+    timestep_increment: str = field(default = "1000")
+    run_realtime: bool = field(default = True)
+    pause_after_measurements: bool = field(default = False)
+    simulation_name: str = field(default = "ieee13nodeckt")
+    power_flow_solver_method: str = field(default = "NR")
+    model_creation_config: ModelCreationConfig = field(default_factory = ModelCreationConfig)
 
 
-__default_simulation_args__ = SimulationArgs()
+# __default_simulation_args__ = SimulationArgs()
 
 
 @dataclass
@@ -75,16 +71,16 @@ class ApplicationConfig(ConfigBase):
     applications: List[Application] = field(default_factory=list)
 
 
-__default_application_config__ = ApplicationConfig()
+# __default_application_config__ = ApplicationConfig()
 
 
 @dataclass
 class TestConfig(ConfigBase):
     events: List[Dict] = field(default_factory=list)
-    appId: str = ""
+    appId: str = field(default = "")
 
 
-__default_test_config__ = TestConfig()
+# __default_test_config__ = TestConfig()
 
 
 @dataclass
@@ -95,18 +91,18 @@ class ServiceConfig(ConfigBase):
 @dataclass
 class PowerSystemConfig(ConfigBase):
     Line_name: str
-    GeographicalRegion_name: str = None
-    SubGeographicalRegion_name: str = None
+    GeographicalRegion_name: str = field(default = None)
+    SubGeographicalRegion_name: str = field(default = None)
 
 
 @dataclass
 class SimulationConfig(ConfigBase):
     power_system_config: PowerSystemConfig
-    application_config: List[ApplicationConfig] = field(default_factory=list)
-    simulation_config: SimulationArgs = __default_simulation_args__
+    application_configs: List[ApplicationConfig] = field(default_factory=list)
+    simulation_config: SimulationArgs = field(default_factory=SimulationArgs)
     service_configs: List[ServiceConfig] = field(default_factory=list)
-    application_config: ApplicationConfig = __default_application_config__
-    test_config: TestConfig = __default_test_config__
+    application_config: ApplicationConfig = field(default_factory=ApplicationConfig)
+    test_config: TestConfig = field(default_factory=TestConfig)
 
 
 class Simulation:
