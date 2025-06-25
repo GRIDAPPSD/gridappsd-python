@@ -1,9 +1,10 @@
-from dataclasses import dataclass, field,
+from dataclasses import dataclass, field
 import time
 import logging
 from typing import Dict, List, Union
 
 import gridappsd.topics as t
+from gridappsd import GridAPPSD
 from . import json_extension as json
 
 _log = logging.getLogger(__name__)
@@ -117,8 +118,8 @@ class Simulation:
     add_onmeasurement_callback, add_oncomplete_callback or add_onstart_callback method respectively.
     """
 
-    def __init__(self, gapps: 'GridAPPSD', run_config: Union[Dict, SimulationConfig]):
-        assert type(gapps).__name__ == 'GridAPPSD', "Must be an instance of GridAPPSD"
+    def __init__(self, gapps: GridAPPSD, run_config: Union[Dict, SimulationConfig]):
+        assert isinstance(gapps, GridAPPSD), "Must be an instance of GridAPPSD"
         if isinstance(run_config, SimulationConfig):
             self._run_config = run_config.asdict()
         elif isinstance(run_config, dict):
