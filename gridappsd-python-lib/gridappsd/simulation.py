@@ -1,8 +1,5 @@
-<<<<<<< bugfix/152
 from dataclasses import dataclass, field
-=======
-from dataclasses import dataclass, field,
->>>>>>> develop
+
 import time
 import logging
 from typing import Dict, List, Union
