@@ -6,6 +6,13 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict
 
+import time
+import os
+from functools import wraps
+import sys
+import inspect
+import atexit
+
 from cimgraph.databases import ConnectionParameters
 from cimgraph.databases.gridappsd import GridappsdConnection
 from cimgraph.models import FeederModel
@@ -17,12 +24,18 @@ from gridappsd_field_bus.field_interface.context import LocalContext
 from gridappsd_field_bus.field_interface.gridappsd_field_bus import GridAPPSDMessageBus
 from gridappsd_field_bus.field_interface.interfaces import (FieldMessageBus, MessageBusDefinition, MessageBusFactory)
 
+
 CIM_PROFILE = None
 IEC61970_301 = None
 cim = None
 
 _log = logging.getLogger(__name__)
-
+decorator_logger = logging.getLogger("decorator_logger")
+decorator_logger.setLevel(logging.INFO)
+file_handler = logging.FileHandler("compute_req_log.txt")  # Log file name
+formatter = logging.Formatter('[COMPUTE_REQ] %(asctime)s - %(message)s')
+file_handler.setFormatter(formatter)
+decorator_logger.addHandler(file_handler)
 
 def set_cim_profile(cim_profile: str, iec61970_301: int):
     global CIM_PROFILE
@@ -41,6 +54,147 @@ class AgentRegistrationDetails:
     upstream_message_bus_id: FieldMessageBus.id
     downstream_message_bus_id: FieldMessageBus.id
 
+@atexit.register
+def call_counter_report():
+    decorator_logger.info("Function call counts summary:")
+    for func_name, count in function_call_counts.items():
+        decorator_logger.info(f"{func_name} was called {count} time(s)")
+
+@atexit.register
+def message_size_report():
+    decorator_logger.info("Total message size summary:")
+    for func_name, total_size in message_size_totals.items():
+        decorator_logger.info(f"{func_name} total message size: {total_size} bytes")
+
+def compute_req(cls):
+    functions = [
+        '__init__', 
+        #'on_measurement', 
+        'on_upstream_message', 
+        'on_downstream_message',
+        'on_request',
+        'publish_upstream',
+        'publish_downstream',
+        'send_control_command'
+    ]
+
+    def call_counter(func):
+        name = func.__qualname__
+        
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if args[0].agent_id+'.'+name not in function_call_counts:
+                function_call_counts[args[0].agent_id+'.'+name] = 0
+            function_call_counts[args[0].agent_id+'.'+name] += 1
+            #decorator_logger.info(f"{name} called {function_call_counts[name]} times")
+            return func(*args, **kwargs)
+        return wrapper
+
+    def timed(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            start = time.perf_counter()
+            result = func(*args, **kwargs)
+            end = time.perf_counter()
+            class_name = args[0].__class__.__name__ if args else ""
+            if func.__name__ == '__init__':
+                decorator_logger.info(f"{class_name}.{func.__name__}.{args[0].agent_id} took: {end - start:.6f} seconds")
+            return result
+        return wrapper
+
+    def get_deep_size(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            result = func(*args, **kwargs)
+
+            def deep_size(obj, seen=None):
+                if seen is None:
+                    seen = set()
+                obj_id = id(obj)
+                if obj_id in seen:
+                    return 0
+                seen.add(obj_id)
+                size = sys.getsizeof(obj)
+                if isinstance(obj, dict):
+                    size += sum(deep_size(k, seen) + deep_size(v, seen) for k, v in obj.items())
+                elif isinstance(obj, (list, tuple, set, frozenset)):
+                    size += sum(deep_size(i, seen) for i in obj)
+                elif hasattr(obj, '__dict__'):
+                    for attr_name, attr_value in vars(obj).items():
+                        if attr_name in ['feeder_area', 'switch_area', 'secondary_area']:
+                            continue
+                        size += deep_size(attr_value, seen)
+                elif hasattr(obj, '__slots__'):
+                    size += sum(deep_size(getattr(obj, slot), seen) for slot in obj.__slots__ if hasattr(obj, slot))
+                return size
+
+            self = args[0]
+            obj_size = deep_size(self)
+            decorator_logger.info(f"{self.__class__.__name__}.{func.__name__}.{args[0].agent_id} size is: {obj_size} bytes")
+
+            return result
+        return wrapper
+
+    def get_graph_size(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            self = args[0]
+            result = func(*args, **kwargs)
+            area_names = ['feeder_area', 'switch_area', 'secondary_area']
+            area_found = False
+            for name in area_names:
+                area_dict = getattr(self, name, None)
+                if area_dict is not None and hasattr(area_dict, 'graph'):
+                    graph_keys = [key.__name__ for key in list(area_dict.graph.keys())]
+                    size = len(area_dict.graph.keys())
+                    decorator_logger.info(f"{self.__class__.__name__}.{func.__name__}.{args[0].agent_id} length of graph: {size}")
+                    decorator_logger.info(f"{self.__class__.__name__}.{name}.{args[0].agent_id} graph keys: {graph_keys}")
+                    area_found = True
+                    break
+
+            if not area_found:
+                decorator_logger.error(f"{class_name}.{func.__name__}.{args[0].agent_id} No area dictionary (feeder/switch/secondary) found in {self.__class__.__name__}")
+            return result
+        return wrapper
+
+    def log_message_size(func):
+        name = func.__qualname__
+        
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            sig = inspect.signature(func)
+            bound_args = sig.bind(*args, **kwargs)
+            bound_args.apply_defaults()
+
+            if 'message' in bound_args.arguments:
+                msg = bound_args.arguments['message']
+                size = sys.getsizeof(msg)
+                if args[0].agent_id+'.'+name not in message_size_totals:
+                    message_size_totals[args[0].agent_id+'.'+name] = 0
+                message_size_totals[args[0].agent_id+'.'+name] += size
+
+            if 'differenceBuilder' in bound_args.arguments:
+                msg = bound_args.arguments['differenceBuilder']
+                size = sys.getsizeof(msg)
+                if args[0].agent_id+'.'+name not in message_size_totals:
+                    message_size_totals[args[0].agent_id+'.'+name] = 0
+                message_size_totals[args[0].agent_id+'.'+name] += size
+
+            return func(*args, **kwargs)
+        return wrapper
+
+    # Decorate the relevant functions
+    for attr_name in functions:
+        if hasattr(cls, attr_name):
+            original_func = getattr(cls, attr_name)
+            if callable(original_func):
+                if attr_name == '__init__':
+                    decorated = get_deep_size(get_graph_size(timed(original_func)))
+                else:
+                    decorated = call_counter(log_message_size(timed(original_func)))
+                setattr(cls, attr_name, decorated)
+
+    return cls
 
 class DistributedAgent:
 
