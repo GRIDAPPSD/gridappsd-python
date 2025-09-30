@@ -70,6 +70,7 @@ class GRIDAPPSD_ENV_ENUM(Enum):
     GRIDAPPSD_ADDRESS = "GRIDAPPSD_ADDRESS"
     GRIDAPPSD_PORT = "GRIDAPPSD_PORT"
     GRIDAPPSD_PASS = "GRIDAPPSD_PASSWORD"
+    GRIDAPPSD_HEARTBEAT = "GRIDAPPSD_HEARTBEAT"
 
 
 class TimeoutError(Exception):
@@ -119,6 +120,8 @@ class GOSS(object):
 
         if not self.__user__ or not self.__pass__:
             raise ValueError("Invalid username/password specified.")
+
+        self._heartbeat = int(os.environ.get(GRIDAPPSD_ENV_ENUM.GRIDAPPSD_HEARTBEAT.value, 10000))
         self._conn = None
         self._ids = set()
         self._topic_set = set()
@@ -306,7 +309,7 @@ class GOSS(object):
                 # send request to token topic
                 tokenTopic = "/topic/pnnl.goss.token.topic"
 
-                tmpConn = Connection([(self.stomp_address, self.stomp_port)])
+                tmpConn = Connection([(self.stomp_address, self.stomp_port)], heartbeats=(self._heartbeat, self._heartbeat))
                 if self._override_thread_fc is not None:
                     tmpConn.transport.override_threading(self._override_thread_fc)
                 tmpConn.connect(self.__user__, self.__pass__, wait=True)
@@ -349,7 +352,7 @@ class GOSS(object):
                     sleep(1)
                     iter += 1
 
-            self._conn = Connection([(self.stomp_address, self.stomp_port)])
+            self._conn = Connection([(self.stomp_address, self.stomp_port)], heartbeats=(self._heartbeat, self._heartbeat))
             if self._override_thread_fc is not None:
                 self._conn.transport.override_threading(self._override_thread_fc)
             try:
@@ -417,3 +420,14 @@ class CallbackRouter(object):
         _log.error("Error in callback router")
         _log.error(header)
         _log.error(message)
+
+    def on_error(self, header, message):
+        _log.error("Error in callback router")
+        _log.error(header)
+        _log.error(message)
+
+    def on_heartbeat_timeout(self):
+        _log.error("Heartbeat timeout")
+        
+    def on_disconnected(self):
+        _log.info("Disconnected")

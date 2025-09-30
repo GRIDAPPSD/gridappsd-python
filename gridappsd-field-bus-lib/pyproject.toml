@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gridappsd-field-bus"
-version = "2025.3.1"
+version = "2025.6.0"
 description = "GridAPPS-D Field Bus Implementation"
 authors = [
     "C. Allwardt <3979063+craig8@users.noreply.github.com>",
@@ -27,7 +27,6 @@ python = ">=3.10,<4.0"
 gridappsd-python = ">=2025.3.1a1"
 cim-graph = ">=0.2.2a4"
 click = "^8.1.8"
-"python-dotenv" = "^1.0.1"
 
 [tool.poetry.scripts]
 # Add things in the form

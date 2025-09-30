@@ -13,6 +13,7 @@ class GridAPPSDMessageBus(FieldMessageBus):
         self._user = definition.connection_args["GRIDAPPSD_USER"]
         self._password = definition.connection_args["GRIDAPPSD_PASSWORD"]
         self._address = definition.connection_args["GRIDAPPSD_ADDRESS"]
+        self._use_auth_token = definition.connection_args.get("GRIDAPPSD_USE_TOKEN_AUTH", False)
 
         self.gridappsd_obj = None
 
@@ -29,7 +30,7 @@ class GridAPPSDMessageBus(FieldMessageBus):
         """
         Connect to the concrete message bus that implements this interface.
         """
-        self.gridappsd_obj = GridAPPSD()
+        self.gridappsd_obj = GridAPPSD(use_auth_token=self._use_auth_token)
 
     def subscribe(self, topic, callback):
         if self.gridappsd_obj is not None:

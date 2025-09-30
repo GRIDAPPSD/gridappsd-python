@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gridappsd-python"
-version = "2025.3.1"
+version = "2025.6.0"
 description = "A GridAPPS-D Python Adapter"
 authors = [
     "C. Allwardt <3979063+craig8@users.noreply.github.com>",
@@ -35,6 +35,8 @@ pytz = "^2022.7"
 dateutils = "^0.6.7"
 stomp-py = "6.0.0"
 requests = "2.28.2"
+dotenv = "^0.9.9"
+loguru = "^0.7.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"
