@@ -1,6 +1,6 @@
 ## Use latest slim Python image. Note that it's built on Debian Stretch.
 # `python-base` sets up all our shared environment variables
-FROM python:3.8.1-slim as python-base
+FROM python:3.13.5-slim as python-base
 
 ARG GRIDAPPSD_PYTHON_VERSION
 
