@@ -145,11 +145,75 @@ time.sleep(5)
 gapps.close()
 ```
 
+## Docker
+
+### Running the GridAPPS-D Platform
+
+The `docker-up` task clones and runs [gridappsd-docker](https://github.com/GRIDAPPSD/gridappsd-docker), which starts the **full GridAPPS-D platform** (including Blazegraph, MySQL, and all services):
+
+```shell
+# Start the full GridAPPS-D platform
+pixi run docker-up
+
+# View logs
+pixi run docker-logs
+
+# Stop the platform
+pixi run docker-down
+```
+
+This is useful for integration testing your applications against a real GridAPPS-D instance.
+
+### Client Application Base Image
+
+We publish a **client base image** (`gridappsd/gridappsd-python`) for building containerized GridAPPS-D applications. This image is NOT the platform itself - it's a Python environment with `gridappsd-python` pre-installed.
+
+**Available tags:**
+
+| Tag | Description |
+|-----|-------------|
+| `latest` | Latest stable release (Python 3.12) |
+| `develop` | Latest development release (Python 3.12) |
+| `<version>` | Specific version (e.g., `2025.4.0`) |
+| `<version>-py310` | Specific version with Python 3.10 |
+| `<version>-py311` | Specific version with Python 3.11 |
+| `<version>-py312` | Specific version with Python 3.12 |
+
+**Example: Building a Client Application**
+
+Create a `Dockerfile` for your application:
+
+```dockerfile
+FROM gridappsd/gridappsd-python:latest
+
+# Install additional dependencies
+COPY requirements.txt /app/
+RUN pip install -r /app/requirements.txt
+
+# Copy your application
+COPY my_app.py /app/
+
+CMD ["python", "/app/my_app.py"]
+```
+
+Build and run alongside the GridAPPS-D platform:
+
+```shell
+# Build your app
+docker build -t my-gridappsd-app .
+
+# Start GridAPPS-D platform (if not already running)
+pixi run docker-up
+
+# Run your app on the same network
+docker run --rm --network gridappsd-docker_default \
+  -e GRIDAPPSD_ADDRESS=gridappsd \
+  my-gridappsd-app
+```
+
+See also: [DOCKER_CONTAINER.md](DOCKER_CONTAINER.md) for more details.
+
 ## Application Developers
-
-### Deployment
-
-Please see [DOCKER_CONTAINER.md](DOCKER_CONTAINER.md) for working within the docker application base container.
 
 ### Local Development
 
