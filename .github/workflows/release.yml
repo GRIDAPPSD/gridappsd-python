@@ -122,16 +122,49 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Build and push Docker image
+      # Build default image (Python 3.12) with latest tag
+      - name: Build and push Docker image (Python 3.12 - default)
         uses: docker/build-push-action@v6
         with:
           context: .
           push: ${{ github.repository_owner == 'GRIDAPPSD' }}
           build-args: |
+            PYTHON_VERSION=3.12
             GRIDAPPSD_PYTHON_VERSION==${{ env.VERSION }}
           tags: |
             ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
+            ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}-py312
             ${{ env.DOCKER_IMAGE }}:latest
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Build Python 3.10 variant
+      - name: Build and push Docker image (Python 3.10)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.repository_owner == 'GRIDAPPSD' }}
+          build-args: |
+            PYTHON_VERSION=3.10
+            GRIDAPPSD_PYTHON_VERSION==${{ env.VERSION }}
+          tags: |
+            ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}-py310
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Build Python 3.11 variant
+      - name: Build and push Docker image (Python 3.11)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.repository_owner == 'GRIDAPPSD' }}
+          build-args: |
+            PYTHON_VERSION=3.11
+            GRIDAPPSD_PYTHON_VERSION==${{ env.VERSION }}
+          tags: |
+            ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}-py311
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
