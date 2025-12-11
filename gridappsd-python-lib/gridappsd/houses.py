@@ -1,20 +1,28 @@
 from collections import namedtuple
 
 house_keys = [
-    'name', 'parent', 'coolingSetpoint', 'coolingSystem', 'floorArea', 'heatingSetpoint',
-    'heatingSystem', 'hvacPowerFactor', 'numberOfStories', 'thermalIntegrity', 'id', 'fdrid'
+    "name",
+    "parent",
+    "coolingSetpoint",
+    "coolingSystem",
+    "floorArea",
+    "heatingSetpoint",
+    "heatingSystem",
+    "hvacPowerFactor",
+    "numberOfStories",
+    "thermalIntegrity",
+    "id",
+    "fdrid",
 ]
-House = namedtuple('House', house_keys)
+House = namedtuple("House", house_keys)
 
 # class House(HouseBase):
 #     def __dict__
 
 
 class Houses:
-
     class __SingltonHouses:
-
-        def __init__(self, gappsd: 'GridAPPSD'):
+        def __init__(self, gappsd: "GridAPPSD"):
             self._gappsd = gappsd
             self._houses = {}
 
@@ -27,7 +35,8 @@ class Houses:
             return self._houses.get(feeder)
 
         def _populate(self, feeder):
-            query = """# list houses - DistHouse
+            query = (
+                """# list houses - DistHouse
 PREFIX r:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX c:  <http://iec.ch/TC57/CIM100#>
 SELECT ?fdrname ?name ?parent ?coolingSetpoint ?coolingSystem ?floorArea ?heatingSetpoint ?heatingSystem ?hvacPowerFactor ?numberOfStories ?thermalIntegrity ?id ?fdrid
@@ -57,17 +66,19 @@ WHERE {
    ?fdr c:IdentifiedObject.name ?fdrname.
    ?econ c:Equipment.EquipmentContainer ?fdr.
 } ORDER BY ?fdrname ?name
-""" % feeder
+"""
+                % feeder
+            )
             response = self._gappsd.query_data(query)
             houses = {}
-            for rec in response['data']['results']['bindings']:
+            for rec in response["data"]["results"]["bindings"]:
                 create_order = {}
                 name = None
                 for d in house_keys:
-                    if d == 'name':
-                        name = rec[d]['value']
+                    if d == "name":
+                        name = rec[d]["value"]
                     try:
-                        create_order[d] = rec[d]['value']
+                        create_order[d] = rec[d]["value"]
                     except KeyError:
                         create_order[d] = None
 

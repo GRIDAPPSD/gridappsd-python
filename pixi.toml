@@ -148,16 +148,7 @@ release = { depends-on = ["clean", "check", "test-all", "build"], description = 
 # ══════════════════════════════════════════════════════════════════════════════
 # Tool Configuration
 # ══════════════════════════════════════════════════════════════════════════════
-
-[tool.ruff]
-line-length = 99
-target-version = "py310"
-
-[tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "C4"]
-
-[tool.ruff.lint.isort]
-known-first-party = ["gridappsd", "gridappsd_field_bus"]
+# Note: Ruff configuration is in ruff.toml (not read from pixi.toml)
 
 [tool.mypy]
 python_version = "3.10"

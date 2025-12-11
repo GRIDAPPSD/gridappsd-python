@@ -44,43 +44,46 @@ import time
 
 
 class DifferenceBuilder(object):
-    """ Automates the building of forward and reverse cim differences
-
-    """
+    """Automates the building of forward and reverse cim differences"""
 
     def __init__(self, simulation_id: str | int | None = None):
-
         self._simulation_id = simulation_id
         self._forward: list[dict] = []
         self._reverse: list[dict] = []
 
     def add_difference(self, object_id, attribute, forward_value, reverse_value):
-        """ Add forward and reverse unit for an object attribute.
+        """Add forward and reverse unit for an object attribute.
 
-         All of the parameters must be serializable for sending the GOSS message bus.
-         """
+        All of the parameters must be serializable for sending the GOSS message bus.
+        """
         forward = dict(object=object_id, attribute=attribute, value=forward_value)
         reverse = dict(object=object_id, attribute=attribute, value=reverse_value)
         self._forward.append(forward)
         self._reverse.append(reverse)
 
     def clear(self):
-        """ Clear the forward and reverse differences """
+        """Clear the forward and reverse differences"""
         self._forward = []
         self._reverse = []
 
     def get_message(self, epoch=None):
-        """ Get the message to send to the GOSS message bus
+        """Get the message to send to the GOSS message bus
 
         :param epoch: The epoch time to use for the message timestamp.  If None, the current time (GMT) is used.
         """
         if epoch is None:
             epoch = calendar.timegm(time.gmtime())
-        msg = dict(command="update",
-                   input=dict(message=dict(timestamp=epoch,
-                                           difference_mrid=str(uuid4()),
-                                           reverse_differences=self._reverse,
-                                           forward_differences=self._forward)))
+        msg = dict(
+            command="update",
+            input=dict(
+                message=dict(
+                    timestamp=epoch,
+                    difference_mrid=str(uuid4()),
+                    reverse_differences=self._reverse,
+                    forward_differences=self._forward,
+                )
+            ),
+        )
         if self._simulation_id is not None:
-            msg['input']['simulation_id'] = self._simulation_id
+            msg["input"]["simulation_id"] = self._simulation_id
         return msg.copy()

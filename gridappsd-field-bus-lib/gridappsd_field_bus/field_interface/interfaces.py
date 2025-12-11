@@ -8,7 +8,7 @@ import gridappsd.topics as t
 import logging
 from os import PathLike
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, Optional, Union, Any
 
 import yaml
 
@@ -37,7 +37,6 @@ class ConnectionType(Enum):
 
 
 class ProtocolTransformer(ABC):
-
     @staticmethod
     @abstractmethod
     def to_cim(data) -> str:
@@ -70,6 +69,7 @@ class MessageBusDefinition:
     A `MessageBusDefinition` class is used to define how to connect to the
     message bus.
     """
+
     """
     A global unique string representing a specific message bus.
     """
@@ -112,13 +112,12 @@ class MessageBusDefinition:
         """
         Load a single message bus definition from a YAML file.
         """
-        config = yaml.load(open(config_file), Loader=yaml.FullLoader)['connections']
+        config = yaml.load(open(config_file), Loader=yaml.FullLoader)["connections"]
 
         return MessageBusDefinition.load_from_json(config)
 
 
 class FieldMessageBus:
-
     def __init__(self, config: MessageBusDefinition):
         self._devices = dict()
         self._is_ot_bus = config.is_ot_bus
@@ -203,18 +202,16 @@ class MessageBusFactory(ABC):
         Create a message bus based upon the configuration passed.
         """
         try:
-            module_name, class_name = config.connection_type.value.rsplit('.', 1)
+            module_name, class_name = config.connection_type.value.rsplit(".", 1)
         except AttributeError:
-            module_name, class_name = config.connection_type.rsplit('.', 1)
+            module_name, class_name = config.connection_type.rsplit(".", 1)
 
         module = importlib.import_module(module_name)
         bus_class = getattr(module, class_name)
         return bus_class(config)
 
 
-
 class MessageBusDefinitions:
-
     def __init__(
         self,
         config: Optional[Union[dict, str]] = None,
@@ -267,7 +264,6 @@ class MessageBusDefinitions:
 
 
 class DeviceFieldInterface:
-
     def __init__(
         self,
         id: str,
