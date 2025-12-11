@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v0.61.0
+          cache: true
+
+      - name: Run linter
+        run: pixi run lint
+
+      - name: Check formatting
+        run: pixi run format-check
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v0.61.0
+          cache: true
+
+      - name: Run type checker
+        run: pixi run typecheck
+
+  test:
+    name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["py310", "py311", "py312", "py313", "py314"]
+        include:
+          # Also test on macOS and Windows with a subset of Python versions
+          - os: macos-latest
+            python-version: "py312"
+          - os: windows-latest
+            python-version: "py312"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v0.61.0
+          cache: true
+          environments: ${{ matrix.python-version }}
+
+      - name: Run tests
+        run: pixi run -e ${{ matrix.python-version }} test
+
+      - name: Run field bus tests
+        run: pixi run -e ${{ matrix.python-version }} test-field-bus
+
+  test-coverage:
+    name: Test with Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v0.61.0
+          cache: true
+
+      - name: Run tests with coverage
+        run: pixi run test-cov
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  build:
+    name: Build Packages
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v0.61.0
+          cache: true
+
+      - name: Build packages
+        run: pixi run build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: dist/
+          retention-days: 30

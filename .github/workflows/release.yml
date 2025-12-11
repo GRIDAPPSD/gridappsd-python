@@ -1,147 +1,137 @@
-name: Deploy Release Artifacts
+name: Release
 
 on:
+  # Trigger on stable version tags only (no prerelease suffixes)
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'  # Matches v2025.4.0 but not v2025.4.0a1
+  # Also allow manual trigger
   workflow_dispatch:
     inputs:
-      previous-version:
-        description: "Previous version number to use for release notes generation."
+      version:
+        description: 'Version to release (without v prefix, e.g., 2025.4.0)'
         required: true
-        type: bool
-      release-version:
-        description: "Version number to use for this release, do not start with v."
-        required: true
-        type: bool
-      publish-to:
-        description: "Publish to pypi or pypi-test"
-        required: true
-        type: choice
-        default: "pypi"
-        options:
-          - "pypi"
-          - "pypi-test"
-
-defaults:
-  run:
-    shell: bash
+        type: string
 
 env:
-  LANG: en_US.utf-8
-  LC_ALL: en_US.utf-8
-  PYTHON_VERSION: "3.10"
+  DOCKER_IMAGE: gridappsd/gridappsd-python
 
 jobs:
-  deploy-release:
-    runs-on: ubuntu-22.04
+  release:
+    runs-on: ubuntu-latest
     permissions:
-      contents: write # To push a branch
-      pull-requests: write # To create a PR from that branch
+      contents: write
+      packages: write
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-
-      #----------------------------------------------
-      #       check-out repo and set-up python
-      #----------------------------------------------
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # ref: develop
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        id: setup-python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      #----------------------------------------------
-      #  -----  install & configure poetry  -----
-      #----------------------------------------------
-      - name: Install Poetry
-        uses: snok/install-poetry@v1.3.3
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-
-      #----------------------------------------------
-      # install your root project, if required
-      #----------------------------------------------
-      - name: Install library
+      - name: Determine version
+        id: version
         run: |
-          ./scripts/poetry_install.sh
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+            TAG="v$VERSION"
+            echo "NEEDS_VERSION_UPDATE=true" >> $GITHUB_ENV
+          else
+            TAG="${{ github.ref_name }}"
+            VERSION="${TAG#v}"
+            echo "NEEDS_VERSION_UPDATE=false" >> $GITHUB_ENV
+          fi
 
-      #----------------------------------------------
-      # Update to new release version
-      #----------------------------------------------
-      - name: Update Version
-        run: |
-          ./scripts/run_on_each.sh poetry version ${{ inputs.release-version }}
+          # Validate this is a stable version (no prerelease suffix)
+          if [[ "$VERSION" =~ (a|b|rc|dev|alpha|beta) ]]; then
+            echo "Error: This workflow is for stable releases only. Use 'Development Release' for prereleases."
+            exit 1
+          fi
 
-          NEW_TAG=v$(poetry version --short)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "Releasing stable version: $VERSION"
 
-          # Finally because we want to be able to use the variable in later
-          # steps we set a NEW_TAG environmental variable
-          echo "NEW_TAG=$(echo ${NEW_TAG})" >> $GITHUB_ENV
-
-      - name: Create build artifacts
-        run: |
-          set -x
-          set -u
-          set -e
-
-          # set the right version in pyproject.toml before build and publish
-          ./scripts/poetry_build.sh
-
-      - name: Push artifacts to github
-        uses: ncipollo/release-action@v1
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
         with:
-          artifacts: "dist/*.gz,dist/*.whl"
+          pixi-version: v0.61.0
+          cache: true
+
+      - name: Update version (manual trigger only)
+        if: env.NEEDS_VERSION_UPDATE == 'true'
+        run: |
+          # Update version in pixi.toml
+          sed -i "s/^version = \".*\"/version = \"${{ env.VERSION }}\"/" pixi.toml
+
+          # Update version in sub-project pyproject.toml files
+          sed -i "s/^version = \".*\"/version = \"${{ env.VERSION }}\"/" gridappsd-python-lib/pyproject.toml
+          sed -i "s/^version = \".*\"/version = \"${{ env.VERSION }}\"/" gridappsd-field-bus-lib/pyproject.toml
+
+      - name: Update lock file
+        if: env.NEEDS_VERSION_UPDATE == 'true'
+        run: pixi install
+
+      - name: Run quality checks
+        run: pixi run check
+
+      - name: Run tests
+        run: pixi run test-all
+
+      - name: Build packages
+        run: pixi run build
+
+      - name: Commit and tag (manual trigger only)
+        if: env.NEEDS_VERSION_UPDATE == 'true'
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add pixi.toml pixi.lock gridappsd-python-lib/pyproject.toml gridappsd-field-bus-lib/pyproject.toml
+          git commit -m "Release version ${{ env.VERSION }}"
+          git tag ${{ env.TAG }}
+          git push origin HEAD:${{ github.ref_name }}
+          git push origin ${{ env.TAG }}
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1.15.0
+        with:
+          artifacts: "dist/*.tar.gz,dist/*.whl"
           artifactErrorsFailBuild: true
           generateReleaseNotes: true
-          commit: ${{ github.ref }}
+          prerelease: false
           makeLatest: true
-          tag: ${{ env.NEW_TAG }}
+          tag: ${{ env.TAG }}
+          name: "Release ${{ env.VERSION }}"
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish to pypi
-        id: publish-to-pypi
-        if: github.repository_owner == 'GRIDAPPSD' || github.repository_owner == 'PNNL-CIM-Tools'
-        run: |
-          set -x
-          set -u
-          set -e
+      - name: Publish to PyPI
+        if: github.repository_owner == 'GRIDAPPSD'
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: pixi run publish
 
-          # This is needed, because the poetry publish will fail at the top level of the project
-          # so ./scripts/run_on_each.sh fails for that.
-          echo "POETRY_PUBLISH_OPTIONS=''" >> $GITHUB_ENV
-          cd gridappsd-python-lib
-          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
-          poetry publish
+      # Docker build and push
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-          cd ../gridappsd-field-bus-lib
-          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
-          poetry publish
+      - name: Login to Docker Hub
+        if: github.repository_owner == 'GRIDAPPSD'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Publish to pypi test
-        id: publish-to-pypi-test
-        if: inputs.publish-to == 'pypi-test'
-        run: |
-          set -x
-          set -u
-          set -e
-
-          ./scripts/run_on_each.sh poetry config repositories.testpypi https://test.pypi.org/legacy/
-
-          # This is needed, because the poetry publish will fail at the top level of the project
-          # so ./scripts/run_on_each.sh fails for that.
-          echo "POETRY_PUBLISH_OPTIONS='--repository testpypi'" >> $GITHUB_ENV
-          cd gridappsd-python-lib
-          poetry config pypi-token.testpypi ${{ secrets.PYPI_TEST_TOKEN }}
-          poetry publish
-
-          cd ../gridappsd-field-bus-lib
-          poetry config pypi-token.testpypi ${{ secrets.PYPI_TEST_TOKEN }}
-          poetry publish
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.repository_owner == 'GRIDAPPSD' }}
+          build-args: |
+            GRIDAPPSD_PYTHON_VERSION==${{ env.VERSION }}
+          tags: |
+            ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
+            ${{ env.DOCKER_IMAGE }}:latest
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
