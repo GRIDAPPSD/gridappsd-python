@@ -336,7 +336,6 @@ class Simulation:
         :param message:
         :return:
         """
-        message["simulation_id"]
         timestamp = message["message"]["timestamp"]
         measurements = message["message"]["measurements"]
         for p in self.__filterable_measurement_callback_set:
