@@ -166,12 +166,13 @@ git --version
 
 ### SSL certificate errors
 
-If you encounter SSL errors when installing from GitHub:
+If you encounter SSL errors when installing from GitHub, do **not** bypass certificate verification, as this can expose you to security risks.
 
-```shell
-pip install --trusted-host github.com gridappsd-python
-```
+Instead, try the following steps:
 
+- Ensure your system's CA certificates are up to date. On Ubuntu/Debian, run:  
+  ```shell
+  sudo apt-get update && sudo apt-get install --reinstall ca-certificates
 ### Subdirectory not found
 
 When using git dependencies with subdirectories, ensure the syntax is correct:
