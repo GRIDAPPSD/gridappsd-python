@@ -5,7 +5,6 @@ from typing import Any
 
 
 class GridAPPSDMessageBus(FieldMessageBus):
-
     def __init__(self, definition: MessageBusDefinition):
         super().__init__(definition)
         self._id = definition.id
