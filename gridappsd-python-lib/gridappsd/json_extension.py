@@ -46,7 +46,7 @@ def dump(
     default=None,
     sort_keys=False,
     **kw,
-):
+) -> None:
     _json.dump(
         data,
         fo,
