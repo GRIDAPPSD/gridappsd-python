@@ -5,20 +5,23 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from gridappsd.gridappsd import GridAPPSD
 
-House = namedtuple("House", [
-    "name",
-    "parent",
-    "coolingSetpoint",
-    "coolingSystem",
-    "floorArea",
-    "heatingSetpoint",
-    "heatingSystem",
-    "hvacPowerFactor",
-    "numberOfStories",
-    "thermalIntegrity",
-    "id",
-    "fdrid",
-])
+House = namedtuple(
+    "House",
+    [
+        "name",
+        "parent",
+        "coolingSetpoint",
+        "coolingSystem",
+        "floorArea",
+        "heatingSetpoint",
+        "heatingSystem",
+        "hvacPowerFactor",
+        "numberOfStories",
+        "thermalIntegrity",
+        "id",
+        "fdrid",
+    ],
+)
 
 # class House(HouseBase):
 #     def __dict__
