@@ -1,8 +1,9 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
 
 import time
 import logging
-from typing import Dict, List, Union
+from typing import Any, Callable
 
 import gridappsd.topics as t
 from gridappsd import GridAPPSD
@@ -70,7 +71,7 @@ class Application(ConfigBase):
 
 @dataclass
 class ApplicationConfig(ConfigBase):
-    applications: List[Application] = field(default_factory=list)
+    applications: list[Application] = field(default_factory=list)
 
 
 # __default_application_config__ = ApplicationConfig()
@@ -78,7 +79,7 @@ class ApplicationConfig(ConfigBase):
 
 @dataclass
 class TestConfig(ConfigBase):
-    events: List[Dict] = field(default_factory=list)
+    events: list[dict[str, Any]] = field(default_factory=list)
     appId: str = field(default="")
 
 
@@ -93,16 +94,16 @@ class ServiceConfig(ConfigBase):
 @dataclass
 class PowerSystemConfig(ConfigBase):
     Line_name: str
-    GeographicalRegion_name: str = field(default=None)
-    SubGeographicalRegion_name: str = field(default=None)
+    GeographicalRegion_name: str | None = field(default=None)
+    SubGeographicalRegion_name: str | None = field(default=None)
 
 
 @dataclass
 class SimulationConfig(ConfigBase):
     power_system_config: PowerSystemConfig
-    application_configs: List[ApplicationConfig] = field(default_factory=list)
+    application_configs: list[ApplicationConfig] = field(default_factory=list)
     simulation_config: SimulationArgs = field(default_factory=SimulationArgs)
-    service_configs: List[ServiceConfig] = field(default_factory=list)
+    service_configs: list[ServiceConfig] = field(default_factory=list)
     application_config: ApplicationConfig = field(default_factory=ApplicationConfig)
     test_config: TestConfig = field(default_factory=TestConfig)
 
@@ -119,7 +120,7 @@ class Simulation:
     add_onmeasurement_callback, add_oncomplete_callback or add_onstart_callback method respectively.
     """
 
-    def __init__(self, gapps: GridAPPSD, run_config: Union[Dict, SimulationConfig]):
+    def __init__(self, gapps: GridAPPSD, run_config: dict[str, Any] | SimulationConfig):
         assert isinstance(gapps, GridAPPSD), "Must be an instance of GridAPPSD"
         if isinstance(run_config, SimulationConfig):
             self._run_config = run_config.asdict()
@@ -148,11 +149,11 @@ class Simulation:
         self._running_or_paused = False
 
         # Will be populated when the simulation is first started.
-        self.simulation_id = None
+        self.simulation_id: str | None = None
 
-        self.__on_start = set()
-        self.__on_next_timestep_callbacks = set()
-        self.__on_simulation_complete_callbacks = set()
+        self.__on_start: set[Callable[..., Any]] = set()
+        self.__on_next_timestep_callbacks: set[Callable[..., Any]] = set()
+        self.__on_simulation_complete_callbacks: set[Callable[..., Any]] = set()
 
         self._measurement_count = 0
         self._log_count = 0
@@ -164,9 +165,9 @@ class Simulation:
         #     float(self._run_config.simulation_config.duration))
 
         # Devices that the user wants measurements from
-        self._device_measurement_filter = {}
+        self._device_measurement_filter: dict[str, Any] = {}
 
-        self.__filterable_measurement_callback_set = set()
+        self.__filterable_measurement_callback_set: set[Callable[..., Any]] = set()
 
     def start_simulation(self, timeout=30):
         """Start the configured simulation by calling the REQUEST_SIMULATION endpoint."""

@@ -8,7 +8,7 @@ import gridappsd.topics as t
 import logging
 from os import PathLike
 from pathlib import Path
-from typing import Dict, Optional, Union, Any
+from typing import Any, Iterator
 
 import yaml
 
@@ -52,7 +52,7 @@ class ProtocolTransformer(ABC):
 
     @staticmethod
     @abstractmethod
-    def to_protocol(cim_data: str, from_format: Optional[str] = None):
+    def to_protocol(cim_data: str, from_format: str | None = None):
         """
         Change passed cim data into a protocol complient data stream
         and return it.
@@ -81,7 +81,7 @@ class MessageBusDefinition:
     """
     connection_args allows dynamic key/value paired strings to be added to allow connections.
     """
-    connection_args: Dict[str, str | int]
+    connection_args: dict[str, str | int | bool | None]
 
     """
     Determines whether or not this message bus has the role of ot bus.
@@ -98,7 +98,7 @@ class MessageBusDefinition:
         return True
 
     @staticmethod
-    def load_from_json(json_obj: dict[str, str | dict]) -> MessageBusDefinition:
+    def load_from_json(json_obj: dict[str, Any]) -> MessageBusDefinition:
         MessageBusDefinition.__validate_loader__(json_obj)
 
         mb_def = MessageBusDefinition(**json_obj)
@@ -119,7 +119,7 @@ class MessageBusDefinition:
 
 class FieldMessageBus:
     def __init__(self, config: MessageBusDefinition):
-        self._devices = dict()
+        self._devices: dict[str, DeviceFieldInterface] = {}
         self._is_ot_bus = config.is_ot_bus
         self._id = config.id
 
@@ -201,23 +201,25 @@ class MessageBusFactory(ABC):
         """
         Create a message bus based upon the configuration passed.
         """
-        try:
-            module_name, class_name = config.connection_type.value.rsplit(".", 1)
-        except AttributeError:
-            module_name, class_name = config.connection_type.rsplit(".", 1)
+        connection_type = config.connection_type
+        if isinstance(connection_type, ConnectionType):
+            type_value = connection_type.value
+        else:
+            type_value = str(connection_type)
 
+        module_name, class_name = type_value.rsplit(".", 1)
         module = importlib.import_module(module_name)
         bus_class = getattr(module, class_name)
-        return bus_class(config)
+        return bus_class(config)  # type: ignore[no-any-return]
 
 
 class MessageBusDefinitions:
     def __init__(
         self,
-        config: Optional[Union[dict, str]] = None,
-        yamlfile: Optional[Union[str, PathLike]] = None,
+        config: dict[str, Any] | str | None = None,
+        yamlfile: str | PathLike[str] | None = None,
     ):
-        self._buses = dict()
+        self._buses: dict[str, MessageBusDefinition] = {}
 
         if config is None and yamlfile is None:
             raise ValueError("Must have either config specified")
@@ -225,42 +227,40 @@ class MessageBusDefinitions:
         if config and yamlfile:
             raise ValueError("Must have at least one of config or yamlfile specified.")
 
+        parsed_config: dict[str, Any]
         if yamlfile:
             if not Path(yamlfile).exists():
                 raise ValueError(f"Invalid path for yamlfile {yamlfile}")
             with open(yamlfile) as fp:
-                config = yaml.safe_load(fp)
+                parsed_config = yaml.safe_load(fp)
         elif isinstance(config, str):
-            config = yaml.load(config)
+            parsed_config = yaml.safe_load(config)
+        else:
+            parsed_config = config  # type: ignore[assignment]
 
-        if config.get("connections"):
-            for con in config.get("connections"):
+        if parsed_config.get("connections"):
+            for con in parsed_config.get("connections", []):
                 obj = MessageBusDefinition.load(con)
                 if self._buses.get(obj.id):
                     raise ValueError(f"Duplicate messagebus id specified for {obj.id}")
                 self._buses[obj.id] = obj
         else:
-            obj = MessageBusDefinition.load(config)
+            obj = MessageBusDefinition.load(parsed_config)
             self._buses[obj.id] = obj
 
-        self._iterator = None
+        self._iterator: Iterator[str] | None = None
 
-    def get(self, id: str) -> Union[MessageBusDefinition, None]:
+    def get(self, id: str) -> MessageBusDefinition | None:
         return self._buses.get(id)
 
-    def __iter__(self):
-        if self._iterator is None:
-            self._iterator = iter(self._buses)
+    def __iter__(self) -> Iterator[str]:
+        self._iterator = iter(self._buses)
         return self._iterator
 
-    def __next__(self) -> MessageBusDefinition:
-        try:
-            definition = next(self._iterator)
-        except StopIteration:
-            self._iterator = None
-            return None
-        else:
-            return definition
+    def __next__(self) -> str:
+        if self._iterator is None:
+            raise StopIteration
+        return next(self._iterator)
 
 
 class DeviceFieldInterface:

@@ -1,6 +1,11 @@
+from __future__ import annotations
 from collections import namedtuple
+from typing import TYPE_CHECKING, Any
 
-house_keys = [
+if TYPE_CHECKING:
+    from gridappsd.gridappsd import GridAPPSD
+
+House = namedtuple("House", [
     "name",
     "parent",
     "coolingSetpoint",
@@ -13,8 +18,7 @@ house_keys = [
     "thermalIntegrity",
     "id",
     "fdrid",
-]
-House = namedtuple("House", house_keys)
+])
 
 # class House(HouseBase):
 #     def __dict__
@@ -22,9 +26,9 @@ House = namedtuple("House", house_keys)
 
 class Houses:
     class __SingltonHouses:
-        def __init__(self, gappsd: "GridAPPSD"):
+        def __init__(self, gappsd: GridAPPSD):
             self._gappsd = gappsd
-            self._houses = {}
+            self._houses: dict[str, dict[str, Any]] = {}
 
         def __str__(self):
             return repr(self) + self._gappsd
@@ -74,7 +78,7 @@ WHERE {
             for rec in response["data"]["results"]["bindings"]:
                 create_order = {}
                 name = None
-                for d in house_keys:
+                for d in House._fields:
                     if d == "name":
                         name = rec[d]["value"]
                     try:

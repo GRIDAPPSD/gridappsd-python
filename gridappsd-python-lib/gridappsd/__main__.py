@@ -48,6 +48,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 
 from gridappsd import GridAPPSD
+from gridappsd.simulation import Simulation
 
 assert sys.version_info >= (3, 10), "Minimum version is python 3.10"
 
@@ -92,8 +93,6 @@ if __name__ == "__main__":
         gappsd = GridAPPSD()
         run_args = yaml.safe_load(opts.run_simulation)
 
-        # if wanting to use the above next_timestep function use this
-        # instead of the one below.
-        # simulation = gappsd.run_simulation(run_args, next_timestep)
-        simulation = gappsd.run_simulation(run_args)
-        simulation.simulation_main_loop()
+        # Create and start the simulation
+        simulation = Simulation(gappsd, run_args)
+        simulation.start_simulation()

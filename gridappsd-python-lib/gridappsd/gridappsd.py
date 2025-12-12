@@ -81,7 +81,7 @@ class GridAPPSD(GOSS):
             raise ValueError("If stomp_address is specified the so should stomp_port")
 
         super(GridAPPSD, self).__init__(stomp_address=address[0], stomp_port=address[1], **kwargs)
-        self._houses = Houses(self)
+        self._houses: Houses = Houses(self)
         self._simulation_log_topic = None
         self._simulation_id = None
         # Transfer simulation_id from environment if its not passed
