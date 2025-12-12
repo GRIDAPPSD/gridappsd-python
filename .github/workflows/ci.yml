@@ -102,10 +102,3 @@ jobs:
 
       - name: Build packages
         run: pixi run build
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-${{ github.sha }}
-          path: dist/
-          retention-days: 30
