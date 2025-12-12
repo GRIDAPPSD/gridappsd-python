@@ -32,6 +32,10 @@ formatter = logging.Formatter("[COMPUTE_REQ] %(asctime)s - %(message)s")
 file_handler.setFormatter(formatter)
 decorator_logger.addHandler(file_handler)
 
+# Tracking dictionaries for compute_req decorator
+function_call_counts: Dict[str, int] = {}
+message_size_totals: Dict[str, int] = {}
+
 
 def set_cim_profile(cim_profile: str, iec61970_301: int):
     global CIM_PROFILE
