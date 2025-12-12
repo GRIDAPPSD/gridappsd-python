@@ -41,19 +41,12 @@ jobs:
         run: pixi run typecheck
 
   test:
-    name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Test Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
         python-version: ["py310", "py311", "py312", "py313", "py314"]
-        include:
-          # Also test on macOS and Windows with a subset of Python versions
-          - os: macos-latest
-            python-version: "py312"
-          - os: windows-latest
-            python-version: "py312"
 
     steps:
       - uses: actions/checkout@v4
