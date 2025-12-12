@@ -51,7 +51,7 @@ def start_forwarder(username, password, connection_url):
     # Use command-line arguments
     click.echo(f"Using command line arguments: {username}, {password}, {connection_url}")
 
-    FieldProxyForwarder(username, password, connection_url)
+    FieldProxyForwarder(username, password, connection_url, None)
 
     time.sleep(0.1)
 
