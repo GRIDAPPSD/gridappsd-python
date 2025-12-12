@@ -60,7 +60,7 @@ class LocalContext:
 
         """
         request = {"request_type": "get_agents"}
-        return downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request)
+        return downstream_message_bus.get_response(t.context_request_queue(downstream_message_bus.id), request, timeout=5)
 
     @classmethod
     def send_control_command(cls, downstream_message_bus: FieldMessageBus, difference_builder: DifferenceBuilder):

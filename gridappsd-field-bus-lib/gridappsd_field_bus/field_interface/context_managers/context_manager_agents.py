@@ -1,6 +1,7 @@
+from __future__ import annotations
 import logging
 import time
-from typing import Dict
+from typing import Any
 
 import gridappsd.topics as t
 from gridappsd import GridAPPSD
@@ -20,9 +21,9 @@ class SubstationAreaContextManager(SubstationAgent):
         self,
         upstream_message_bus_def: MessageBusDefinition,
         downstream_message_bus_def: MessageBusDefinition,
-        agent_config: Dict,
-        substation_dict: Dict = None,
-        simulation_id: str = None,
+        agent_config: dict[str, Any],
+        substation_dict: dict[str, Any] | None = None,
+        simulation_id: str | None = None,
     ):
         self.ot_connection = GridAPPSD()
         if substation_dict is None:
@@ -43,14 +44,14 @@ class SubstationAreaContextManager(SubstationAgent):
         # Override agent_id to a static value
         self.agent_id = downstream_message_bus_def.id + ".context_manager"
 
-        self.context = {"data": substation_dict}
+        self.context: dict[str, Any] = {"data": substation_dict}
 
-        self.registered_agents = {}
+        self.registered_agents: dict[str, Any] = {}
         self.registered_agents[self.agent_id] = self.get_registration_details()
 
-        self.neighbouring_agents = {}
-        self.upstream_agents = {}
-        self.downstream_agents = {}
+        self.neighbouring_agents: dict[str, Any] = {}
+        self.upstream_agents: dict[str, Any] = {}
+        self.downstream_agents: dict[str, Any] = {}
         self.ot_connection.get_logger().info("Substation Area Context Manager Created")
 
 
@@ -59,9 +60,9 @@ class FeederAreaContextManager(FeederAgent):
         self,
         upstream_message_bus_def: MessageBusDefinition,
         downstream_message_bus_def: MessageBusDefinition,
-        agent_config: Dict,
-        feeder_dict: Dict = None,
-        simulation_id: str = None,
+        agent_config: dict[str, Any],
+        feeder_dict: dict[str, Any] | None = None,
+        simulation_id: str | None = None,
     ):
         self.ot_connection = GridAPPSD()
         if feeder_dict is None:
@@ -80,17 +81,17 @@ class FeederAreaContextManager(FeederAgent):
         # Override agent_id to a static value
         self.agent_id = downstream_message_bus_def.id + ".context_manager"
 
-        self.context = {"data": feeder_dict}
+        self.context: dict[str, Any] = {"data": feeder_dict}
 
-        self.registered_agents = {}
+        self.registered_agents: dict[str, Any] = {}
         self.registered_agents[self.agent_id] = self.get_registration_details()
 
-        self.neighbouring_agents = {}
-        self.upstream_agents = {}
-        self.downstream_agents = {}
+        self.neighbouring_agents: dict[str, Any] = {}
+        self.upstream_agents: dict[str, Any] = {}
+        self.downstream_agents: dict[str, Any] = {}
         self.ot_connection.get_logger().info("Feeder Area Context Manager Created")
 
-    def on_request(self, message_bus, headers: Dict, message):
+    def on_request(self, message_bus, headers: dict[str, Any], message):
         _log.debug(f"Received request: {message}")
 
         if message["request_type"] == "get_context":
@@ -122,9 +123,9 @@ class SwitchAreaContextManager(SwitchAreaAgent):
         self,
         upstream_message_bus_def: MessageBusDefinition,
         downstream_message_bus_def: MessageBusDefinition,
-        agent_config: Dict,
-        switch_area_dict: Dict = None,
-        simulation_id: str = None,
+        agent_config: dict[str, Any],
+        switch_area_dict: dict[str, Any] | None = None,
+        simulation_id: str | None = None,
     ):
         self.ot_connection = GridAPPSD()
         if switch_area_dict is None:
@@ -138,13 +139,13 @@ class SwitchAreaContextManager(SwitchAreaAgent):
         # Override agent_id to a static value
         self.agent_id = downstream_message_bus_def.id + ".context_manager"
 
-        self.context = {"data": switch_area_dict}
+        self.context: dict[str, Any] = {"data": switch_area_dict}
 
-        self.registered_agents = {}
+        self.registered_agents: dict[str, Any] = {}
         self.registered_agents[self.agent_id] = self.get_registration_details()
         self.ot_connection.get_logger().info("Switch Area " + self.agent_id + " Context Manager Created")
 
-    def on_request(self, message_bus, headers: Dict, message):
+    def on_request(self, message_bus, headers: dict[str, Any], message):
         _log.debug(f"Received request: {message}")
 
         if message["request_type"] == "get_context":
@@ -179,9 +180,9 @@ class SecondaryAreaContextManager(SecondaryAreaAgent):
         self,
         upstream_message_bus_def: MessageBusDefinition,
         downstream_message_bus_def: MessageBusDefinition,
-        agent_config: Dict,
-        secondary_area_dict: Dict = None,
-        simulation_id: str = None,
+        agent_config: dict[str, Any],
+        secondary_area_dict: dict[str, Any] | None = None,
+        simulation_id: str | None = None,
     ):
         self.ot_connection = GridAPPSD()
         if secondary_area_dict is None:
@@ -195,13 +196,13 @@ class SecondaryAreaContextManager(SecondaryAreaAgent):
         # Override agent_id to a static value
         self.agent_id = downstream_message_bus_def.id + ".context_manager"
 
-        self.context = {"data": secondary_area_dict}
+        self.context: dict[str, Any] = {"data": secondary_area_dict}
 
-        self.registered_agents = {}
+        self.registered_agents: dict[str, Any] = {}
         self.registered_agents[self.agent_id] = self.get_registration_details()
         self.ot_connection.get_logger().info("Secondary Area " + self.agent_id + " Context Manager Created")
 
-    def on_request(self, message_bus, headers: Dict, message):
+    def on_request(self, message_bus, headers: dict[str, Any], message):
         _log.debug(f"Received request: {message}")
         _log.debug(f"Received request: {headers}")
 

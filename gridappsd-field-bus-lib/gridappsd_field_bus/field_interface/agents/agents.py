@@ -1,9 +1,10 @@
+from __future__ import annotations
 import dataclasses
 import importlib
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict
+from typing import Any
 
 import time
 from functools import wraps
@@ -33,8 +34,8 @@ file_handler.setFormatter(formatter)
 decorator_logger.addHandler(file_handler)
 
 # Tracking dictionaries for compute_req decorator
-function_call_counts: Dict[str, int] = {}
-message_size_totals: Dict[str, int] = {}
+function_call_counts: dict[str, int] = {}
+message_size_totals: dict[str, int] = {}
 
 
 def set_cim_profile(cim_profile: str, iec61970_301: int):
@@ -51,8 +52,8 @@ class AgentRegistrationDetails:
     agent_id: str
     app_id: str
     description: str
-    upstream_message_bus_id: FieldMessageBus.id
-    downstream_message_bus_id: FieldMessageBus.id
+    upstream_message_bus_id: str
+    downstream_message_bus_id: str
 
 
 @atexit.register
@@ -230,10 +231,10 @@ class DistributedAgent:
         buses and gets context based on feeder id and area id.
         """
         _log.debug(f"Creating DistributedAgent: {self.__class__.__name__}")
-        self.upstream_message_bus = None
-        self.downstream_message_bus = None
+        self.upstream_message_bus: FieldMessageBus | None = None
+        self.downstream_message_bus: FieldMessageBus | None = None
         self.simulation_id = simulation_id
-        self.context = None
+        self.context: dict[str, Any] | None = None
 
         self.connection = GridappsdConnection()
         self.connection.cim_profile = cim_profile
@@ -340,25 +341,25 @@ class DistributedAgent:
             t.field_agent_request_queue(self.upstream_message_bus.id, self.agent_id), self.on_request_from_uptream
         )
 
-    def on_measurement(self, headers: Dict, message) -> None:
+    def on_measurement(self, headers: dict[str, Any], message) -> None:
         raise NotImplementedError(f"{self.__class__.__name__} must be overriden in child class")
 
     def on_simulation_output(self, headers, message):
         self.on_measurement(headers=headers, message=message)
 
-    def on_upstream_message(self, headers: Dict, message) -> None:
+    def on_upstream_message(self, headers: dict[str, Any], message) -> None:
         raise NotImplementedError(f"{self.__class__.__name__} must be overriden in child class")
 
-    def on_downstream_message(self, headers: Dict, message) -> None:
+    def on_downstream_message(self, headers: dict[str, Any], message) -> None:
         raise NotImplementedError(f"{self.__class__.__name__} must be overriden in child class")
 
-    def on_request_from_uptream(self, headers: Dict, message):
+    def on_request_from_uptream(self, headers: dict[str, Any], message):
         self.on_request(self.upstream_message_bus, headers, message)
 
-    def on_request_from_downstream(self, headers: Dict, message):
+    def on_request_from_downstream(self, headers: dict[str, Any], message):
         self.on_request(self.downstream_message_bus, headers, message)
 
-    def on_request(self, message_bus, headers: Dict, message):
+    def on_request(self, message_bus, headers: dict[str, Any], message):
         raise NotImplementedError(f"{self.__class__.__name__} must be overriden in child class")
 
     def get_registration_details(self):
@@ -378,7 +379,7 @@ class DistributedAgent:
         self.upstream_message_bus.send(t.field_message_bus_topic(self.upstream_message_bus.id), message)
 
     def send_control_command(self, differenceBuilder: DifferenceBuilder):
-        if self.simulation_id is not None:
+        if self.simulation_id is not None and self.downstream_message_bus is not None:
             LocalContext.send_control_command(self.downstream_message_bus, differenceBuilder)
 
     """
@@ -402,7 +403,7 @@ class SubstationAgent(DistributedAgent):
         self,
         upstream_message_bus_def: MessageBusDefinition,
         downstream_message_bus_def: MessageBusDefinition,
-        agent_config: Dict,
+        agent_config: dict[str, Any],
         substation_dict=None,
         simulation_id=None,
     ):
@@ -414,7 +415,7 @@ class SubstationAgent(DistributedAgent):
 
         self._connect()
 
-        if self.agent_area_dict is not None:
+        if self.agent_area_dict is not None and cim is not None:
             substation = cim.Substation(mRID=self.downstream_message_bus_def.id)
             self.substation_area = DistributedArea(connection=self.connection, container=substation, distributed=True)
             self.substation_area.build_from_topo_message(topology_dict=self.agent_area_dict)
@@ -425,7 +426,7 @@ class FeederAgent(DistributedAgent):
         self,
         upstream_message_bus_def: MessageBusDefinition,
         downstream_message_bus_def: MessageBusDefinition,
-        agent_config: Dict,
+        agent_config: dict[str, Any],
         feeder_dict=None,
         simulation_id=None,
     ):
@@ -435,7 +436,7 @@ class FeederAgent(DistributedAgent):
 
         self._connect()
 
-        if self.agent_area_dict is not None:
+        if self.agent_area_dict is not None and cim is not None:
             feeder = cim.FeederArea(mRID=self.downstream_message_bus_def.id)
             self.feeder_area = DistributedArea(connection=self.connection, container=feeder, distributed=True)
             self.feeder_area.build_from_topo_message(topology_dict=self.agent_area_dict)
@@ -446,7 +447,7 @@ class SwitchAreaAgent(DistributedAgent):
         self,
         upstream_message_bus_def: MessageBusDefinition,
         downstream_message_bus_def: MessageBusDefinition,
-        agent_config: Dict,
+        agent_config: dict[str, Any],
         switch_area_dict=None,
         simulation_id=None,
     ):
@@ -458,7 +459,7 @@ class SwitchAreaAgent(DistributedAgent):
 
         self._connect()
 
-        if self.agent_area_dict is not None:
+        if self.agent_area_dict is not None and cim is not None:
             container = cim.SwitchArea(mRID=self.downstream_message_bus_def.id)
             self.switch_area = DistributedArea(container=container, connection=self.connection, distributed=True)
             self.switch_area.build_from_topo_message(topology_dict=self.agent_area_dict)
@@ -469,7 +470,7 @@ class SecondaryAreaAgent(DistributedAgent):
         self,
         upstream_message_bus_def: MessageBusDefinition,
         downstream_message_bus_def: MessageBusDefinition,
-        agent_config: Dict,
+        agent_config: dict[str, Any],
         secondary_area_dict=None,
         simulation_id=None,
     ):
@@ -481,10 +482,11 @@ class SecondaryAreaAgent(DistributedAgent):
 
         self._connect()
 
-        if self.agent_area_dict is not None:
+        if self.agent_area_dict is not None and cim is not None:
             if len(self.agent_area_dict["AddressableEquipment"]) == 0:
+                downstream_id = self.downstream_message_bus.id if self.downstream_message_bus else "unknown"
                 _log.warning(
-                    f"No addressable equipment in the secondary area with down stream message bus id: {self.downstream_message_bus.id}."
+                    f"No addressable equipment in the secondary area with down stream message bus id: {downstream_id}."
                 )
             container = cim.SecondaryArea(mRID=self.downstream_message_bus_def.id)
             self.secondary_area = DistributedArea(container=container, connection=self.connection, distributed=True)
@@ -504,7 +506,7 @@ class CoordinatingAgent:
 
     def __init__(self, feeder_id, system_message_bus_def: MessageBusDefinition, simulation_id=None):
         self.feeder_id = feeder_id
-        self.distributed_agents = []
+        self.distributed_agents: list[DistributedAgent] = []
 
         self.system_message_bus = MessageBusFactory.create(system_message_bus_def)
         self.system_message_bus.connect()

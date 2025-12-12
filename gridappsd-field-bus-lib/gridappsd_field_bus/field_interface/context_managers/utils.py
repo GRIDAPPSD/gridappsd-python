@@ -8,7 +8,7 @@ REQUEST_FIELD = ".".join((t.PROCESS_PREFIX, "request.field"))
 
 
 def get_message_bus_definition(area_id: str) -> MessageBusDefinition:
-    connection_args = {
+    connection_args: dict[str, str | int | bool | None] = {
         "GRIDAPPSD_ADDRESS": os.environ.get("GRIDAPPSD_ADDRESS", "tcp://gridappsd:61613"),
         "GRIDAPPSD_USER": os.environ.get("GRIDAPPSD_USER"),
         "GRIDAPPSD_PASSWORD": os.environ.get("GRIDAPPSD_PASSWORD"),

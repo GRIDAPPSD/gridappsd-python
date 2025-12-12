@@ -26,7 +26,7 @@ class JsonEncoderExtension(_json.JSONEncoder):
         if isinstance(obj, complex):
             jsonComplexInstance = JsonComplex(real=obj.real, imag=obj.imag)
             rv = dataclasses.asdict(jsonComplexInstance)
-        elif dataclasses.is_dataclass(obj):
+        elif dataclasses.is_dataclass(obj) and not isinstance(obj, type):
             rv = dataclasses.asdict(obj)
         else:
             rv = super().default(obj)
