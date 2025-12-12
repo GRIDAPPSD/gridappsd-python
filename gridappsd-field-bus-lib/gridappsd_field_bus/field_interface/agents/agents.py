@@ -237,7 +237,6 @@ class DistributedAgent:
         self.app_id = agent_config["app_id"]
         self.description = agent_config["description"]
         dt = datetime.now()
-        datetime.timestamp(dt)
         if "context_manager" not in self.app_id:
             self.agent_id = "da_" + self.app_id
         else:
