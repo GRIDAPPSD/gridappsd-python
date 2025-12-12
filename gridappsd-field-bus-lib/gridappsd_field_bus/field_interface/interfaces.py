@@ -112,8 +112,8 @@ class MessageBusDefinition:
         """
         Load a single message bus definition from a YAML file.
         """
-        config = yaml.load(open(config_file), Loader=yaml.FullLoader)["connections"]
-
+        with open(config_file) as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)["connections"]
         return MessageBusDefinition.load_from_json(config)
 
 
