@@ -27,6 +27,13 @@ class ConfigBase:
         for k, v in self.__dict__.items():
             if isinstance(v, ConfigBase):
                 built[k] = v.asdict()
+            elif isinstance(v, list):
+                built[k] = []
+                for item in v:
+                    if isinstance(item, ConfigBase):
+                        built[k].append(item.asdict())
+                    else:
+                        built[k].append(item)
             else:
                 built[k] = v
         return built
@@ -50,15 +57,18 @@ class ModelCreationConfig(ConfigBase):
 class SimulationArgs(ConfigBase):
     start_time: str = field(default = "1655321830")
     duration: str = field(default = "300")
-    simulator: str = field(default = "GridLAB-D")
     timestep_frequency: str = field(default = "1000")
     timestep_increment: str = field(default = "1000")
     run_realtime: bool = field(default = True)
     pause_after_measurements: bool = field(default = False)
     simulation_name: str = field(default = "ieee13nodeckt")
-    power_flow_solver_method: str = field(default = "NR")
+    
+    
+@dataclass
+class SimulatorArgs(ConfigBase):
+    simulator: str = field(default = "GridLAB-D")
     model_creation_config: ModelCreationConfig = field(default_factory = ModelCreationConfig)
-
+    power_flow_solver_method: str = field(default = "NR")
 
 # __default_simulation_args__ = SimulationArgs()
 
@@ -95,11 +105,12 @@ class PowerSystemConfig(ConfigBase):
     Line_name: str
     GeographicalRegion_name: str = field(default = None)
     SubGeographicalRegion_name: str = field(default = None)
+    simulator_config: SimulatorArgs = field(default_factory=SimulatorArgs)
 
 
 @dataclass
 class SimulationConfig(ConfigBase):
-    power_system_config: PowerSystemConfig
+    power_system_configs: List[PowerSystemConfig] = field(default_factory=list)
     application_configs: List[ApplicationConfig] = field(default_factory=list)
     simulation_config: SimulationArgs = field(default_factory=SimulationArgs)
     service_configs: List[ServiceConfig] = field(default_factory=list)
