@@ -11,6 +11,8 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 from gridappsd import GridAPPSD, topics as t
 from gridappsd.simulation import Simulation, PowerSystemConfig, SimulationArgs, SimulationConfig
 
+simulation_is_complete = False
+
 @pytest.fixture
 def createGadObject():
     gad_user = os.environ.get('GRIDAPPSD_USER')
@@ -20,7 +22,6 @@ def createGadObject():
     if gad_password is None:
         os.environ['GRIDAPPSD_PASSWORD'] = 'manager'
     return GridAPPSD()
-
 
 def test_createSimulations(createGadObject):
     gadObj = createGadObject
@@ -32,7 +33,13 @@ def test_createSimulations(createGadObject):
                                     run_realtime=True,
                                     pause_after_measurements=False)
     sim_config = SimulationConfig(simulation_config=simulationArgs)
+    modelsToRun = [
+        "49AD8E07-3BF9-A4E2-CB8F-C3722F837B62", # IEEE 13 Node Test Feeder
+        "C1C3E687-6FFD-C753-582B-632A27E28507"  # IEEE 123 Node Test Feeder
+    ]
     for m in models:
+        if m.get("modelId") not in modelsToRun:
+            continue
         line_name = m.get("modelId")
         subregion_name = m.get("subRegionId")
         region_name = m.get("regionId")
@@ -41,5 +48,12 @@ def test_createSimulations(createGadObject):
                                 GeographicalRegion_name=region_name)
         sim_config.power_system_configs.append(psc)
     sim_obj = Simulation(gapps=gadObj, run_config=sim_config)
-    rvStr = json.dumps(sim_obj._run_config, indent=4, sort_keys=True)
-    pass
+    def on_simulation_complete(sim):
+        global simulation_is_complete
+        simulation_is_complete = True
+    sim_obj.add_oncomplete_callback(on_simulation_complete)
+    sim_obj.start_simulation()
+    while not simulation_is_complete:
+        time.sleep(1)
+    print("Simulation completed successfully.")
+    gadObj.disconnect()
