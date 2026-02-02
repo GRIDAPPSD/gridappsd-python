@@ -37,20 +37,21 @@
 # PACIFIC NORTHWEST NATIONAL LABORATORY operated by BATTELLE for the
 # UNITED STATES DEPARTMENT OF ENERGY under Contract DE-AC05-76RL01830
 # -------------------------------------------------------------------------------
-""" GridAPPSD Python Connection Library
+"""GridAPPSD Python Connection Library
 
 The :mod:`gridappsd` contains a connection class :class:`gridappsd.GridAPPSD` for connecting with the
 main GridAPPSD executable.
 
 """
+
 import pathlib
 import typing
 
 StrPath = typing.Union[str, pathlib.Path]
 
-from gridappsd.goss import GOSS
-from gridappsd.utils import ProcessStatusEnum
-from gridappsd.gridappsd import GridAPPSD
-from gridappsd.difference_builder import DifferenceBuilder
-from gridappsd.app_registration import ApplicationController
-import gridappsd.json_extension as json
+from gridappsd.goss import GOSS as GOSS
+from gridappsd.utils import ProcessStatusEnum as ProcessStatusEnum
+from gridappsd.gridappsd import GridAPPSD as GridAPPSD
+from gridappsd.difference_builder import DifferenceBuilder as DifferenceBuilder
+from gridappsd.app_registration import ApplicationController as ApplicationController
+from gridappsd import json_extension as json

@@ -1,44 +1,144 @@
 # Docker Environment for Applications
 
-The Dockerfile in the gridappsd-python repository is the base for the
-gridappsd/application-base-python:main container.  It is meant to extended for applications
-to utilize.  An example of this is used in the
-[gridappsd-sample-app](https://github.com/GRIDAPPSD/gridappsd-sample-app).
+The `gridappsd/gridappsd-python` Docker image provides a Python environment with `gridappsd-python` pre-installed. Use it as a base for building GridAPPS-D client applications.
 
-## Application Creation
+**Important:** This is NOT the GridAPPS-D platform. To run the platform, use [gridappsd-docker](https://github.com/GRIDAPPSD/gridappsd-docker).
 
-Create a new directory to hold your application.  Please create a document structure as
-in the gridappsd-sample-app above.
+## Available Tags
 
-The following Dockerfile is the preferred way of allowing your application to self-register
-with the gridappsd server.  Please follow the gridappsd-sample-app directory structure.
+| Tag | Python | Description |
+|-----|--------|-------------|
+| `latest` | 3.12 | Latest stable release |
+| `develop` | 3.12 | Latest development release |
+| `<version>` | 3.12 | Specific version (e.g., `2025.4.0`) |
+| `<version>-py310` | 3.10 | Specific version with Python 3.10 |
+| `<version>-py311` | 3.11 | Specific version with Python 3.11 |
+| `<version>-py312` | 3.12 | Specific version with Python 3.12 |
 
-````
-# Dockerfile from gridappsd-sample-app
+## Building a Client Application
 
-# Use the base application container to allow the application to be controlled
-# from the gridappsd container.
-FROM gridappsd/app-container-base:main
+### Basic Dockerfile
 
-# Add the TIMESTAMP variable to capture the build information from
-# the travis docker build command and add them to the image.
-ARG TIMESTAMP
-RUN echo $TIMESTAMP > /dockerbuildversion.txt
+```dockerfile
+FROM gridappsd/gridappsd-python:latest
 
-# Pick a spot to put our application code
-# (note gridappsd-python is located at /usr/src/gridappsd-python)
-# and is already installed in the app-container-base environment.
-WORKDIR /usr/src/gridappsd-sample
+WORKDIR /app
 
-# Add dependencies to the requirements.txt file before
-# uncommenting the next two lines
-# COPY requirements.txt ./
-# RUN RUN pip install --no-cache-dir -r requirements.txt
+# Install additional dependencies (optional)
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all of the source over to the container.
-COPY . .
+# Copy your application code
+COPY my_app.py ./
 
-# Use a symbolic link to the sample app rather than having to
-# mount it at run time (note can still be overriden in docker-compose file)
-RUN ln -s /usr/src/gridappsd-sample/sample_app.config /appconfig
-````
+CMD ["python", "my_app.py"]
+```
+
+### Build and Run
+
+```shell
+# Build your application image
+docker build -t my-gridappsd-app .
+
+# Run alongside GridAPPS-D platform
+# (assumes gridappsd-docker is running)
+docker run --rm \
+  --network gridappsd-docker_default \
+  -e GRIDAPPSD_ADDRESS=gridappsd \
+  -e GRIDAPPSD_PORT=61613 \
+  -e GRIDAPPSD_USER=app_user \
+  -e GRIDAPPSD_PASSWORD=1234App \
+  my-gridappsd-app
+```
+
+## Environment Variables
+
+The image sets these defaults (override at runtime):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GRIDAPPSD_ADDRESS` | `gridappsd` | Hostname of GridAPPS-D server |
+| `GRIDAPPSD_PORT` | `61613` | STOMP port |
+| `GRIDAPPSD_USER` | `app_user` | Username |
+| `GRIDAPPSD_PASSWORD` | `1234App` | Password |
+
+## Running with GridAPPS-D Platform
+
+### Option 1: Using pixi tasks
+
+```shell
+# Start the GridAPPS-D platform
+pixi run docker-up
+
+# Run your app
+docker run --rm --network gridappsd-docker_default my-gridappsd-app
+
+# Stop the platform when done
+pixi run docker-down
+```
+
+### Option 2: Using docker-compose
+
+Add your application to a `docker-compose.yml`:
+
+```yaml
+version: '3'
+
+services:
+  my-app:
+    build: .
+    depends_on:
+      - gridappsd
+    environment:
+      - GRIDAPPSD_ADDRESS=gridappsd
+    networks:
+      - gridappsd-docker_default
+
+networks:
+  gridappsd-docker_default:
+    external: true
+```
+
+## Example Application
+
+See [gridappsd-sample-app](https://github.com/GRIDAPPSD/gridappsd-sample-app) for a complete example.
+
+### Minimal Example
+
+```python
+# my_app.py
+from gridappsd import GridAPPSD
+
+def on_message(header, message):
+    print(f"Received: {message}")
+
+# Connect using environment variables
+gapps = GridAPPSD()
+assert gapps.connected, "Failed to connect to GridAPPS-D"
+
+print(f"Connected to GridAPPS-D")
+
+# Subscribe to simulation output
+gapps.subscribe('/topic/goss.gridappsd.simulation.output.>', on_message)
+
+# Keep running
+import time
+try:
+    while True:
+        time.sleep(1)
+except KeyboardInterrupt:
+    pass
+finally:
+    gapps.close()
+```
+
+## Choosing a Python Version
+
+If your application requires a specific Python version:
+
+```dockerfile
+# Use Python 3.10 for compatibility with older dependencies
+FROM gridappsd/gridappsd-python:2025.4.0-py310
+
+# ... rest of Dockerfile
+```

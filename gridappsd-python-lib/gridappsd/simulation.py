@@ -1,8 +1,9 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
 
 import time
 import logging
-from typing import Dict, List, Union
+from typing import Any, Callable
 
 import gridappsd.topics as t
 from gridappsd import GridAPPSD
@@ -13,12 +14,12 @@ _log = logging.getLogger(__name__)
 
 class SimulationFailedToStartError(Exception):
     """Exception raised if a simulation fails to start."""
+
     pass
 
 
 @dataclass
 class ConfigBase:
-
     def asjson(self):
         return json.dumps(self.asdict())
 
@@ -41,13 +42,13 @@ class ConfigBase:
 
 @dataclass
 class ModelCreationConfig(ConfigBase):
-    load_scaling_factor: str = field(default = "1")
-    schedule_name: str = field(default = "ieeezipload")
-    z_fraction: str = field(default = "0")
-    i_fraction: str = field(default = "1")
-    p_fraction: str = field(default = "0")
-    randomize_zipload_fractions: bool = field(default = False)
-    use_houses: bool = field(default = False)
+    load_scaling_factor: str = field(default="1")
+    schedule_name: str = field(default="ieeezipload")
+    z_fraction: str = field(default="0")
+    i_fraction: str = field(default="1")
+    p_fraction: str = field(default="0")
+    randomize_zipload_fractions: bool = field(default=False)
+    use_houses: bool = field(default=False)
 
 
 # __default_model_creation_config__ = ModelCreationConfig()
@@ -80,7 +81,7 @@ class Application(ConfigBase):
 
 @dataclass
 class ApplicationConfig(ConfigBase):
-    applications: List[Application] = field(default_factory=list)
+    applications: list[Application] = field(default_factory=list)
 
 
 # __default_application_config__ = ApplicationConfig()
@@ -88,8 +89,8 @@ class ApplicationConfig(ConfigBase):
 
 @dataclass
 class TestConfig(ConfigBase):
-    events: List[Dict] = field(default_factory=list)
-    appId: str = field(default = "")
+    events: list[dict[str, Any]] = field(default_factory=list)
+    appId: str = field(default="")
 
 
 # __default_test_config__ = TestConfig()
@@ -110,16 +111,16 @@ class PowerSystemConfig(ConfigBase):
 
 @dataclass
 class SimulationConfig(ConfigBase):
-    power_system_configs: List[PowerSystemConfig] = field(default_factory=list)
-    application_configs: List[ApplicationConfig] = field(default_factory=list)
+    power_system_configs: list[PowerSystemConfig] = field(default_factory=list)
+    application_configs: list[ApplicationConfig] = field(default_factory=list)
     simulation_config: SimulationArgs = field(default_factory=SimulationArgs)
-    service_configs: List[ServiceConfig] = field(default_factory=list)
+    service_configs: list[ServiceConfig] = field(default_factory=list)
     application_config: ApplicationConfig = field(default_factory=ApplicationConfig)
     test_config: TestConfig = field(default_factory=TestConfig)
 
 
 class Simulation:
-    """ Simulation object allows controlling simulations through a python API.
+    """Simulation object allows controlling simulations through a python API.
 
     The simulation object allows controlling and monitoring of simulations through
     a python API.  It is capable of starting, stopping, pausing and restarting simulations
@@ -130,7 +131,7 @@ class Simulation:
     add_onmeasurement_callback, add_oncomplete_callback or add_onstart_callback method respectively.
     """
 
-    def __init__(self, gapps: GridAPPSD, run_config: Union[Dict, SimulationConfig]):
+    def __init__(self, gapps: GridAPPSD, run_config: dict[str, Any] | SimulationConfig):
         assert isinstance(gapps, GridAPPSD), "Must be an instance of GridAPPSD"
         if isinstance(run_config, SimulationConfig):
             self._run_config = run_config.asdict()
@@ -159,11 +160,11 @@ class Simulation:
         self._running_or_paused = False
 
         # Will be populated when the simulation is first started.
-        self.simulation_id = None
+        self.simulation_id: str | None = None
 
-        self.__on_start = set()
-        self.__on_next_timestep_callbacks = set()
-        self.__on_simulation_complete_callbacks = set()
+        self.__on_start: set[Callable[..., Any]] = set()
+        self.__on_next_timestep_callbacks: set[Callable[..., Any]] = set()
+        self.__on_simulation_complete_callbacks: set[Callable[..., Any]] = set()
 
         self._measurement_count = 0
         self._log_count = 0
@@ -175,21 +176,20 @@ class Simulation:
         #     float(self._run_config.simulation_config.duration))
 
         # Devices that the user wants measurements from
-        self._device_measurement_filter = {}
+        self._device_measurement_filter: dict[str, Any] = {}
 
-        self.__filterable_measurement_callback_set = set()
+        self.__filterable_measurement_callback_set: set[Callable[..., Any]] = set()
 
     def start_simulation(self, timeout=30):
-        """ Start the configured simulation by calling the REQUEST_SIMULATION endpoint.
-        """
+        """Start the configured simulation by calling the REQUEST_SIMULATION endpoint."""
         resp = self._gapps.get_response(t.REQUEST_SIMULATION, self._run_config, timeout=timeout)
 
-        if 'simulationId' not in resp:
+        if "simulationId" not in resp:
             message = "Simulation was not able to run\n" + str(resp)
             raise SimulationFailedToStartError(message)
 
         self._running_or_paused = True
-        self.simulation_id = resp['simulationId']
+        self.simulation_id = resp["simulationId"]
 
         # Subscribe to the different components necessary to run and receive
         # simulated measurements and messages.
@@ -201,28 +201,28 @@ class Simulation:
             p(self)
 
     def pause(self):
-        """ Pause simulation"""
+        """Pause simulation"""
         _log.debug("Pausing simulation")
         command = dict(command="pause")
         self._gapps.send(t.simulation_input_topic(self.simulation_id), json.dumps(command))
         self._running_or_paused = True
 
     def stop(self):
-        """ Stop the simulation"""
+        """Stop the simulation"""
         _log.debug("Stopping simulation")
         command = dict(command="stop")
         self._gapps.send(t.simulation_input_topic(self.simulation_id), json.dumps(command))
         self._running_or_paused = True
 
     def resume(self):
-        """ Resume the simulation"""
+        """Resume the simulation"""
         _log.debug("Resuming simulation")
         command = dict(command="resume")
         self._gapps.send(t.simulation_input_topic(self.simulation_id), json.dumps(command))
         self._running_or_paused = True
 
     def run_loop(self):
-        """ Loop around the running of the simulation itself.
+        """Loop around the running of the simulation itself.
 
         Example:
 
@@ -245,7 +245,7 @@ class Simulation:
             time.sleep(0.01)
 
     def resume_pause_at(self, pause_in):
-        """ Resume the simulation and have it automatically pause after specified amount of seconds later.
+        """Resume the simulation and have it automatically pause after specified amount of seconds later.
 
         :param pause_in: number of seconds to run before pausing the simulation
         """
@@ -255,7 +255,7 @@ class Simulation:
         self._running_or_paused = True
 
     def add_onmeasurement_callback(self, callback, device_filter=()):
-        """ registers an onmeasurment callback to be called when measurements have come through.
+        """registers an onmeasurment callback to be called when measurements have come through.
 
         Note:
 
@@ -276,7 +276,7 @@ class Simulation:
         self.__filterable_measurement_callback_set.add((callback, device_filter))
 
     def add_onstart_callback(self, callback):
-        """ registers a start callback that is called when the simulation is started
+        """registers a start callback that is called when the simulation is started
 
         Callback Example:
 
@@ -291,7 +291,7 @@ class Simulation:
         self.__on_start.add(callback)
 
     def add_oncomplete_callback(self, callback):
-        """ registers a completion callback when the last timestep has been requested.
+        """registers a completion callback when the last timestep has been requested.
 
         Callback Example:
 
@@ -304,7 +304,7 @@ class Simulation:
         self.__on_simulation_complete_callbacks.add(callback)
 
     def add_ontimestep_callback(self, callback):
-        """ register a timestep callback
+        """register a timestep callback
 
         Callback Example:
 
@@ -318,18 +318,18 @@ class Simulation:
 
     def __on_platformlog(self, headers, message):
         try:
-            if self.simulation_id == message['processId']:
+            if self.simulation_id == message["processId"]:
                 _log.debug(f"__on_platform_log: message: {message}")
         except KeyError as e:
             _log.error(f"__on_platformlog keyerror({e}): {message}")
 
-        if 'command' in message:
+        if "command" in message:
             _log.debug("Command was: {}".format(message))
 
     def __on_simulation_log(self, headers, message):
         # Handle the callbacks here
-        if 'logMessage' in message:
-            log_message = message['logMessage']
+        if "logMessage" in message:
+            log_message = message["logMessage"]
             # if this is the last timestamp then call the finished callbacks
             if log_message == f"Simulation {self.simulation_id} complete":
                 for p in self.__on_simulation_complete_callbacks:
@@ -337,26 +337,26 @@ class Simulation:
                 self._running_or_paused = False
                 _log.debug("Simulation completed")
             elif log_message.startswith("incrementing to "):
-                timestep = log_message[len("incrementing to "):]
+                timestep = log_message[len("incrementing to ") :]
                 for p in self.__on_next_timestep_callbacks:
                     p(self, int(timestep))
 
     def __onmeasurement(self, headers, message):
-        """ Call the measurement callbacks
+        """Call the measurement callbacks
 
         :param headers:
         :param message:
         :return:
         """
-        sim_id = message['simulation_id']
-        timestamp = message['message']['timestamp']
-        measurements = message['message']['measurements']
+        timestamp = message["message"]["timestamp"]
+        measurements = message["message"]["measurements"]
         for p in self.__filterable_measurement_callback_set:
             p[0](self, timestamp, measurements)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pprint import pprint
+
     psc = PowerSystemConfig(Line_name="_49AD8E07-3BF9-A4E2-CB8F-C3722F837B62")
     sim = SimulationConfig(power_system_config=psc)
 

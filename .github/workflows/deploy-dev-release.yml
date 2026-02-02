@@ -1,103 +1,219 @@
-name: Development Artifacts
+name: Development Release
 
+# Manual trigger only - creates GitHub release with artifacts (no PyPI)
 on:
-  push:
-    branches:
-      - develop
   workflow_dispatch:
     inputs:
-      force:
-        description: 'Force deploy'
+      bump-type:
+        description: 'How to bump the version'
+        required: true
+        type: choice
+        default: 'prerelease'
+        options:
+          - prerelease    # 2025.3.2a13 -> 2025.3.2a14
+          - prepatch      # 2025.3.2 -> 2025.3.3a1
+          - preminor      # 2025.3.2 -> 2025.4.0a1
+          - custom        # Use custom-version input
+      custom-version:
+        description: 'Custom version (only if bump-type is "custom", e.g., 2025.4.0b1)'
         required: false
-        default: false
-        type: boolean
+        type: string
+
+env:
+  DOCKER_IMAGE: gridappsd/gridappsd-python
+
 jobs:
-  check-changes:
+  dev-release:
     runs-on: ubuntu-latest
-    outputs:
-      any_changed: ${{ steps.changed-files.outputs.any_changed }}
+    if: github.ref == 'refs/heads/develop'
+    permissions:
+      contents: write
+      packages: write
     steps:
+      - name: Verify branch
+        run: |
+          echo "Running on branch: ${{ github.ref_name }}"
+          if [ "${{ github.ref_name }}" != "develop" ]; then
+            echo "Error: Development releases can only be created from the develop branch."
+            echo "Current branch: ${{ github.ref_name }}"
+            exit 1
+          fi
+
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get changed files
-        id: changed-files
-        uses: tj-actions/changed-files@v45
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
         with:
-          files: |
-            **.py
+          pixi-version: v0.61.0
+          cache: true
 
-  build:
-    runs-on: ubuntu-latest
-    needs: check-changes
-    if: needs.check-changes.outputs.any_changed == 'true' || github.event.inputs.force == 'true'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1.4.1
-        with:
-          virtualenvs-in-project: true
-          installer-parallel: true
-
-      - name: Bump version
+      - name: Determine version
         id: bump-version
         run: |
-          echo "Bumping version..."
-          ./scripts/run_on_each.sh poetry version prerelease
-          echo "Version bumped to $(poetry version -s)"
-          NEW_TAG=v$(poetry version --short)
-          # Finally because we want to be able to use the variable in later
-          # steps we set a NEW_TAG environmental variable
-          echo "NEW_TAG=$(echo ${NEW_TAG})" >> $GITHUB_ENV
+          # Get current version from pixi.toml
+          CURRENT_VERSION=$(grep '^version' pixi.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          echo "Current version: $CURRENT_VERSION"
 
-      - name: Install dependencies
+          BUMP_TYPE="${{ inputs.bump-type }}"
+
+          if [ "$BUMP_TYPE" == "custom" ]; then
+            # Use custom version
+            CUSTOM_VERSION="${{ inputs.custom-version }}"
+            if [ -z "$CUSTOM_VERSION" ]; then
+              echo "Error: custom-version is required when bump-type is 'custom'"
+              exit 1
+            fi
+            NEW_VERSION="$CUSTOM_VERSION"
+            echo "Using custom version: $NEW_VERSION"
+          else
+            # Parse version components
+            # Handle versions like 2025.3.2a13 or 2025.3.2
+            if [[ $CURRENT_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(a([0-9]+))?$ ]]; then
+              MAJOR="${BASH_REMATCH[1]}"
+              MINOR="${BASH_REMATCH[2]}"
+              PATCH="${BASH_REMATCH[3]}"
+              PRE_NUM="${BASH_REMATCH[5]:-0}"
+            else
+              echo "Error: Cannot parse version $CURRENT_VERSION"
+              exit 1
+            fi
+
+            case $BUMP_TYPE in
+              prerelease)
+                NEW_PRE=$((PRE_NUM + 1))
+                NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}a${NEW_PRE}"
+                ;;
+              prepatch)
+                NEW_PATCH=$((PATCH + 1))
+                NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}a1"
+                ;;
+              preminor)
+                NEW_MINOR=$((MINOR + 1))
+                NEW_VERSION="${MAJOR}.${NEW_MINOR}.0a1"
+                ;;
+            esac
+          fi
+
+          echo "New version: $NEW_VERSION"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "NEW_TAG=v$NEW_VERSION" >> $GITHUB_ENV
+
+          # Update version in pixi.toml
+          sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" pixi.toml
+
+          # Update version in sub-project pyproject.toml files
+          sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" gridappsd-python-lib/pyproject.toml
+          sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" gridappsd-field-bus-lib/pyproject.toml
+
+      - name: Update lock file
+        run: pixi install
+
+      - name: Run tests
+        run: pixi run test-all
+
+      - name: Build packages
+        run: pixi run build
+
+      - name: Commit and tag
         run: |
-          ./scripts/run_on_each.sh poetry self add poetry-plugin-export
-          ./scripts/poetry_install.sh
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add pixi.toml pixi.lock gridappsd-python-lib/pyproject.toml gridappsd-field-bus-lib/pyproject.toml
+          git commit -m "Bump version to ${{ env.NEW_VERSION }}"
+          git tag ${{ env.NEW_TAG }}
+          git push origin HEAD:${{ github.ref_name }}
+          git push origin ${{ env.NEW_TAG }}
 
-      - name: Build project
-        run: ./scripts/poetry_build.sh
-
-      - name: Commit bumped version
-        run: |
-          git config --global user.name 'gridappsd[bot]'
-          git config --global user.email 'gridappsd[bot]@users.noreply.github.com'
-          git commit -am "Bump version to $(poetry version -s)"
-          git push origin develop
-
-      - name: Create Release
+      - name: Create GitHub Release
         uses: ncipollo/release-action@v1.15.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          artifacts: "dist/*.gz,dist/*.whl"
+          artifacts: "dist/*.tar.gz,dist/*.whl"
           artifactErrorsFailBuild: true
           generateReleaseNotes: true
-          commit: ${{ github.ref }}
           prerelease: true
           tag: ${{ env.NEW_TAG }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Publish to PyPI
-        id: publish-to-pypi
-        run: |
-          # This is needed, because the poetry publish will fail at the top level of the project
-          # so ./scripts/run_on_each.sh fails for that.
-          echo "POETRY_PUBLISH_OPTIONS=''" >> $GITHUB_ENV
-          cd gridappsd-python-lib
-          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
-          poetry publish
+          name: "Development Release ${{ env.NEW_VERSION }}"
+          body: |
+            ## Development Release
 
-          cd ../gridappsd-field-bus-lib
-          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
-          poetry publish
+            This is a development/pre-release version. It is **not published to PyPI**.
+
+            ### Installation
+
+            **Via pip (from GitHub release):**
+            ```bash
+            pip install https://github.com/GRIDAPPSD/gridappsd-python/releases/download/${{ env.NEW_TAG }}/gridappsd_python-${{ env.NEW_VERSION }}-py3-none-any.whl
+            ```
+
+            **Via pip (from git tag):**
+            ```bash
+            pip install git+https://github.com/GRIDAPPSD/gridappsd-python.git@${{ env.NEW_TAG }}#subdirectory=gridappsd-python-lib
+            ```
+
+            **Via Docker:**
+            ```bash
+            docker pull ${{ env.DOCKER_IMAGE }}:${{ env.NEW_VERSION }}
+            ```
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Docker build and push
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        if: github.repository_owner == 'GRIDAPPSD'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      # Build default image (Python 3.12) with develop tag
+      - name: Build and push Docker image (Python 3.12 - default)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.repository_owner == 'GRIDAPPSD' }}
+          build-args: |
+            PYTHON_VERSION=3.12
+            GRIDAPPSD_PYTHON_VERSION==${{ env.NEW_VERSION }}
+          tags: |
+            ${{ env.DOCKER_IMAGE }}:${{ env.NEW_VERSION }}
+            ${{ env.DOCKER_IMAGE }}:${{ env.NEW_VERSION }}-py312
+            ${{ env.DOCKER_IMAGE }}:develop
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Build Python 3.10 variant
+      - name: Build and push Docker image (Python 3.10)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.repository_owner == 'GRIDAPPSD' }}
+          build-args: |
+            PYTHON_VERSION=3.10
+            GRIDAPPSD_PYTHON_VERSION==${{ env.NEW_VERSION }}
+          tags: |
+            ${{ env.DOCKER_IMAGE }}:${{ env.NEW_VERSION }}-py310
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Build Python 3.11 variant
+      - name: Build and push Docker image (Python 3.11)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.repository_owner == 'GRIDAPPSD' }}
+          build-args: |
+            PYTHON_VERSION=3.11
+            GRIDAPPSD_PYTHON_VERSION==${{ env.NEW_VERSION }}
+          tags: |
+            ${{ env.DOCKER_IMAGE }}:${{ env.NEW_VERSION }}-py311
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

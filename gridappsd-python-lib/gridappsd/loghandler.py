@@ -4,23 +4,23 @@ import os
 from . import topics as t
 
 _nameToLevel = {
-    'FATAL': FATAL,
-    'ERROR': ERROR,
-    'WARN': WARN,
-    'WARNING': WARN,
-    'INFO': INFO,
-    'DEBUG': DEBUG,
-    'NOTSET': NOTSET,
+    "FATAL": FATAL,
+    "ERROR": ERROR,
+    "WARN": WARN,
+    "WARNING": WARN,
+    "INFO": INFO,
+    "DEBUG": DEBUG,
+    "NOTSET": NOTSET,
 }
 
 _levelToName = {
-    FATAL: 'FATAL',
-    ERROR: 'ERROR',
-    WARNING: 'WARN',
-    WARN: 'WARN',
-    INFO: 'INFO',
-    DEBUG: 'DEBUG',
-    NOTSET: 'NOTSET',
+    FATAL: "FATAL",
+    ERROR: "ERROR",
+    WARNING: "WARN",
+    WARN: "WARN",
+    INFO: "INFO",
+    DEBUG: "DEBUG",
+    NOTSET: "NOTSET",
 }
 
 VALID_LOG_LEVELS = set(_nameToLevel.values())
@@ -68,13 +68,14 @@ class Logger:
         """
         process_identifier = self._gaps.get_application_id()
 
-        if not level in VALID_LOG_LEVELS:
+        if level not in VALID_LOG_LEVELS:
             raise AttributeError(f"Log level must be one of {[x for x in _levelToName.values()]}")
 
         if not process_identifier:
             raise AttributeError(
-                f"Must have GRIDAPPSD_APPLICATION_ID or GRIDAPPSD_SERVICE_ID or GRIDAPPSD_PROCESS_ID "
-                "set in os environments.")
+                "Must have GRIDAPPSD_APPLICATION_ID or GRIDAPPSD_SERVICE_ID or GRIDAPPSD_PROCESS_ID "
+                "set in os environments."
+            )
         status = self._gaps.get_application_status()
         sim_id = self._gaps.get_simulation_id()
 
@@ -89,11 +90,11 @@ class Logger:
             "processStatus": str(status),
             "logMessage": str(message),
             "logLevel": _levelToName[level],
-            "storeToDb": True
+            "storeToDb": True,
         }
 
-        gridappsd_log_level = os.getenv('GRIDAPPSD_LOG_LEVEL')
-        if gridappsd_log_level == None:
+        gridappsd_log_level = os.getenv("GRIDAPPSD_LOG_LEVEL")
+        if gridappsd_log_level is None:
             gridappsd_log_level = level
         else:
             gridappsd_log_level = _nameToLevel[gridappsd_log_level]

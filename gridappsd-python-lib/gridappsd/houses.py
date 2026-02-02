@@ -1,22 +1,37 @@
+from __future__ import annotations
 from collections import namedtuple
+from typing import TYPE_CHECKING, Any
 
-house_keys = [
-    'name', 'parent', 'coolingSetpoint', 'coolingSystem', 'floorArea', 'heatingSetpoint',
-    'heatingSystem', 'hvacPowerFactor', 'numberOfStories', 'thermalIntegrity', 'id', 'fdrid'
-]
-House = namedtuple('House', house_keys)
+if TYPE_CHECKING:
+    from gridappsd.gridappsd import GridAPPSD
+
+House = namedtuple(
+    "House",
+    [
+        "name",
+        "parent",
+        "coolingSetpoint",
+        "coolingSystem",
+        "floorArea",
+        "heatingSetpoint",
+        "heatingSystem",
+        "hvacPowerFactor",
+        "numberOfStories",
+        "thermalIntegrity",
+        "id",
+        "fdrid",
+    ],
+)
 
 # class House(HouseBase):
 #     def __dict__
 
 
 class Houses:
-
     class __SingltonHouses:
-
-        def __init__(self, gappsd: 'GridAPPSD'):
+        def __init__(self, gappsd: GridAPPSD):
             self._gappsd = gappsd
-            self._houses = {}
+            self._houses: dict[str, dict[str, Any]] = {}
 
         def __str__(self):
             return repr(self) + self._gappsd
@@ -27,7 +42,8 @@ class Houses:
             return self._houses.get(feeder)
 
         def _populate(self, feeder):
-            query = """# list houses - DistHouse
+            query = (
+                """# list houses - DistHouse
 PREFIX r:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX c:  <http://iec.ch/TC57/CIM100#>
 SELECT ?fdrname ?name ?parent ?coolingSetpoint ?coolingSystem ?floorArea ?heatingSetpoint ?heatingSystem ?hvacPowerFactor ?numberOfStories ?thermalIntegrity ?id ?fdrid
@@ -57,17 +73,19 @@ WHERE {
    ?fdr c:IdentifiedObject.name ?fdrname.
    ?econ c:Equipment.EquipmentContainer ?fdr.
 } ORDER BY ?fdrname ?name
-""" % feeder
+"""
+                % feeder
+            )
             response = self._gappsd.query_data(query)
             houses = {}
-            for rec in response['data']['results']['bindings']:
+            for rec in response["data"]["results"]["bindings"]:
                 create_order = {}
                 name = None
-                for d in house_keys:
-                    if d == 'name':
-                        name = rec[d]['value']
+                for d in House._fields:
+                    if d == "name":
+                        name = rec[d]["value"]
                     try:
-                        create_order[d] = rec[d]['value']
+                        create_order[d] = rec[d]["value"]
                     except KeyError:
                         create_order[d] = None
 

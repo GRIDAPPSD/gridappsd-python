@@ -5,7 +5,6 @@ from typing import Any
 
 
 class GridAPPSDMessageBus(FieldMessageBus):
-
     def __init__(self, definition: MessageBusDefinition):
         super().__init__(definition)
         self._id = definition.id
@@ -18,13 +17,13 @@ class GridAPPSDMessageBus(FieldMessageBus):
         self.gridappsd_obj = None
 
     def query_devices(self) -> dict:
-        pass
+        return {}
 
     def is_connected(self) -> bool:
         """
         Is this object connected to the message bus
         """
-        pass
+        return self.gridappsd_obj is not None and self.gridappsd_obj.connected
 
     def connect(self):
         """
