@@ -12,6 +12,7 @@ from gridappsd import GridAPPSD, topics as t
 from gridappsd.simulation import Simulation, PowerSystemConfig, SimulationArgs, SimulationConfig
 
 simulation_is_complete = False
+measurements_received = 0
 
 @pytest.fixture
 def createGadObject():
@@ -30,7 +31,7 @@ def test_createSimulations(createGadObject):
     start_time = int(datetime(year=2025, month=1, day=1, hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc).timestamp())
     simulationArgs = SimulationArgs(start_time=f"{start_time}",
                                     duration="120",
-                                    run_realtime=True,
+                                    run_realtime=False,
                                     pause_after_measurements=False)
     sim_config = SimulationConfig(simulation_config=simulationArgs)
     modelsToRun = [
@@ -48,12 +49,16 @@ def test_createSimulations(createGadObject):
                                 GeographicalRegion_name=region_name)
         sim_config.power_system_configs.append(psc)
     sim_obj = Simulation(gapps=gadObj, run_config=sim_config)
+    def on_measurement(sim, ts, m):
+        global measurements_received
+        measurements_received += 1
     def on_simulation_complete(sim):
         global simulation_is_complete
         simulation_is_complete = True
+    sim_obj.add_onmeasurement_callback(on_measurement)
     sim_obj.add_oncomplete_callback(on_simulation_complete)
     sim_obj.start_simulation()
     while not simulation_is_complete:
         time.sleep(1)
-    print("Simulation completed successfully.")
+    assert measurements_received == 1
     gadObj.disconnect()
