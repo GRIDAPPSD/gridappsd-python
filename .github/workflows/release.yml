@@ -92,6 +92,13 @@ jobs:
           git push origin HEAD:${{ github.ref_name }}
           git push origin ${{ env.TAG }}
 
+      - name: Publish to PyPI
+        if: github.repository_owner == 'GRIDAPPSD'
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: pixi run publish
+
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1.15.0
         with:
@@ -103,13 +110,6 @@ jobs:
           tag: ${{ env.TAG }}
           name: "Release ${{ env.VERSION }}"
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish to PyPI
-        if: github.repository_owner == 'GRIDAPPSD'
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: pixi run publish
 
       # Docker build and push
       - name: Set up Docker Buildx

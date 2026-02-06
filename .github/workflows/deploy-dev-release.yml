@@ -1,6 +1,6 @@
 name: Development Release
 
-# Manual trigger only - creates GitHub release with artifacts (no PyPI)
+# Manual trigger only - creates GitHub release with artifacts and publishes to PyPI
 on:
   workflow_dispatch:
     inputs:
@@ -128,6 +128,13 @@ jobs:
           git push origin HEAD:${{ github.ref_name }}
           git push origin ${{ env.NEW_TAG }}
 
+      - name: Publish to PyPI
+        if: github.repository_owner == 'GRIDAPPSD'
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: pixi run publish
+
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1.15.0
         with:
@@ -140,18 +147,18 @@ jobs:
           body: |
             ## Development Release
 
-            This is a development/pre-release version. It is **not published to PyPI**.
+            This is a development/pre-release version published to PyPI.
 
             ### Installation
+
+            **Via pip (from PyPI):**
+            ```bash
+            pip install gridappsd-python==${{ env.NEW_VERSION }}
+            ```
 
             **Via pip (from GitHub release):**
             ```bash
             pip install https://github.com/GRIDAPPSD/gridappsd-python/releases/download/${{ env.NEW_TAG }}/gridappsd_python-${{ env.NEW_VERSION }}-py3-none-any.whl
-            ```
-
-            **Via pip (from git tag):**
-            ```bash
-            pip install git+https://github.com/GRIDAPPSD/gridappsd-python.git@${{ env.NEW_TAG }}#subdirectory=gridappsd-python-lib
             ```
 
             **Via Docker:**

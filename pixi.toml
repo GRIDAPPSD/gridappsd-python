@@ -26,7 +26,7 @@ python-dotenv = ">=0.9"
 loguru = ">=0.7"
 
 # Field bus dependencies
-cim-graph = ">=0.2.2a4"
+cim-graph = ">=0.4.3a6"
 click = ">=8.1"
 
 # Install local packages in editable mode
