@@ -63,8 +63,7 @@ class SimulationArgs(ConfigBase):
     run_realtime: bool = field(default = True)
     pause_after_measurements: bool = field(default = False)
     simulation_name: str = field(default = "ieee13nodeckt")
-    
-    
+
 @dataclass
 class SimulatorArgs(ConfigBase):
     simulator: str = field(default = "GridLAB-D")
