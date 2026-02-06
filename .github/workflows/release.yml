@@ -143,7 +143,7 @@ jobs:
           push: ${{ github.repository_owner == 'GRIDAPPSD' }}
           build-args: |
             PYTHON_VERSION=3.12
-            GRIDAPPSD_PYTHON_VERSION==${{ env.VERSION }}
+            GRIDAPPSD_PYTHON_VERSION=${{ env.VERSION }}
           tags: |
             ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
             ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}-py312
@@ -160,7 +160,7 @@ jobs:
           push: ${{ github.repository_owner == 'GRIDAPPSD' }}
           build-args: |
             PYTHON_VERSION=3.10
-            GRIDAPPSD_PYTHON_VERSION==${{ env.VERSION }}
+            GRIDAPPSD_PYTHON_VERSION=${{ env.VERSION }}
           tags: |
             ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}-py310
           platforms: linux/amd64,linux/arm64
@@ -175,7 +175,7 @@ jobs:
           push: ${{ github.repository_owner == 'GRIDAPPSD' }}
           build-args: |
             PYTHON_VERSION=3.11
-            GRIDAPPSD_PYTHON_VERSION==${{ env.VERSION }}
+            GRIDAPPSD_PYTHON_VERSION=${{ env.VERSION }}
           tags: |
             ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}-py311
           platforms: linux/amd64,linux/arm64

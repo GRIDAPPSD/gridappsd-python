@@ -61,11 +61,15 @@ RUN apt-get update \
 WORKDIR /app
 
 # Install gridappsd-python
-# If GRIDAPPSD_PYTHON_VERSION is set (e.g., "==2025.3.2"), use it
+# If GRIDAPPSD_PYTHON_VERSION is set (e.g., "2025.3.2"), install that exact version
 # Otherwise install latest from PyPI
-# --pre allows installing prerelease versions (e.g., 2025.3.2a15)
+# --pre allows installing prerelease versions (e.g., 2025.3.2a17)
 RUN pip install --upgrade pip \
-    && pip install --pre gridappsd-python${GRIDAPPSD_PYTHON_VERSION:-}
+    && if [ -n "$GRIDAPPSD_PYTHON_VERSION" ]; then \
+         pip install --pre "gridappsd-python==$GRIDAPPSD_PYTHON_VERSION"; \
+       else \
+         pip install --pre gridappsd-python; \
+       fi
 
 # Default command shows installed version
 CMD ["python", "-c", "import gridappsd; print(f'gridappsd-python version: {gridappsd.__version__}')"]
