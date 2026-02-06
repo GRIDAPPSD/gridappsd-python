@@ -103,8 +103,8 @@ class ServiceConfig(ConfigBase):
 @dataclass
 class PowerSystemConfig(ConfigBase):
     Line_name: str
-    GeographicalRegion_name: str = field(default = None)
-    SubGeographicalRegion_name: str = field(default = None)
+    GeographicalRegion_name: str = field(default = "")
+    SubGeographicalRegion_name: str = field(default = "")
     simulator_config: SimulatorArgs = field(default_factory=SimulatorArgs)
 
 
@@ -356,9 +356,9 @@ class Simulation:
 if __name__ == "__main__":
     from pprint import pprint
 
-    psc = PowerSystemConfig(Line_name="_49AD8E07-3BF9-A4E2-CB8F-C3722F837B62")
-    sim = SimulationConfig(power_system_config=psc)
+    psc = [PowerSystemConfig(Line_name="_49AD8E07-3BF9-A4E2-CB8F-C3722F837B62")]
+    sim = SimulationConfig(power_system_configs=psc)
 
-    print(psc.asjson())
+    #print(psc.asjson())
     print(sim.asjson())
     pprint(json.loads(sim.asjson()), indent=2)
