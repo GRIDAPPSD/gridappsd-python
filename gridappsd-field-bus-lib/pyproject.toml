@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gridappsd-field-bus"
-version = "2025.3.2a16"
+version = "2025.3.2a17"
 description = "GridAPPS-D Field Bus Implementation"
 readme = "README.md"
 license = "BSD-3-Clause"
