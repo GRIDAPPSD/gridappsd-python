@@ -114,6 +114,7 @@ ENV/
 
 # pixi
 .pixi/
+pixi.lock
 
 # uv
 uv.lock
