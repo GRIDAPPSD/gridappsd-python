@@ -1,0 +1,2 @@
+[COMPUTE_REQ] 2026-02-06 14:28:12,596 - Total message size summary:
+[COMPUTE_REQ] 2026-02-06 14:28:12,596 - Function call counts summary:

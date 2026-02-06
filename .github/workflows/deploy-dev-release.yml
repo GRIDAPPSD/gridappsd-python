@@ -167,6 +167,20 @@ jobs:
             ```
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Verify package available on PyPI
+        if: github.repository_owner == 'GRIDAPPSD'
+        run: |
+          for i in $(seq 1 30); do
+            if pip index versions gridappsd-python 2>/dev/null | grep -q "${{ env.NEW_VERSION }}" || \
+               pip install --dry-run --no-deps "gridappsd-python==${{ env.NEW_VERSION }}" 2>/dev/null; then
+              echo "Package gridappsd-python==${{ env.NEW_VERSION }} is available on PyPI"
+              exit 0
+            fi
+            echo "Attempt $i/30: Package not yet available, waiting 10s..."
+            sleep 10
+          done
+          echo "Warning: Package not confirmed on PyPI after 5 minutes, proceeding anyway"
+
       # Docker build and push
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
