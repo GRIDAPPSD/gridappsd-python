@@ -4566,8 +4566,8 @@ packages:
   requires_python: '>=3.7'
 - pypi: ./gridappsd-field-bus-lib
   name: gridappsd-field-bus
-  version: 2025.3.2a14
-  sha256: a4b78cd0dd5ca5df1a5f33799ee1acae6c73eeb0a824953cf2a35ac1608e0b75
+  version: 2025.3.2a15
+  sha256: 3d77cc48d28a56c8e93028a838116b0395ddeac2b49b280f4634324a9ebdc446
   requires_dist:
   - cim-graph>=0.2.2a4
   - click>=8.1.8,<9.0.0
@@ -4576,8 +4576,8 @@ packages:
   editable: true
 - pypi: ./gridappsd-python-lib
   name: gridappsd-python
-  version: 2025.3.2a14
-  sha256: 2f90fc39d83ca50e4303d33b0c138a7f15f475dd09ad90ceea627d50f1602017
+  version: 2025.3.2a15
+  sha256: 199497d09984b30dab14293a41ce0c4ca5137c51de29a0238981b71a78c654d2
   requires_dist:
   - pyyaml>=6.0,<7.0
   - dateutils>=0.6.7,<0.7.0

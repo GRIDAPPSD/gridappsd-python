@@ -1,6 +1,6 @@
 [workspace]
 name = "gridappsd-python-workspace"
-version = "2025.3.2a14"
+version = "2025.3.2a15"
 description = "A GridAPPS-D Python Adapter"
 authors = [
     "C. Allwardt <3979063+craig8@users.noreply.github.com>",
