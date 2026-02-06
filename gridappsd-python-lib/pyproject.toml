@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gridappsd-python"
-version = "2025.3.2a17"
+version = "2026.1.1b1"
 description = "A GridAPPS-D Python Adapter"
 readme = "README.md"
 license = "BSD-3-Clause"
