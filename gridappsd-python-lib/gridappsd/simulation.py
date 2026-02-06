@@ -56,19 +56,21 @@ class ModelCreationConfig(ConfigBase):
 
 @dataclass
 class SimulationArgs(ConfigBase):
-    start_time: str = field(default = "1655321830")
-    duration: str = field(default = "300")
-    timestep_frequency: str = field(default = "1000")
-    timestep_increment: str = field(default = "1000")
-    run_realtime: bool = field(default = True)
-    pause_after_measurements: bool = field(default = False)
-    simulation_name: str = field(default = "ieee13nodeckt")
+    start_time: str = field(default="1655321830")
+    duration: str = field(default="300")
+    timestep_frequency: str = field(default="1000")
+    timestep_increment: str = field(default="1000")
+    run_realtime: bool = field(default=True)
+    pause_after_measurements: bool = field(default=False)
+    simulation_name: str = field(default="ieee13nodeckt")
+
 
 @dataclass
 class SimulatorArgs(ConfigBase):
-    simulator: str = field(default = "GridLAB-D")
-    model_creation_config: ModelCreationConfig = field(default_factory = ModelCreationConfig)
-    power_flow_solver_method: str = field(default = "NR")
+    simulator: str = field(default="GridLAB-D")
+    model_creation_config: ModelCreationConfig = field(default_factory=ModelCreationConfig)
+    power_flow_solver_method: str = field(default="NR")
+
 
 # __default_simulation_args__ = SimulationArgs()
 
@@ -103,8 +105,8 @@ class ServiceConfig(ConfigBase):
 @dataclass
 class PowerSystemConfig(ConfigBase):
     Line_name: str
-    GeographicalRegion_name: str = field(default = "")
-    SubGeographicalRegion_name: str = field(default = "")
+    GeographicalRegion_name: str = field(default="")
+    SubGeographicalRegion_name: str = field(default="")
     simulator_config: SimulatorArgs = field(default_factory=SimulatorArgs)
 
 
@@ -359,6 +361,6 @@ if __name__ == "__main__":
     psc = [PowerSystemConfig(Line_name="_49AD8E07-3BF9-A4E2-CB8F-C3722F837B62")]
     sim = SimulationConfig(power_system_configs=psc)
 
-    #print(psc.asjson())
+    # print(psc.asjson())
     print(sim.asjson())
     pprint(json.loads(sim.asjson()), indent=2)
