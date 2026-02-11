@@ -20,7 +20,7 @@ on:
         type: string
 
 env:
-  DOCKER_IMAGE: gridappsd/gridappsd-python
+  DOCKER_IMAGE: gridappsd/app-base-container
 
 jobs:
   dev-release:
