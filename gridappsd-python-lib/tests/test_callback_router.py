@@ -238,3 +238,66 @@ class TestCallbackRouterWildcard:
         assert not q2.empty()
         # Only one pattern entry despite two callbacks
         assert len(router._wildcard_patterns) == 1
+
+    def test_temp_queue_wildcard(self):
+        router = CallbackRouter()
+        results = Queue()
+        router.add_callback("/temp-queue/response.*",
+                            lambda h, m: results.put(m))
+        router.on_message(
+            *_make_msg({"destination": "/temp-queue/response.abc123"}, '"data"'))
+        sleep(0.15)
+        assert not results.empty()
+
+    def test_partial_remove_keeps_wildcard_pattern(self):
+        """Removing one callback should keep the pattern if another remains."""
+        router = CallbackRouter()
+        q1 = Queue()
+        q2 = Queue()
+        cb1 = lambda h, m: q1.put(m)
+        cb2 = lambda h, m: q2.put(m)
+        router.add_callback("/topic/goss.gridappsd.field.*", cb1)
+        router.add_callback("/topic/goss.gridappsd.field.*", cb2)
+        router.remove_callback("/topic/goss.gridappsd.field.*", cb1)
+        # Pattern should still exist
+        assert len(router._wildcard_patterns) == 1
+        # Remaining callback should still fire
+        router.on_message(
+            *_make_msg({"destination": "/topic/goss.gridappsd.field.sub1"}, '"data"'))
+        sleep(0.15)
+        assert q1.empty()
+        assert not q2.empty()
+
+    def test_concurrent_add_and_dispatch(self):
+        """Thread-safe: add callbacks from threads while messages are dispatched."""
+        import threading
+        router = CallbackRouter()
+        results = Queue()
+        errors = Queue()
+
+        def add_callbacks():
+            try:
+                for i in range(20):
+                    router.add_callback(
+                        f"/topic/concurrent.test.{i}.*",
+                        lambda h, m, idx=i: results.put(idx))
+            except Exception as e:
+                errors.put(e)
+
+        def send_messages():
+            try:
+                sleep(0.01)  # let some callbacks register first
+                for i in range(20):
+                    router.on_message(
+                        *_make_msg({"destination": f"/topic/concurrent.test.{i}.data"}, '"msg"'))
+            except Exception as e:
+                errors.put(e)
+
+        t1 = threading.Thread(target=add_callbacks)
+        t2 = threading.Thread(target=send_messages)
+        t1.start()
+        t2.start()
+        t1.join(timeout=5)
+        t2.join(timeout=5)
+        sleep(0.3)
+        assert errors.empty(), f"Errors during concurrent test: {errors.get()}"
