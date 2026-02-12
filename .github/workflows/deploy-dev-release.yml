@@ -10,9 +10,9 @@ on:
         type: choice
         default: 'prerelease'
         options:
-          - prerelease    # 2025.3.2a13 -> 2025.3.2a14
-          - prepatch      # 2025.3.2 -> 2025.3.3a1
-          - preminor      # 2025.3.2 -> 2025.4.0a1
+          - prerelease    # 2025.3.2a13 -> 2025.3.2a14, 2026.1.1b1 -> 2026.1.1b2
+          - prepatch      # 2025.3.2a13 -> 2025.3.3a1, 2026.1.1b1 -> 2026.1.2b1
+          - preminor      # 2025.3.2a13 -> 2025.4.0a1, 2026.1.1b1 -> 2026.2.0b1
           - custom        # Use custom-version input
       custom-version:
         description: 'Custom version (only if bump-type is "custom", e.g., 2025.4.0b1)'
@@ -70,12 +70,13 @@ jobs:
             echo "Using custom version: $NEW_VERSION"
           else
             # Parse version components
-            # Handle versions like 2025.3.2a13 or 2025.3.2
-            if [[ $CURRENT_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(a([0-9]+))?$ ]]; then
+            # Handle versions like 2025.3.2a13, 2025.3.2b1, or 2025.3.2
+            if [[ $CURRENT_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)((a|b)([0-9]+))?$ ]]; then
               MAJOR="${BASH_REMATCH[1]}"
               MINOR="${BASH_REMATCH[2]}"
               PATCH="${BASH_REMATCH[3]}"
-              PRE_NUM="${BASH_REMATCH[5]:-0}"
+              PRE_TAG="${BASH_REMATCH[5]:-a}"
+              PRE_NUM="${BASH_REMATCH[6]:-0}"
             else
               echo "Error: Cannot parse version $CURRENT_VERSION"
               exit 1
@@ -84,15 +85,15 @@ jobs:
             case $BUMP_TYPE in
               prerelease)
                 NEW_PRE=$((PRE_NUM + 1))
-                NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}a${NEW_PRE}"
+                NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}${PRE_TAG}${NEW_PRE}"
                 ;;
               prepatch)
                 NEW_PATCH=$((PATCH + 1))
-                NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}a1"
+                NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}${PRE_TAG}1"
                 ;;
               preminor)
                 NEW_MINOR=$((MINOR + 1))
-                NEW_VERSION="${MAJOR}.${NEW_MINOR}.0a1"
+                NEW_VERSION="${MAJOR}.${NEW_MINOR}.0${PRE_TAG}1"
                 ;;
             esac
           fi
