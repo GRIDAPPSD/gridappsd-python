@@ -4,6 +4,12 @@ import time
 from gridappsd import GridAPPSD
 from gridappsd import topics
 
+try:
+    from importlib.metadata import version as _pkg_version
+    _STOMP_V8 = int(_pkg_version('stomp-py').split('.')[0]) >= 8
+except Exception:
+    _STOMP_V8 = False
+
 from cimgraph.databases import BlazegraphConnection
 from cimgraph.models import BusBranchModel
 
@@ -18,8 +24,13 @@ class FieldListener:
         self.ot_connection = ot_connection
         self.proxy_connection = proxy_connection
 
-    def on_message(self, headers, message):
+    def on_message(self, *args):
         "Receives messages coming from Proxy bus (e.g. ARTEMIS) and forwards to OT bus"
+        if _STOMP_V8:
+            frame = args[0]
+            headers, message = frame.headers, frame.body
+        else:
+            headers, message = args[0], args[1]
         try:
             print(f"Received message at Proxy. destination: {headers['destination']}, message: {headers}")
 

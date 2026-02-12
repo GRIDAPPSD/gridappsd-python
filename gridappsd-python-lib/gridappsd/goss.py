@@ -57,6 +57,7 @@ from enum import Enum
 from logging import Logger
 from queue import Queue
 
+import stomp as _stomp_module
 from stomp import Connection12 as Connection
 from stomp.exception import NotConnectedException
 from time import sleep
@@ -64,6 +65,15 @@ from time import sleep
 from gridappsd import json_extension as json
 
 _log: Logger = logging.getLogger(inspect.getmodulename(__file__))
+
+# stomp.py 8.x changed listener callbacks from (headers, body) to (frame)
+_stomp_major = int(getattr(_stomp_module, '__version__', (0,))[0]) if isinstance(getattr(_stomp_module, '__version__', None), tuple) else 0
+try:
+    from importlib.metadata import version as _pkg_version
+    _stomp_major = int(_pkg_version('stomp-py').split('.')[0])
+except Exception:
+    pass
+_STOMP_V8 = _stomp_major >= 8
 
 
 class GRIDAPPSD_ENV_ENUM(Enum):
@@ -182,7 +192,12 @@ class GOSS(object):
                 self._topic = topic
                 self.result_format = result_format
 
-            def on_message(self, header, message):
+            def on_message(self, *args):
+                if _STOMP_V8:
+                    frame = args[0]
+                    header, message = frame.headers, frame.body
+                else:
+                    header, message = args[0], args[1]
                 _log.debug("Internal on message is: {} {}".format(header, message))
                 try:
                     if self.result_format == "JSON":
@@ -195,12 +210,14 @@ class GOSS(object):
                 except ValueError:
                     self.response = dict(error="Invalid json returned", header=header, message=message)
 
-            def on_error(self, headers, message):
+            def on_error(self, *args):
+                if _STOMP_V8:
+                    frame = args[0]
+                    headers, message = frame.headers, frame.body
+                else:
+                    headers, message = args[0], args[1]
                 _log.error("ERR: {}".format(headers))
                 _log.error("OUR ERROR: {}".format(message))
-
-            def on_disconnect(self, header, message):
-                _log.debug("Disconnected")
 
         listener = ResponseListener(reply_to, self.result_format)
         self.subscribe(reply_to, listener)
@@ -314,17 +331,24 @@ class GOSS(object):
                     def get_token(self):
                         return self.__token
 
-                    def on_message(self, header, message):
+                    def on_message(self, *args):
+                        if _STOMP_V8:
+                            frame = args[0]
+                            header, message = frame.headers, frame.body
+                        else:
+                            header, message = args[0], args[1]
                         _log.debug("Internal on message is: {} {}".format(header, message))
 
                         self.__token = str(message)
 
-                    def on_error(self, headers, message):
+                    def on_error(self, *args):
+                        if _STOMP_V8:
+                            frame = args[0]
+                            headers, message = frame.headers, frame.body
+                        else:
+                            headers, message = args[0], args[1]
                         _log.error("ERR: {}".format(headers))
                         _log.error("OUR ERROR: {}".format(message))
-
-                    def on_disconnect(self, header, message):
-                        _log.debug("Disconnected")
 
                 # receive token and set token variable
                 # set callback
@@ -399,7 +423,12 @@ class CallbackRouter(object):
             except ValueError:
                 pass
 
-    def on_message(self, headers, message):
+    def on_message(self, *args):
+        if _STOMP_V8:
+            frame = args[0]
+            headers, message = frame.headers, frame.body
+        else:
+            headers, message = args[0], args[1]
         destination = headers["destination"]
         # _log.debug("Topic map keys are: {keys}".format(keys=self._topics_callback_map.keys()))
         if destination in self._topics_callback_map:
@@ -407,7 +436,12 @@ class CallbackRouter(object):
         else:
             _log.error("INVALID DESTINATION {destination}".format(destination=destination))
 
-    def on_error(self, header, message):
+    def on_error(self, *args):
+        if _STOMP_V8:
+            frame = args[0]
+            header, message = frame.headers, frame.body
+        else:
+            header, message = args[0], args[1]
         _log.error("Error in callback router")
         _log.error(header)
         _log.error(message)
