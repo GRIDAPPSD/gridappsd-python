@@ -19,7 +19,7 @@ dependencies = [
     "PyYAML>=6.0",
     "pytz>=2022.7",
     "dateutils>=0.6.7",
-    "stomp-py>=6.0.0",
+    "stomp-py==6.0.0",
     "requests>=2.28",
     "python-dotenv>=0.9",
     "loguru>=0.7",
