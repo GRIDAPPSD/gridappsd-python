@@ -1,11 +1,10 @@
-#import json
+# import json
 from gridappsd import topics, json_extension as json
 from typing import Optional
 
 
 class Query:
-    """ Class to create and execute request to query timeseries data
-    """
+    """Class to create and execute request to query timeseries data"""
 
     def __init__(self, measurement):
         self.queryMeasurement = measurement
@@ -14,7 +13,7 @@ class Query:
         self.key = None
 
     def select(self, *keys):
-        """ Defines what fields should be returned from the query.
+        """Defines what fields should be returned from the query.
 
         If this function is not called or is called without argument then
         all the fields are returned.
@@ -26,7 +25,7 @@ class Query:
         return self
 
     def first(self, n=Optional[int]):
-        """ Method to add request to return first or oldest data to the query.
+        """Method to add request to return first or oldest data to the query.
 
         When n is specified, query will return first or oldest 'n' rows.
 
@@ -37,7 +36,7 @@ class Query:
         return self
 
     def last(self, n=Optional[int]):
-        """ Method to add request to return last or latest data to the query.
+        """Method to add request to return last or latest data to the query.
 
         When n is specified, query will return last or latest 'n' rows.
 
@@ -48,7 +47,7 @@ class Query:
         return self
 
     def ge(self, value):
-        """ Method to add 'value greater than or equal to' filter to a key.
+        """Method to add 'value greater than or equal to' filter to a key.
 
         :param value:
         """
@@ -59,7 +58,7 @@ class Query:
         return self
 
     def le(self, value):
-        """ Method to add 'value less than or equal to' filter to a key.
+        """Method to add 'value less than or equal to' filter to a key.
 
         :param value:
         """
@@ -70,7 +69,7 @@ class Query:
         return self
 
     def eq(self, value):
-        """ Method to add 'value equal to' filter to a key.
+        """Method to add 'value equal to' filter to a key.
 
         :param value:
         """
@@ -81,7 +80,7 @@ class Query:
         return self
 
     def between(self, value1, value2):
-        """ Method to add 'value between' value1 and value2 filter to a key.
+        """Method to add 'value between' value1 and value2 filter to a key.
 
         :param value1: defines 'greater than equal to' filter for key's value
         :param value2: defines 'less than equal to' filter for key's value
@@ -100,6 +99,5 @@ class Query:
 
     def execute(self, gridappsd_obj):
         del self.key
-        response = gridappsd_obj.get_response(topics.REQUEST_TIMESERIES_DATA,
-                                              json.dumps(self.__dict__))
+        response = gridappsd_obj.get_response(topics.REQUEST_TIMESERIES_DATA, json.dumps(self.__dict__))
         return response

@@ -1,0 +1,41 @@
+# Ruff configuration for gridappsd-python
+# https://docs.astral.sh/ruff/
+
+line-length = 120
+
+[lint]
+# Rules to enable
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "W",    # pycodestyle warnings
+]
+
+# Rules to ignore for legacy code compatibility
+ignore = [
+    "E101",  # Mixed spaces and tabs (some files have this in multiline strings)
+    "E402",  # Module level import not at top of file
+    "E501",  # Line too long (legacy code has long strings/docstrings)
+    "E722",  # Do not use bare `except`
+    "F401",  # Imported but unused (needed for re-exports in __init__.py)
+    "F811",  # Redefinition of unused name
+    "F821",  # Undefined name (some legacy code patterns)
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided
+fixable = ["ALL"]
+unfixable = []
+
+[lint.per-file-ignores]
+# Allow unused imports in __init__.py files (re-exports)
+"__init__.py" = ["F401"]
+
+[format]
+# Use double quotes for strings
+quote-style = "double"
+
+# Indent with spaces
+indent-style = "space"
+
+# Unix-style line endings
+line-ending = "auto"

@@ -1,10 +1,12 @@
-import datetime, time
+import datetime
+import time
 from enum import Enum
 from typing import Optional
 
 from dateutil import parser
 import os
-try:    # python2.7
+
+try:  # python2.7
     from urlparse import urlparse
 except ImportError:
     from urllib.parse import urlparse
@@ -71,7 +73,7 @@ def get_gridappsd_address():
 
 
 def get_gridappsd_application_id():
-    """ Retrieve the application_id from the environment.
+    """Retrieve the application_id from the environment.
 
     In order to use this function an environmental variable `GRIDAPPSD_APPLICATION_ID`
     must have been set.  For docker containers this is done in the
@@ -85,7 +87,7 @@ def get_gridappsd_application_id():
 
 
 def get_gridappsd_simulation_id() -> Optional[str]:
-    """ Retrieve simulation_id from environment.
+    """Retrieve simulation_id from environment.
 
     This method will return a `None` if the GRIDAPPSD_SIMULATION_ID environmental
     variable is not set.

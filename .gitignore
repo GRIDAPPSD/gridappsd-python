@@ -111,3 +111,13 @@ ENV/
 .pytest_cache
 /gridappsd-python.code-workspace
 .qodo
+
+# pixi
+.pixi/
+pixi.lock
+
+# uv
+uv.lock
+
+# ruff
+.ruff_cache/

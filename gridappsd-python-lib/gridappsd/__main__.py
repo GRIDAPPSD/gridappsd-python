@@ -48,28 +48,30 @@ from dotenv import load_dotenv
 from pathlib import Path
 
 from gridappsd import GridAPPSD
+from gridappsd.simulation import Simulation
 
 assert sys.version_info >= (3, 10), "Minimum version is python 3.10"
 
-logging.basicConfig(stream=sys.stdout,
-                    level=logging.INFO,
-                    format="'%(asctime)s: %(name)-20s - %(levelname)-6s - %(message)s")
+logging.basicConfig(
+    stream=sys.stdout, level=logging.INFO, format="'%(asctime)s: %(name)-20s - %(levelname)-6s - %(message)s"
+)
 
-logging.getLogger('stomp.py').setLevel(logging.WARNING)
+logging.getLogger("stomp.py").setLevel(logging.WARNING)
 _log = logging.getLogger("gridappsd.__main__")
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     parser = ArgumentParser()
 
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-s",
-                       "--run-simulation",
-                       type=argparse.FileType('r'),
-                       help="Start running a simulation from a passed simulation file.")
-    group.add_argument("--env", required=False, type=str,
-                       default=".env",
-                       help="Load environment variables from a .env file.")
+    group.add_argument(
+        "-s",
+        "--run-simulation",
+        type=argparse.FileType("r"),
+        help="Start running a simulation from a passed simulation file.",
+    )
+    group.add_argument(
+        "--env", required=False, type=str, default=".env", help="Load environment variables from a .env file."
+    )
     opts = parser.parse_args()
 
     if opts.run_simulation:
@@ -91,8 +93,6 @@ if __name__ == '__main__':
         gappsd = GridAPPSD()
         run_args = yaml.safe_load(opts.run_simulation)
 
-        # if wanting to use the above next_timestep function use this
-        # instead of the one below.
-        # simulation = gappsd.run_simulation(run_args, next_timestep)
-        simulation = gappsd.run_simulation(run_args)
-        simulation.simulation_main_loop()
+        # Create and start the simulation
+        simulation = Simulation(gappsd, run_args)
+        simulation.start_simulation()

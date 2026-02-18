@@ -1,64 +1,33 @@
-[tool.poetry]
-name = "gridappsd-field-bus"
-version = "2025.6.0"
-description = "GridAPPS-D Field Bus Implementation"
-authors = [
-    "C. Allwardt <3979063+craig8@users.noreply.github.com>",
-    "P. Sharma <poorva.sharma@pnnl.gov",
-    "A. Fisher <andrew.fisher@pnnl.gov"
-]
-license = "BSD-3-Clause"
-
-repository = "https://github.com/GRIDAPPSD/gridappsd-python"
-homepage = "https://gridappsd.readthedocs.io"
-
-keywords = ["gridappsd", "grid", "activemq", "powergrid", "simulation", "library"]
-
-readme = "README.md"
-
-
-packages = [
-    { include = 'gridappsd_field_bus'}
-]
-
-
-[tool.poetry.dependencies]
-python = ">=3.10,<4.0"
-gridappsd-python = ">=2025.3.1a1"
-cim-graph = ">=0.2.2a4"
-click = "^8.1.8"
-
-[tool.poetry.scripts]
-# Add things in the form
-# myscript = 'my_package:main'
-start-field-bus-forwarder = 'gridappsd_field_bus.forwarder:start_forwarder'
-context_manager = 'gridappsd_field_bus.field_interface.context_managers.centralized_context_managers:_main'
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.4"
-pytest-html = "^3.1.1"
-mock = "^4.0.3"
-docker = "^4.4.4"
-yapf = "^0.32.0"
-pre-commit = "^4.1.0"
-
 [build-system]
-requires = ["poetry-core>=1.2.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.yapfignore]
-ignore_patterns = [
-    ".venv/**",
-    ".pytest_cache/**",
-    "dist/**",
-    "docs/**"
+[project]
+name = "gridappsd-field-bus"
+version = "2026.1.1b2"
+description = "GridAPPS-D Field Bus Implementation"
+readme = "README.md"
+license = "BSD-3-Clause"
+requires-python = ">=3.10,<4.0"
+authors = [
+    { name = "C. Allwardt", email = "3979063+craig8@users.noreply.github.com" },
+    { name = "P. Sharma", email = "poorva.sharma@pnnl.gov" },
+    { name = "A. Fisher", email = "andrew.fisher@pnnl.gov" },
+]
+keywords = ["gridappsd", "grid", "activemq", "powergrid", "simulation", "library"]
+dependencies = [
+    "gridappsd-python>=2025.3.1a1",
+    "cim-graph>=0.4.3a6",
+    "click>=8.1",
 ]
 
-[tool.yapf]
-based_on_style = "pep8"
-spaces_before_comment = 4
-column_limit = 99
-split_before_logical_operator = true
+[project.urls]
+Repository = "https://github.com/GRIDAPPSD/gridappsd-python"
+Homepage = "https://gridappsd.readthedocs.io"
 
-[tool.poetry.requires-plugins]
-poetry-plugin-export = ">=1.8"
+[project.scripts]
+start-field-bus-forwarder = "gridappsd_field_bus.forwarder:start_forwarder"
+context_manager = "gridappsd_field_bus.field_interface.context_managers.centralized_context_managers:_main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["gridappsd_field_bus"]

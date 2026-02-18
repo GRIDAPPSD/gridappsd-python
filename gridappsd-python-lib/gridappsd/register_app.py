@@ -8,11 +8,13 @@ from gridappsd import ApplicationController, GridAPPSD, utils, json_extension as
 
 def main():
     loglevel = logging.INFO
-    logging.basicConfig(stream=sys.stdout,
-                        level=loglevel,
-                        format="%(asctime)s - %(name)s;%(levelname)s|%(message)s",
-                        datefmt="%Y-%m-%d %H:%M:%S")
-    logging.getLogger('stomp.py').setLevel(logging.ERROR)
+    logging.basicConfig(
+        stream=sys.stdout,
+        level=loglevel,
+        format="%(asctime)s - %(name)s;%(levelname)s|%(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    logging.getLogger("stomp.py").setLevel(logging.ERROR)
     _log = logging.getLogger(__name__)
 
     problems = utils.validate_gridappsd_uri()
@@ -29,23 +31,22 @@ def main():
     config = {}
     with open("/appconfig") as fo:
         config = json.load(fo)
-    #config = json.loads(open("/appconfig").read())
+    # config = json.loads(open("/appconfig").read())
 
     if "id" not in config:
         _log.error("Invalid appconfig, must have a unique id set.")
         sys.exit(1)
 
-    os.environ['GRIDAPPSD_APPLICATION_ID'] = config['id']
+    os.environ["GRIDAPPSD_APPLICATION_ID"] = config["id"]
 
     appreg = None
     gap = None
     while True:
-
         try:
             if gap is None:
                 gap = GridAPPSD()
 
-        except ConnectionRefusedError:    # Python 3 specific error code
+        except ConnectionRefusedError:  # Python 3 specific error code
             _log.debug("Retry in 10 seconds")
             gap = appreg = None
             time.sleep(10)
@@ -70,7 +71,7 @@ def main():
                 try:
                     appreg = ApplicationController(config, gridappsd=gap)
                     appreg.register_app(end_app)
-                    _log.info('Application {} registered.'.format(config['id']))
+                    _log.info("Application {} registered.".format(config["id"]))
                 except:
                     _log.exception("An unhandled exception occured retrying app")
                     appreg = None

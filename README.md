@@ -1,276 +1,312 @@
-[![Run All Pytests](https://github.com/GRIDAPPSD/gridappsd-python/actions/workflows/run-pytest.yml/badge.svg)](https://github.com/GRIDAPPSD/gridappsd-python/actions/workflows/run-pytest.yml)
+[![CI](https://github.com/GRIDAPPSD/gridappsd-python/actions/workflows/ci.yml/badge.svg)](https://github.com/GRIDAPPSD/gridappsd-python/actions/workflows/ci.yml)
 
 # gridappsd-python
-Python library for developing applications and services against the gridappsd api
+
+Python library for developing applications and services against the GridAPPS-D API.
 
 ## Requirements
 
-The gridappsd-python library requires a  python version >= 3.6 and < 4 in order to work properly (Note no testing
-has been done with python 4 to date).
+- Python >= 3.10, < 4.0
+- [Pixi](https://pixi.sh) (for development)
 
 ## Installation
 
-The recommended installation of `gridappsd-python` is in a separate virtual environment.  Executing the following
-will create an environment called `griddapps-env`.
+### Stable Releases (PyPI)
 
-```shell
-python3 -m venv gridappsd-env
-```
-
-Sourcing the gridappsd-env activates the newly created python environment.
-
-```shell
-source gridappsd-env/bin/activate
-```
-
-Upgrade pip to the latest (some packages require 19.0+ version of pip).
-
-```shell
-python -m pip install pip --upgrade
-```
-
-Install the latest `gridappsd-python` and its dependencies in the virtual environment.
+Install the latest stable release from PyPI:
 
 ```shell
 pip install gridappsd-python
 ```
 
-### Verifying things are working properly
+### Development Releases (GitHub)
 
-The following code snippet assumes you have created a gridappsd instance using the steps in
-https://github.com/GRIDAPPSD/gridappsd-docker.
+Development releases are published to GitHub Releases (not PyPI). To install a development version:
 
-Create a test script (tester.py) with the following content.
+```shell
+# Install a specific dev release directly from GitHub
+pip install https://github.com/GRIDAPPSD/gridappsd-python/releases/download/v2025.3.2a14/gridappsd_python-2025.3.2a14-py3-none-any.whl
+
+# Or install from a specific git tag
+pip install git+https://github.com/GRIDAPPSD/gridappsd-python.git@v2025.3.2a14#subdirectory=gridappsd-python-lib
+
+# Or install the latest from the develop branch
+pip install git+https://github.com/GRIDAPPSD/gridappsd-python.git@develop#subdirectory=gridappsd-python-lib
+```
+
+Browse available releases at: https://github.com/GRIDAPPSD/gridappsd-python/releases
+
+For detailed instructions on adding `gridappsd-python` to your project using `requirements.txt`, `pyproject.toml`, or `pixi.toml`, see the [Installation Guide](docs/INSTALLATION.md).
+
+### For Developers
+
+This project uses [Pixi](https://pixi.sh) for development environment and task management.
+
+#### Install Pixi
+
+```shell
+curl -fsSL https://pixi.sh/install.sh | bash
+```
+
+#### Clone and Setup
+
+```shell
+git clone https://github.com/GRIDAPPSD/gridappsd-python -b develop
+cd gridappsd-python
+
+# Install all dependencies and create the development environment
+pixi install
+
+# Verify installation
+pixi run test
+```
+
+#### Available Tasks
+
+```shell
+# List all available tasks
+pixi task list
+
+# Run tests
+pixi run test              # Run main library tests
+pixi run test-field-bus    # Run field bus tests
+pixi run test-all          # Run all tests
+pixi run test-cov          # Run tests with coverage
+
+# Code quality
+pixi run lint              # Run linter (ruff)
+pixi run lint-fix          # Auto-fix lint issues
+pixi run format            # Format code (ruff)
+pixi run format-check      # Check formatting
+pixi run typecheck         # Run type checker (mypy)
+pixi run check             # Run all quality checks
+
+# Building
+pixi run build             # Build all packages
+pixi run build-lib         # Build main library only
+pixi run build-field-bus   # Build field bus library only
+
+# CI workflows
+pixi run ci                # Run full CI pipeline (lint + typecheck + tests)
+pixi run release           # Full release workflow
+
+# Docker (for integration testing)
+pixi run docker-up         # Start GridAPPS-D containers
+pixi run docker-down       # Stop containers
+pixi run docker-logs       # Follow container logs
+
+# Utilities
+pixi run clean             # Clean build artifacts
+pixi run pre-commit-install # Install pre-commit hooks
+```
+
+#### Testing with Different Python Versions
+
+The project supports Python 3.10 through 3.14. You can run tests against specific versions:
+
+```shell
+pixi run -e py310 test     # Test with Python 3.10
+pixi run -e py311 test     # Test with Python 3.11
+pixi run -e py312 test     # Test with Python 3.12
+pixi run -e py313 test     # Test with Python 3.13
+pixi run -e py314 test     # Test with Python 3.14
+```
+
+## Quick Start
+
+The following code snippet assumes you have a GridAPPS-D instance running using
+[gridappsd-docker](https://github.com/GRIDAPPSD/gridappsd-docker).
 
 ```python
-
 from gridappsd import GridAPPSD
 
 def on_message_callback(header, message):
     print(f"header: {header} message: {message}")
 
-# Note these should be changed on the server in a cyber secure environment!
+# Note: credentials should be changed in a production environment!
 username = "app_user"
 password = "1234App"
 
-# Note: there are other parameters for connecting to
-# systems other than localhost
+# Connect to GridAPPS-D (defaults to localhost)
 gapps = GridAPPSD(username=username, password=password)
 
 assert gapps.connected
 
 gapps.send('send.topic', {"foo": "bar"})
 
-# Note we are sending the function not executing the function in the second parameter
+# Subscribe to a topic (pass the function, don't call it)
 gapps.subscribe('subscribe.topic', on_message_callback)
 
-gapps.send('subcribe.topic', 'A message about subscription')
+gapps.send('subscribe.topic', 'A message about subscription')
 
+import time
 time.sleep(5)
 
 gapps.close()
-
 ```
 
-Start up the gridappsd-docker enabled platform.  Then run the following to execute the tester.py script
+## Docker
+
+### Running the GridAPPS-D Platform
+
+The `docker-up` task clones and runs [gridappsd-docker](https://github.com/GRIDAPPSD/gridappsd-docker), which starts the **full GridAPPS-D platform** (including Blazegraph, MySQL, and all services):
 
 ```shell
-python tester.py
+# Start the full GridAPPS-D platform
+pixi run docker-up
+
+# View logs
+pixi run docker-logs
+
+# Stop the platform
+pixi run docker-down
 ```
+
+This is useful for integration testing your applications against a real GridAPPS-D instance.
+
+### Client Application Base Image
+
+We publish a **client base image** (`gridappsd/gridappsd-python`) for building containerized GridAPPS-D applications. This image is NOT the platform itself - it's a Python environment with `gridappsd-python` pre-installed.
+
+**Available tags:**
+
+| Tag | Description |
+|-----|-------------|
+| `latest` | Latest stable release (Python 3.12) |
+| `develop` | Latest development release (Python 3.12) |
+| `<version>` | Specific version (e.g., `2025.4.0`) |
+| `<version>-py310` | Specific version with Python 3.10 |
+| `<version>-py311` | Specific version with Python 3.11 |
+| `<version>-py312` | Specific version with Python 3.12 |
+
+**Example: Building a Client Application**
+
+Create a `Dockerfile` for your application:
+
+```dockerfile
+FROM gridappsd/gridappsd-python:latest
+
+# Install additional dependencies
+COPY requirements.txt /app/
+RUN pip install -r /app/requirements.txt
+
+# Copy your application
+COPY my_app.py /app/
+
+CMD ["python", "/app/my_app.py"]
+```
+
+Build and run alongside the GridAPPS-D platform:
+
+```shell
+# Build your app
+docker build -t my-gridappsd-app .
+
+# Start GridAPPS-D platform (if not already running)
+pixi run docker-up
+
+# Run your app on the same network
+docker run --rm --network gridappsd-docker_default \
+  -e GRIDAPPSD_ADDRESS=gridappsd \
+  my-gridappsd-app
+```
+
+See also: [DOCKER_CONTAINER.md](DOCKER_CONTAINER.md) for more details.
 
 ## Application Developers
 
-### Deployment
-
-Please see [DOCKER_CONTAINER.md](DOCKER_CONTAINER.md) for working within the docker application base container.
-
 ### Local Development
 
-Developing applications against gridappsd using the `gridappsd-python` library should follow the same steps
-as above, however with a couple of environmental variables specified.  The following environmental variables are
-available to provide the same context that would be available from inside the application docker container.  These
-are useful to know for developing your application outside of the docker context (e.g. in a python notebook).
-
-***NOTE: you can also define these your ~./bashrc file so you don't have to specify them all the time***
+When developing applications locally (outside of Docker), set these environment variables:
 
 ```shell
-# export allows all processes started by this shell to have access to the global variable
-
-# address where the gridappsd server is running - default localhost
+# Address where the GridAPPS-D server is running (default: localhost)
 export GRIDAPPSD_ADDRESS=localhost
 
-# port to connect to on the gridappsd server (the stomp client port)
+# STOMP client port (default: 61613)
 export GRIDAPPSD_PORT=61613
 
-# username to connect to the gridappsd server
+# Credentials
 export GRIDAPPSD_USER=app_user
-
-# password to connect to the gridappsd server
 export GRIDAPPSD_PASSWORD=1234App
-
-# Note these should be changed on the server in a cyber secure environment!
 ```
 
-The following is the same tester code as above, but with the environment variables set.  The environment variables
-should be set in your environment when running the application inside our docker container.
+With environment variables set, you can connect without explicit credentials:
 
 ```python
-
 from gridappsd import GridAPPSD
 
 def on_message_callback(header, message):
     print(f"header: {header} message: {message}")
 
-# Create GridAPPSD object and connect to the gridappsd server.
+# Connect using environment variables
 gapps = GridAPPSD()
 
 assert gapps.connected
 
 gapps.send('send.topic', {"foo": "bar"})
-
-# Note we are sending the function not executing the function in the second parameter
 gapps.subscribe('subscribe.topic', on_message_callback)
+gapps.send('subscribe.topic', 'A message about subscription')
 
-gapps.send('subcribe.topic', 'A message about subscription')
-
+import time
 time.sleep(5)
 
 gapps.close()
-
 ```
-
-## Developers
-
-This project uses poetry to build the environment for execution.  Follow the instructions
-https://python-poetry.org/docs/#installation to install poetry.  As a developer I prefer not to have poetry installed
-in the same virtual environment that my projects are in.
-
-Clone the github repository:
-
-```shell
-git clone https://github.com/GRIDAPPSD/gridappsd-python -b develop
-cd gridappsd-python
-```
-
-The following commands build and install a local wheel into an environment created just for this package.
-
-```shell
-# Build the project (stores in dist directory both .tar.gz and .whl file)
-poetry build
-
-# Install the wheel into the environment and the dev dependencies
-poetry install
-
-# Install only the library dependencies
-poetry install --no-dev
-```
-
-***Note:*** Poetry does not have a setup.py that you can install in editable mode like with pip install -e ., however
-you can extract the generated setup.py file from the built tar.gz file in the dist directory.  Just extract the
-.tar.gz file and copy the setup.py file from the extracted directory to the root of gridappsd-python.  Then you can
-enable editing through pip install -e. as normal.
-
 
 ## Testing
 
-Testing has become an integral part of the software lifecycle.  The `gridappsd-python` library has both unit and
-integration tests available to be run.  In order to execute these, you must have installed the gridappsd-python library
-as above with dev-dependencies.
+### Running Tests
 
-During the testing phase the docker containers required for the tests are downloaded from
-dockerhub and started.  By default the `develop` tag is used to test the library using pytest.
-One can customize the docker image tag by setting the environmental
-variable `GRIDAPPSD_TAG_ENV` either by `export GRIDAPPSD_TAG_ENV=other_tag` or by executing
-pytest with the following:
+```shell
+# Run all tests
+pixi run test-all
 
-```shell script
-
-# Export environmental variables and all tests will use the same tag (other_tag) to pull from docker hub.
-# Default tag is develop
-export GRIDAPPSD_TAG_ENV=other_tag
-pytest
-
-# Tests also require the username and password to be avaialable as environmental variables
-# in order for them to properly run these tests
-export GRIDAPPSD_USER=user
-export GRIDAPPSD_PASSWORD=pass
-
-pytest
+# Run with coverage
+pixi run test-cov
 ```
 
- ***NOTE: the first running the tests will download all of the docker images associated with the
- [GOSS-GridAPPS-D](http://github.com/GRIDAPPSD/GOSS-GridAPPS-D) repository.  This process may take some time.***
+### Environment Variables for Testing
 
-### Running tests created in a new project
+```shell
+# Docker image tag to use (default: develop)
+export GRIDAPPSD_TAG_ENV=develop
 
-The `gridappsd-python` library exposes a testing environment through the `gridappsd.docker_handler` module.  Including the following
-`conftest.py` in the root of your base test directory allows tests to reference these.  Using these fixtures will start all of the
-base containers required for `gridappsd` to run.
+# Credentials for integration tests
+export GRIDAPPSD_USER=system
+export GRIDAPPSD_PASSWORD=manager
+```
+
+**Note:** The first test run will download Docker images from [GOSS-GridAPPS-D](http://github.com/GRIDAPPSD/GOSS-GridAPPS-D). This may take some time.
+
+### Using Test Fixtures in Your Project
+
+The `gridappsd-python` library provides testing fixtures through `gridappsd.docker_handler`. Create a `conftest.py` in your test directory:
 
 ```python
-
 # conftest.py
-# Create a conftest.py file in the root of the tests directory to enable usage throughout the tests directory and below.
-#
-# Tested project structure an layout
-#
-# project-folder\
-#   mainmodule\
-#     __init__.py
-#     myapplication.py
-#   tests\
-#     conftest.py
-#     test_myapplication.py
-#   README.md
-
 import logging
 import os
 import sys
 
 import pytest
-
 from gridappsd import GridAPPSD, GOSS
-from gridappsd.docker_handler import run_dependency_containers, run_gridappsd_container, Containers
+from gridappsd.docker_handler import run_dependency_containers, run_gridappsd_container
 
-levels = dict(
-    CRITICAL=50,
-    FATAL=50,
-    ERROR=40,
-    WARNING=30,
-    WARN=30,
-    INFO=20,
-    DEBUG=10,
-    NOTSET=0
-)
-
-# Get string representation of the log level passed
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
-
-# Make sure the level passed is one of the valid levels.
-if LOG_LEVEL not in levels.keys():
-    raise AttributeError("Invalid LOG_LEVEL environmental variable set.")
-
-# Set the numeric version of log level to pass to the basicConfig function
-LOG_LEVEL = levels[LOG_LEVEL]
-
-logging.basicConfig(stream=sys.stdout, level=LOG_LEVEL,
-                    format="%(asctime)s|%(levelname)s|%(name)s|%(message)s")
-logging.getLogger("urllib3.connectionpool").setLevel(logging.INFO)
-logging.getLogger("docker.utils.config").setLevel(logging.INFO)
-logging.getLogger("docker.auth").setLevel(logging.INFO)
-
+logging.basicConfig(
+    stream=sys.stdout,
+    level=getattr(logging, LOG_LEVEL),
+    format="%(asctime)s|%(levelname)s|%(name)s|%(message)s"
+)
 
 STOP_CONTAINER_AFTER_TEST = os.environ.get('GRIDAPPSD_STOP_CONTAINERS_AFTER_TESTS', True)
 
 
 @pytest.fixture(scope="module")
 def docker_dependencies():
-    print("Docker dependencies")
-    # Containers.reset_all_containers()
-
     with run_dependency_containers(stop_after=STOP_CONTAINER_AFTER_TEST) as dep:
         yield dep
-    print("Cleanup docker dependencies")
 
 
 @pytest.fixture
@@ -279,8 +315,7 @@ def gridappsd_client(request, docker_dependencies):
         gappsd = GridAPPSD()
         gappsd.connect()
         assert gappsd.connected
-        models = gappsd.query_model_names()
-        assert models is not None
+
         if request.cls is not None:
             request.cls.gridappsd_client = gappsd
         yield gappsd
@@ -294,34 +329,41 @@ def goss_client(docker_dependencies):
         goss = GOSS()
         goss.connect()
         assert goss.connected
-
         yield goss
-
 ```
 
-Using the above fixtures from inside a test module and test function looks like the following:
+Example test using the fixtures:
 
 ```python
+import os
+from unittest import mock
+from gridappsd import ProcessStatusEnum
 
-# Example test function using the gridappsd_client fixture
-
-@mock.patch.dict(os.environ, {"GRIDAPPSD_APPLICATION_ID": "helics_goss_bridge.py"})
+@mock.patch.dict(os.environ, {"GRIDAPPSD_APPLICATION_ID": "my_app.py"})
 def test_gridappsd_status(gridappsd_client):
     gappsd = gridappsd_client
-    assert "helics_goss_bridge.py" == gappsd.get_application_id()
+    assert "my_app.py" == gappsd.get_application_id()
     assert gappsd.get_application_status() == ProcessStatusEnum.STARTING.value
-    assert gappsd.get_service_status() == ProcessStatusEnum.STARTING.value
+
     gappsd.set_application_status("RUNNING")
-
-    assert gappsd.get_service_status() == ProcessStatusEnum.RUNNING.value
     assert gappsd.get_application_status() == ProcessStatusEnum.RUNNING.value
-
-    gappsd.set_service_status("COMPLETE")
-    assert gappsd.get_service_status() == ProcessStatusEnum.COMPLETE.value
-    assert gappsd.get_application_status() == ProcessStatusEnum.COMPLETE.value
-
-    # Invalid
-    gappsd.set_service_status("Foo")
-    assert gappsd.get_service_status() == ProcessStatusEnum.COMPLETE.value
-    assert gappsd.get_application_status() == ProcessStatusEnum.COMPLETE.value
 ```
+
+## Project Structure
+
+```
+gridappsd-python/
+├── gridappsd-python-lib/     # Main library
+│   ├── gridappsd/            # Source code
+│   └── tests/                # Tests
+├── gridappsd-field-bus-lib/  # Field bus library
+│   ├── gridappsd_field_bus/  # Source code
+│   └── tests/                # Tests
+├── pixi.toml                 # Pixi configuration
+├── pixi.lock                 # Lock file
+└── .github/workflows/        # CI workflows
+```
+
+## License
+
+BSD-3-Clause

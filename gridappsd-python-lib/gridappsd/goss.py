@@ -42,9 +42,11 @@ Created on March 1, 2018
 
 @author: Craig Allwardt
 """
+
 import base64
 import inspect
-#import json
+
+# import json
 import logging
 import os
 import random
@@ -55,6 +57,7 @@ from enum import Enum
 from logging import Logger
 from queue import Queue
 
+import stomp as _stomp_module
 from stomp import Connection12 as Connection
 from stomp.exception import NotConnectedException
 from time import sleep
@@ -62,6 +65,20 @@ from time import sleep
 from gridappsd import json_extension as json
 
 _log: Logger = logging.getLogger(inspect.getmodulename(__file__))
+
+# stomp.py 8.x changed listener callbacks from (headers, body) to (frame)
+_stomp_major = (
+    int(getattr(_stomp_module, "__version__", (0,))[0])
+    if isinstance(getattr(_stomp_module, "__version__", None), tuple)
+    else 0
+)
+try:
+    from importlib.metadata import version as _pkg_version
+
+    _stomp_major = int(_pkg_version("stomp-py").split(".")[0])
+except Exception:
+    pass
+_STOMP_V8 = _stomp_major >= 8
 
 
 class GRIDAPPSD_ENV_ENUM(Enum):
@@ -78,22 +95,22 @@ class TimeoutError(Exception):
 
 
 class GOSS(object):
-    """ Base class providing connections to a GOSS instance via stomp protocol
-    """
+    """Base class providing connections to a GOSS instance via stomp protocol"""
 
-    def __init__(self,
-                 username=None,
-                 password=None,
-                 stomp_address='localhost',
-                 stomp_port='61613',
-                 attempt_connection=True,
-                 override_threading=None,
-                 stomp_log_level=logging.WARNING,
-                 goss_log_level=logging.INFO,
-                 use_auth_token=True):
-
-        logging.getLogger('stomp.py').setLevel(stomp_log_level)
-        logging.getLogger('goss').setLevel(goss_log_level)
+    def __init__(
+        self,
+        username=None,
+        password=None,
+        stomp_address="localhost",
+        stomp_port="61613",
+        attempt_connection=True,
+        override_threading=None,
+        stomp_log_level=logging.WARNING,
+        goss_log_level=logging.INFO,
+        use_auth_token=True,
+    ):
+        logging.getLogger("stomp.py").setLevel(stomp_log_level)
+        logging.getLogger("goss").setLevel(goss_log_level)
 
         self.__user__ = username
         self.__pass__ = password
@@ -154,12 +171,9 @@ class GOSS(object):
         if isinstance(message, list) or isinstance(message, dict):
             message = json.dumps(message)
         _log.debug("Sending topic: {} body: {}".format(topic, message))
-        self._conn.send(body=message,
-                        destination=topic,
-                        headers={
-                            'GOSS_HAS_SUBJECT': True,
-                            'GOSS_SUBJECT': self.__token
-                        })
+        self._conn.send(
+            body=message, destination=topic, headers={"GOSS_HAS_SUBJECT": True, "GOSS_SUBJECT": self.__token}
+        )
 
     def get_response(self, topic, message, timeout=5):
         id = datetime.now().strftime("%Y%m%d%h%M%S%f")[:-3]
@@ -168,8 +182,8 @@ class GOSS(object):
         if isinstance(message, str):
             message = json.loads(message)
 
-        if 'resultFormat' in message:
-            self.result_format = message['resultFormat']
+        if "resultFormat" in message:
+            self.result_format = message["resultFormat"]
 
         # Change message to string if we have a dictionary.
         if isinstance(message, dict):
@@ -178,17 +192,20 @@ class GOSS(object):
             message = json.dumps(message)
 
         class ResponseListener(object):
-
             def __init__(self, topic, result_format):
                 self.response = None
                 self._topic = topic
                 self.result_format = result_format
 
-            def on_message(self, header, message):
-
+            def on_message(self, *args):
+                if _STOMP_V8:
+                    frame = args[0]
+                    header, message = frame.headers, frame.body
+                else:
+                    header, message = args[0], args[1]
                 _log.debug("Internal on message is: {} {}".format(header, message))
                 try:
-                    if self.result_format == 'JSON':
+                    if self.result_format == "JSON":
                         if isinstance(message, dict):
                             self.response = message
                         else:
@@ -196,27 +213,25 @@ class GOSS(object):
                     else:
                         self.response = message
                 except ValueError:
-                    self.response = dict(error="Invalid json returned",
-                                         header=header,
-                                         message=message)
+                    self.response = dict(error="Invalid json returned", header=header, message=message)
 
-            def on_error(self, headers, message):
+            def on_error(self, *args):
+                if _STOMP_V8:
+                    frame = args[0]
+                    headers, message = frame.headers, frame.body
+                else:
+                    headers, message = args[0], args[1]
                 _log.error("ERR: {}".format(headers))
                 _log.error("OUR ERROR: {}".format(message))
-
-            def on_disconnect(self, header, message):
-                _log.debug("Disconnected")
 
         listener = ResponseListener(reply_to, self.result_format)
         self.subscribe(reply_to, listener)
 
-        self._conn.send(body=message,
-                        destination=topic,
-                        headers={
-                            'reply-to': reply_to,
-                            'GOSS_HAS_SUBJECT': True,
-                            'GOSS_SUBJECT': self.__token
-                        })
+        self._conn.send(
+            body=message,
+            destination=topic,
+            headers={"reply-to": reply_to, "GOSS_HAS_SUBJECT": True, "GOSS_SUBJECT": self.__token},
+        )
         count = 0
 
         while count < timeout:
@@ -255,8 +270,8 @@ class GOSS(object):
 
         self._make_connection()
 
-        if self._conn.get_listener('gridappsd') is None:
-            self._conn.set_listener('gridappsd', self._router_callback)
+        if self._conn.get_listener("gridappsd") is None:
+            self._conn.set_listener("gridappsd", self._router_callback)
 
         if callable(callback):
             self._router_callback.add_callback(topic, callback)
@@ -265,13 +280,12 @@ class GOSS(object):
             #                         CallbackWrapperListener(callback, conn_id))
         else:
             # Case where the callback is (supposedly) a class.
-            if not hasattr(callback, 'on_message'):
+            if not hasattr(callback, "on_message"):
                 m = "The given callback must have an 'on_message' method!"
                 raise AttributeError(m)
 
             if not callable(callback.on_message):
-                m = "The given callback's 'on_message' attribute must be " \
-                    "callable!"
+                m = "The given callback's 'on_message' attribute must be callable!"
                 raise TypeError(m)
 
             # Fix for https://github.com/GRIDAPPSD/GOSS-GridAPPS-D/issues/1072
@@ -284,7 +298,7 @@ class GOSS(object):
             #                         CallbackWrapperListener(callback.on_message, conn_id))
 
         _log.debug("Subscribing to {topic}".format(topic=topic))
-        self._conn.subscribe(destination=topic, ack='auto', id=conn_id)
+        self._conn.subscribe(destination=topic, ack="auto", id=conn_id)
 
         return conn_id
 
@@ -295,7 +309,6 @@ class GOSS(object):
         if self._conn is None or not self._conn.is_connected():
             _log.debug("Creating connection")
             if self.use_auth_token is True and not self.__token:
-
                 # get token
                 # get initial connection
                 dt = datetime.now()
@@ -309,41 +322,47 @@ class GOSS(object):
                 # send request to token topic
                 tokenTopic = "/topic/pnnl.goss.token.topic"
 
-                tmpConn = Connection([(self.stomp_address, self.stomp_port)], heartbeats=(self._heartbeat, self._heartbeat))
+                tmpConn = Connection(
+                    [(self.stomp_address, self.stomp_port)], heartbeats=(self._heartbeat, self._heartbeat)
+                )
                 if self._override_thread_fc is not None:
                     tmpConn.transport.override_threading(self._override_thread_fc)
                 tmpConn.connect(self.__user__, self.__pass__, wait=True)
 
-                class TokenResponseListener():
-
+                class TokenResponseListener:
                     def __init__(self):
                         self.__token = None
 
                     def get_token(self):
                         return self.__token
 
-                    def on_message(self, header, message):
+                    def on_message(self, *args):
+                        if _STOMP_V8:
+                            frame = args[0]
+                            header, message = frame.headers, frame.body
+                        else:
+                            header, message = args[0], args[1]
                         _log.debug("Internal on message is: {} {}".format(header, message))
 
                         self.__token = str(message)
 
-                    def on_error(self, headers, message):
+                    def on_error(self, *args):
+                        if _STOMP_V8:
+                            frame = args[0]
+                            headers, message = frame.headers, frame.body
+                        else:
+                            headers, message = args[0], args[1]
                         _log.error("ERR: {}".format(headers))
                         _log.error("OUR ERROR: {}".format(message))
-
-                    def on_disconnect(self, header, message):
-                        _log.debug("Disconnected")
 
                 # receive token and set token variable
                 # set callback
                 listener = TokenResponseListener()
 
                 # self.subscribe(replyDest, listener)
-                tmpConn.subscribe('/queue/' + replyDest, 123)
-                tmpConn.set_listener('token_resp', listener)
-                tmpConn.send(body=base64Str,
-                             destination=tokenTopic,
-                             headers={'reply-to': replyDest})
+                tmpConn.subscribe("/queue/" + replyDest, 123)
+                tmpConn.set_listener("token_resp", listener)
+                tmpConn.send(body=base64Str, destination=tokenTopic, headers={"reply-to": replyDest})
                 # while token is null or for x iterations
                 iter = 0
                 while not self.__token and iter < 10:
@@ -352,14 +371,16 @@ class GOSS(object):
                     sleep(1)
                     iter += 1
 
-            self._conn = Connection([(self.stomp_address, self.stomp_port)], heartbeats=(self._heartbeat, self._heartbeat))
+            self._conn = Connection(
+                [(self.stomp_address, self.stomp_port)], heartbeats=(self._heartbeat, self._heartbeat)
+            )
             if self._override_thread_fc is not None:
                 self._conn.transport.override_threading(self._override_thread_fc)
             try:
                 if self.use_auth_token and self.__token is not None:
                     self._conn.connect(self.__token, "", wait=True)
                 else:
-                    self._conn.connect(self.__user__,self.__pass__, wait=True)
+                    self._conn.connect(self.__user__, self.__pass__, wait=True)
             except TypeError as e:
                 _log.error("TypeError: {e}".format(e=e))
             except NotConnectedException as e:
@@ -369,7 +390,6 @@ class GOSS(object):
 
 
 class CallbackRouter(object):
-
     def __init__(self):
         self.callbacks = {}
         self._topics_callback_map = defaultdict(list)
@@ -393,7 +413,7 @@ class CallbackRouter(object):
             sleep(0.01)
 
     def add_callback(self, topic, callback):
-        if not topic.startswith('/topic/') and not topic.startswith('/temp-queue/'):
+        if not topic.startswith("/topic/") and not topic.startswith("/temp-queue/"):
             topic = "/queue/{topic}".format(topic=topic)
         if callback in self._topics_callback_map[topic]:
             raise ValueError("Callbacks can only be used one time per topic")
@@ -408,26 +428,31 @@ class CallbackRouter(object):
             except ValueError:
                 pass
 
-    def on_message(self, headers, message):
-        destination = headers['destination']
+    def on_message(self, *args):
+        if _STOMP_V8:
+            frame = args[0]
+            headers, message = frame.headers, frame.body
+        else:
+            headers, message = args[0], args[1]
+        destination = headers["destination"]
         # _log.debug("Topic map keys are: {keys}".format(keys=self._topics_callback_map.keys()))
         if destination in self._topics_callback_map:
             self._queue_callerback.put((self._topics_callback_map[destination], headers, message))
         else:
             _log.error("INVALID DESTINATION {destination}".format(destination=destination))
 
-    def on_error(self, header, message):
-        _log.error("Error in callback router")
-        _log.error(header)
-        _log.error(message)
-
-    def on_error(self, header, message):
+    def on_error(self, *args):
+        if _STOMP_V8:
+            frame = args[0]
+            header, message = frame.headers, frame.body
+        else:
+            header, message = args[0], args[1]
         _log.error("Error in callback router")
         _log.error(header)
         _log.error(message)
 
     def on_heartbeat_timeout(self):
         _log.error("Heartbeat timeout")
-        
+
     def on_disconnected(self):
         _log.info("Disconnected")
