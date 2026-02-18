@@ -84,8 +84,8 @@ py314 = { features = ["dev", "py314"], solve-group = "py314" }
 # ──────────────────────────────────────────────────────────────────────────────
 # Testing
 # ──────────────────────────────────────────────────────────────────────────────
-test = { cmd = "pytest gridappsd-python-lib/tests -v", description = "Run main library tests" }
-test-cov = { cmd = "pytest gridappsd-python-lib/tests -v --cov=gridappsd --cov-report=term-missing --cov-report=html", description = "Run tests with coverage" }
+test = { cmd = "pytest gridappsd-python-lib/tests -v -m 'not integration'", description = "Run main library tests" }
+test-cov = { cmd = "pytest gridappsd-python-lib/tests -v -m 'not integration' --cov=gridappsd --cov-report=term-missing --cov-report=html", description = "Run tests with coverage" }
 test-field-bus = { cmd = "pytest gridappsd-field-bus-lib/tests -v", description = "Run field bus tests" }
 test-all = { depends-on = ["test", "test-field-bus"], description = "Run all tests" }
 test-integration = { cmd = "pytest gridappsd-python-lib/tests -v -m integration", description = "Run integration tests only" }
