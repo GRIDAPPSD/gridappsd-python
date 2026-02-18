@@ -6,7 +6,8 @@ from gridappsd import topics
 
 try:
     from importlib.metadata import version as _pkg_version
-    _STOMP_V8 = int(_pkg_version('stomp-py').split('.')[0]) >= 8
+
+    _STOMP_V8 = int(_pkg_version("stomp-py").split(".")[0]) >= 8
 except Exception:
     _STOMP_V8 = False
 
