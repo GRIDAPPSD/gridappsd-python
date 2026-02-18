@@ -67,10 +67,15 @@ from gridappsd import json_extension as json
 _log: Logger = logging.getLogger(inspect.getmodulename(__file__))
 
 # stomp.py 8.x changed listener callbacks from (headers, body) to (frame)
-_stomp_major = int(getattr(_stomp_module, '__version__', (0,))[0]) if isinstance(getattr(_stomp_module, '__version__', None), tuple) else 0
+_stomp_major = (
+    int(getattr(_stomp_module, "__version__", (0,))[0])
+    if isinstance(getattr(_stomp_module, "__version__", None), tuple)
+    else 0
+)
 try:
     from importlib.metadata import version as _pkg_version
-    _stomp_major = int(_pkg_version('stomp-py').split('.')[0])
+
+    _stomp_major = int(_pkg_version("stomp-py").split(".")[0])
 except Exception:
     pass
 _STOMP_V8 = _stomp_major >= 8
