@@ -103,8 +103,9 @@ class FieldProxyForwarder:
         self.network.get_all_edges(cim.Substation)
 
         for substation in self.network.graph.get(cim.Substation, {}).values():
-            print(f"Subscribing to Substation: /topic/goss.gridappsd.field.{substation.mRID}")
-            self.ot_connection.subscribe("/topic/goss.gridappsd.field." + substation.mRID, self.on_message_from_ot)
+            mrid = substation.mRID  # type: ignore[attr-defined]
+            print(f"Subscribing to Substation: /topic/goss.gridappsd.field.{mrid}")
+            self.ot_connection.subscribe("/topic/goss.gridappsd.field." + mrid, self.on_message_from_ot)
 
         # self.ot_connection.subscribe(topics.BASE_FIELD_TOPIC, self.on_message_from_ot)
 

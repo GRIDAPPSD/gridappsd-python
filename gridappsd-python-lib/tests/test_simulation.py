@@ -24,6 +24,7 @@ def createGadObject():
        os.environ['GRIDAPPSD_PASSWORD'] = 'manager'
    return GridAPPSD()
 
+@pytest.mark.integration
 def test_createSimulations(createGadObject):
    gadObj = createGadObject
    response = gadObj.query_model_info()
