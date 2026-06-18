@@ -58,11 +58,22 @@ class ModelCreationConfig(ConfigBase):
 class SimulationArgs(ConfigBase):
     start_time: str = field(default="1655321830")
     duration: str = field(default="300")
-    publish_period: str = field(default="60")
-    interval: str = field(default="60")
+    publish_period: str = field(default=None)
+    interval: str = field(default=None)
     run_realtime: bool = field(default=True)
     pause_after_measurements: bool = field(default=False)
     simulation_name: str = field(default="ieee13nodeckt")
+
+    def __post_init_(self):
+        if self.run_realtime:
+            self.interval = "1"
+            if not self.publish_period:
+                self.publish_period = "3"
+        else:
+            if not self.interval:
+                self.interval = "60"
+            if not self.publish_period:
+                self.publish_period = "60"
 
 
 @dataclass
