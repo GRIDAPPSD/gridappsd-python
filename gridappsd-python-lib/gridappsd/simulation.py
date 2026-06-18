@@ -58,8 +58,8 @@ class ModelCreationConfig(ConfigBase):
 class SimulationArgs(ConfigBase):
     start_time: str = field(default="1655321830")
     duration: str = field(default="300")
-    timestep_frequency: str = field(default="1000")
-    timestep_increment: str = field(default="1000")
+    publish_period: str = field(default="60")
+    interval: str = field(default="60")
     run_realtime: bool = field(default=True)
     pause_after_measurements: bool = field(default=False)
     simulation_name: str = field(default="ieee13nodeckt")
