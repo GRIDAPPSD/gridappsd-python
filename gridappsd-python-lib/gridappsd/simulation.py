@@ -42,11 +42,11 @@ class ConfigBase:
 
 @dataclass
 class ModelCreationConfig(ConfigBase):
-    load_scaling_factor: str = field(default="1")
+    load_scaling_factor: float = field(default=1)
     schedule_name: str = field(default="ieeezipload")
-    z_fraction: str = field(default="0")
-    i_fraction: str = field(default="1")
-    p_fraction: str = field(default="0")
+    z_fraction: float = field(default=0)
+    i_fraction: float = field(default=1)
+    p_fraction: float = field(default=0)
     randomize_zipload_fractions: bool = field(default=False)
     use_houses: bool = field(default=False)
 
@@ -56,24 +56,27 @@ class ModelCreationConfig(ConfigBase):
 
 @dataclass
 class SimulationArgs(ConfigBase):
-    start_time: str = field(default="1655321830")
-    duration: str = field(default="300")
-    publish_period: str = field(default=None)
-    interval: str = field(default=None)
+    start_time: int = field(default=1655321830)
+    duration: int = field(default=300)
+    publish_period: int = field(default=None)
+    interval: int = field(default=None)
     run_realtime: bool = field(default=True)
     pause_after_measurements: bool = field(default=False)
     simulation_name: str = field(default="ieee13nodeckt")
 
     def __post_init_(self):
         if self.run_realtime:
-            self.interval = "1"
+            self.interval = 1
             if not self.publish_period:
-                self.publish_period = "3"
+                self.publish_period = 3
         else:
             if not self.interval:
-                self.interval = "60"
+                self.interval = 60
             if not self.publish_period:
-                self.publish_period = "60"
+                self.publish_period = 60
+        if self.publish_period < self.interval:
+            raise RuntimeError("A simulation's publishing_period cannot be less than the simulation's timestep "
+                               f"interval. please make the publishing_period >= interval!")
 
 
 @dataclass
