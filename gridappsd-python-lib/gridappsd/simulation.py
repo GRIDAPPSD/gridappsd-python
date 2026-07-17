@@ -75,8 +75,10 @@ class SimulationArgs(ConfigBase):
             if not self.publish_period:
                 self.publish_period = 60
         if self.publish_period < self.interval:
-            raise RuntimeError("A simulation's publishing_period cannot be less than the simulation's timestep "
-                               "interval. please make the publishing_period >= interval!")
+            raise RuntimeError(
+                "A simulation's publishing_period cannot be less than the simulation's timestep "
+                "interval. please make the publishing_period >= interval!"
+            )
 
 
 @dataclass

@@ -38,6 +38,7 @@ def _set_application_status(status: ApplicationStatusEnum) -> None:
     """Write status to the GRIDAPPSD_APPLICATION_STATUS environment variable."""
     os.environ[GRIDAPPSD_APPLICATION_STATUS] = status.value
 
+
 # determine OS type
 posix = False
 if os.name == "posix":
