@@ -1,204 +1,128 @@
-# import json
-# import logging
-# import os
-# import threading
-# from queue import Queue
+"""Unit tests for gridappsd.goss.
 
-# import mock
-# import pytest
-# from time import sleep
+These tests exercise the pure argument-shape and serialization helpers
+directly. They do not require a live stomp broker: GOSS is constructed
+with attempt_connection=False where a GOSS/GridAPPSD instance is needed
+at all.
+"""
 
-# from gridappsd import GOSS
-# from gridappsd.docker_handler import get_docker_in_docker
-# from gridappsd.goss import GRIDAPPSD_ENV_ENUM
+import pytest
 
-# _log = logging.getLogger(__name__)
+from gridappsd.goss import _serialize_message, _unpack_stomp_args
 
-# def test_auth_raises_error_no_username_password(docker_dependencies):
-#     container = get_docker_in_docker()
-#     mockdict = {
-#         GRIDAPPSD_ENV_ENUM.GRIDAPPSD_USER.value: '',
-#         GRIDAPPSD_ENV_ENUM.GRIDAPPSD_PASSWORD.value: ''
-#     }
-#     if container:
-#         mockdict[GRIDAPPSD_ENV_ENUM.GRIDAPPSD_ADDRESS.value] = "gridappsd"
 
-#     with mock.patch.dict(os.environ, mockdict):
-#         with pytest.raises(ValueError) as ex:
-#             goss = GOSS()
+class _FakeFrame:
+    """Stand in for stomp-py 8.x's Frame object.
 
-#         with pytest.raises(ValueError) as ex:
-#             goss = GOSS(username="foo")
+    stomp-py 8.x calls a raw listener's on_message/on_error with a single
+    object exposing .headers and .body, instead of two positional
+    arguments. This fake reproduces that shape without depending on the
+    installed stomp-py version actually being 8.x.
+    """
 
-#         with pytest.raises(ValueError) as ex:
-#             goss = GOSS(password="bar")
+    def __init__(self, headers, body):
+        self.headers = headers
+        self.body = body
 
-# def test_get_response(caplog, goss_client):
-#     caplog.set_level(logging.DEBUG)
 
-#     def addem_callback(header, message):
-#         print("Addem callback")
-#         print("Threadid: {}".format(threading.current_thread().ident))
+class TestUnpackStompArgs:
+    """Parametrized coverage of both stomp callback argument shapes."""
 
-#         if isinstance(message, str):
-#             item = json.loads(message)
-#         else:
-#             item = message
-#         total = 0
-#         for x in item:
-#             total += x
+    def test_two_positional_args_stomp_pre_8(self):
+        headers = {"destination": "/topic/foo", "reply-to": "/temp-queue/bar"}
+        body = "hello world"
 
-#         reply_to = header['reply-to']
-#         response = dict(result=total)
-#         print("Sending back topic: {topic} {response}".format(topic=reply_to,
-#                                                               response=response))
-#         goss_client.send(reply_to, json.dumps(response))
+        unpacked_headers, unpacked_body = _unpack_stomp_args(headers, body)
 
-#     gen_sub = []
+        assert unpacked_headers == headers
+        assert unpacked_body == body
 
-#     def generic_subscription(header, message):
-#         gen_sub.append((header, message))
+    def test_two_positional_args_preserves_dict_body(self):
+        headers = {"destination": "/topic/foo"}
+        body = {"key": "value"}
 
-#     # Simulate an rpc call.
-#     goss_client.subscribe("/addem", addem_callback)
+        unpacked_headers, unpacked_body = _unpack_stomp_args(headers, body)
 
-#     goss_client.subscribe("foo", generic_subscription)
+        assert unpacked_headers is headers
+        assert unpacked_body is body
 
-#     # id_before = id(goss_client._conn)
-#     result = goss_client.get_response('/addem', [5, 6])
-#     assert result['result'] == 11
-#     # assert id_before == id(goss_client._conn)
+    def test_single_frame_object_stomp_8(self):
+        headers = {"destination": "/topic/foo", "reply-to": "/temp-queue/bar"}
+        body = "hello world"
+        frame = _FakeFrame(headers, body)
 
-#     goss_client.send("foo", str(result['result']))
+        unpacked_headers, unpacked_body = _unpack_stomp_args(frame)
 
-#     count = 0
-#     while True:
-#         sleep(0.1)
-#         count += 1
-#         if len(gen_sub) > 0 or count > 10:
-#             break
+        assert unpacked_headers == headers
+        assert unpacked_body == body
 
-#     assert gen_sub
-#     assert len(gen_sub) == 1
-#     assert len(gen_sub[0]) == 2
-#     assert result['result'] == 11
+    def test_single_frame_object_preserves_dict_body(self):
+        headers = {"destination": "/topic/foo"}
+        body = {"key": "value"}
+        frame = _FakeFrame(headers, body)
 
-# def test_send_receive(goss_client):
-#     message_queue = Queue()
+        unpacked_headers, unpacked_body = _unpack_stomp_args(frame)
 
-#     class MyListener(object):
-#         def on_message(self, headers, message):
-#             message_queue.put((headers, message))
+        assert unpacked_headers is headers
+        assert unpacked_body is body
 
-#     listener = MyListener()
-#     goss_client.subscribe('doah', listener)
-#     goss_client.send('doah', "I am a foo")
-#     sleep(0.5)
-#     assert message_queue.qsize() == 1
-#     header, message = message_queue.get()
-#     assert message == "I am a foo"
+    def test_single_tuple_falls_back_to_unpacking(self):
+        headers = {"destination": "/topic/foo"}
+        body = "plain body"
 
-# def test_callback_function(goss_client):
-#     message_queue1 = Queue()
+        unpacked_headers, unpacked_body = _unpack_stomp_args((headers, body))
 
-#     def callback1(headers, message):
-#         message_queue1.put((headers, message))
+        assert unpacked_headers == headers
+        assert unpacked_body == body
 
-#     goss_client.subscribe('foo', callback1)
-#     goss_client.send('foo', "I am a foo")
-#     sleep(0.5)
-#     assert message_queue1.qsize() == 1
-#     header, message = message_queue1.get()
-#     assert message == "I am a foo"
+    @pytest.mark.parametrize(
+        "args,expected_headers,expected_body",
+        [
+            (({"destination": "/topic/a"}, "body-a"), {"destination": "/topic/a"}, "body-a"),
+            (({"destination": "/topic/b"}, {"nested": 1}), {"destination": "/topic/b"}, {"nested": 1}),
+        ],
+    )
+    def test_two_arg_shape_parametrized(self, args, expected_headers, expected_body):
+        unpacked_headers, unpacked_body = _unpack_stomp_args(*args)
 
-# def test_multi_subscriptions(goss_client):
-#     message_queue1 = Queue()
-#     message_queue2 = Queue()
+        assert unpacked_headers == expected_headers
+        assert unpacked_body == expected_body
 
-#     def callback1(headers, message):
-#         print(f"mq1 {headers} {message}")
-#         message_queue1.put((headers, message))
+    @pytest.mark.parametrize(
+        "headers,body",
+        [
+            ({"destination": "/topic/c"}, "body-c"),
+            ({"destination": "/topic/d"}, {"nested": 2}),
+        ],
+    )
+    def test_frame_shape_parametrized(self, headers, body):
+        frame = _FakeFrame(headers, body)
 
-#     def callback2(headers, message):
-#         print(f"mq2 {headers} {message}")
-#         message_queue2.put((headers, message))
+        unpacked_headers, unpacked_body = _unpack_stomp_args(frame)
 
-#     goss_client.subscribe('bim', callback1)
-#     goss_client.subscribe('bar', callback2)
-#     sleep(0.5)
-#     goss_client.send('bim', "I am a foo")
-#     goss_client.send('bar', "I am a bar")
-#     sleep(0.5)
-#     assert message_queue1.qsize() == 1
-#     assert message_queue2.qsize() == 1
-#     header, message = message_queue1.get()
-#     assert message == "I am a foo"
-#     header, message = message_queue2.get()
-#     assert message == "I am a bar"
+        assert unpacked_headers == headers
+        assert unpacked_body == body
 
-# def test_multi_subscriptions_same_topic(goss_client):
-#     # pytest.xfail("Multiple topics can't be subscribed to the same topic at present.")
 
-#     message_queue1 = Queue()
-#     message_queue2 = Queue()
+class TestSerializeMessage:
+    def test_dict_is_serialized_to_json_string(self):
+        result = _serialize_message({"a": 1, "b": 2})
 
-#     def callback1(headers, message):
-#         print(f"handling callback1 {message} ")
-#         message_queue1.put((headers, message))
+        assert result == '{"a": 1, "b": 2}'
 
-#     def callback2(headers, message):
-#         print(f"handling callback2 {message} ")
-#         message_queue2.put((headers, message))
+    def test_list_is_serialized_to_json_string(self):
+        result = _serialize_message([1, 2, 3])
 
-#     indx1 = goss_client.subscribe('bim', callback1)
-#     goss_client.subscribe('bim', callback2)
-#     sleep(0.5)
-#     goss_client.send('bim', "I am a foo")
-#     goss_client.send('bim', "I am a bar")
-#     sleep(0.5)
-#     assert message_queue1.qsize() == 2
-#     assert message_queue2.qsize() == 2
-#     header, message = message_queue1.get()
-#     assert message == "I am a foo"
-#     header, message = message_queue1.get()
-#     assert message == "I am a bar"
-#     header, message = message_queue2.get()
-#     assert message == "I am a foo"
-#     header, message = message_queue2.get()
-#     assert message == "I am a bar"
+        assert result == "[1, 2, 3]"
 
-# def test_response_class(goss_client):
-#     message_queue = Queue()
+    def test_string_passes_through_unchanged(self):
+        result = _serialize_message("already a string")
 
-#     class SubListener:
-#         def on_message(self, header, message):
-#             message_queue.put((header, message))
+        assert result == "already a string"
 
-#     goss_client.subscribe("/topic/bar", SubListener())
-#     sleep(0.5)
-#     goss_client.send("/topic/bar", {"abc": "def"})
+    def test_bytes_pass_through_unchanged(self):
+        payload = b"already bytes"
 
-#     result = message_queue.get()
+        result = _serialize_message(payload)
 
-#     print(result)
-#     assert result
-#     assert 2 == len(result)
-
-#     assert dict(abc="def") == result[1]
-
-# def test_replace_subscription(caplog, goss_client):
-#     caplog.set_level(logging.DEBUG)
-#     original_queue = Queue()
-#     after_queue = Queue()
-
-#     def original_callback(headers, message):
-#         original_queue.put((headers, message))
-
-#     def after_callback(headers, message):
-#         after_queue.put((headers, message))
-
-#     goss_client.subscribe("woot", original_callback)
-#     goss_client.send("woot", "This is a message")
-#     sleep(0.5)
-
-#     assert original_queue.qsize() == 1
+        assert result is payload
