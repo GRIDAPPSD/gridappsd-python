@@ -5,9 +5,69 @@
 
 # import mock
 
-from gridappsd import GridAPPSD
+from gridappsd import GridAPPSD, ProcessStatusEnum
 
-#, topics as t, ProcessStatusEnum
+#, topics as t
+
+
+def _make_gappsd():
+    return GridAPPSD(attempt_connection=False, username="u", password="p")
+
+
+class TestApplicationAndServiceStatusShareState:
+    """Unit coverage for the semantics the commented out test_gridappsd_status
+    integration stub below documents: set_application_status and
+    set_service_status both mutate the same shared _process_status field,
+    and an invalid status string is silently ignored (with a warning), not
+    raised, leaving the old value in place. No live broker is required:
+    GridAPPSD is constructed with attempt_connection=False.
+    """
+
+    def test_starts_in_starting_status(self):
+        gappsd = _make_gappsd()
+
+        assert gappsd.get_application_status() == ProcessStatusEnum.STARTING.value
+        assert gappsd.get_service_status() == ProcessStatusEnum.STARTING.value
+
+    def test_set_application_status_is_visible_through_service_status(self):
+        gappsd = _make_gappsd()
+
+        gappsd.set_application_status("RUNNING")
+
+        assert gappsd.get_service_status() == ProcessStatusEnum.RUNNING.value
+        assert gappsd.get_application_status() == ProcessStatusEnum.RUNNING.value
+
+    def test_set_service_status_is_visible_through_application_status(self):
+        gappsd = _make_gappsd()
+
+        gappsd.set_service_status("COMPLETE")
+
+        assert gappsd.get_service_status() == ProcessStatusEnum.COMPLETE.value
+        assert gappsd.get_application_status() == ProcessStatusEnum.COMPLETE.value
+
+    def test_invalid_service_status_is_ignored_and_retains_old_value(self, monkeypatch):
+        # The except ValueError branch in _set_status logs a warning, and the
+        # logger reads GRIDAPPSD_APPLICATION_ID to build the log record. In
+        # production app_registration.py sets this before app code runs; here
+        # it must be set explicitly so the warning path itself does not raise.
+        monkeypatch.setenv("GRIDAPPSD_APPLICATION_ID", "test-app-id")
+        gappsd = _make_gappsd()
+        gappsd.set_service_status("COMPLETE")
+
+        gappsd.set_service_status("Foo")
+
+        assert gappsd.get_service_status() == ProcessStatusEnum.COMPLETE.value
+        assert gappsd.get_application_status() == ProcessStatusEnum.COMPLETE.value
+
+    def test_invalid_application_status_is_ignored_and_retains_old_value(self, monkeypatch):
+        monkeypatch.setenv("GRIDAPPSD_APPLICATION_ID", "test-app-id")
+        gappsd = _make_gappsd()
+        gappsd.set_application_status("RUNNING")
+
+        gappsd.set_application_status("NotAValidStatus")
+
+        assert gappsd.get_application_status() == ProcessStatusEnum.RUNNING.value
+
 
     # def test_get_gridappsd_client(gridappsd_client: GridAPPSD):
     #     assert isinstance(gridappsd_client, GridAPPSD)

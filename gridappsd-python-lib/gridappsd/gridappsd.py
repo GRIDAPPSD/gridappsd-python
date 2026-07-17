@@ -116,29 +116,32 @@ class GridAPPSD(GOSS):
                 self._simulation_log_topic = t.simulation_log_topic(self._simulation_id)
         return self._simulation_id
 
-    def set_application_status(self, status):
-        """
-        Set the application status.
-        :param status:
+    def _set_status(self, status, kind):
+        """Set self._process_status, warning instead of raising on an invalid value.
+
+        :param status: candidate value for ProcessStatusEnum
+        :param kind: human readable label for the warning message, e.g. "application"
         """
         try:
             self._process_status = ProcessStatusEnum(status)
         except ValueError:
             self.get_logger().warning(
-                "Unsuccessful change of application status." + f"Valid statuses are {ProcessStatusEnum.__members__}."
+                f"Unsuccessful change of {kind} status." + f"Valid statuses are {ProcessStatusEnum.__members__}."
             )
+
+    def set_application_status(self, status):
+        """
+        Set the application status.
+        :param status:
+        """
+        self._set_status(status, "application")
 
     def set_service_status(self, status):
         """
         Set the service status.
         :param status:
         """
-        try:
-            self._process_status = ProcessStatusEnum(status)
-        except ValueError:
-            self.get_logger().warning(
-                "Unsuccessful change of service status." + f"Valid statuses are {ProcessStatusEnum.__members__}."
-            )
+        self._set_status(status, "service")
 
     def set_simulation_id(self, simulation_id):
         if simulation_id is None:
@@ -148,12 +151,16 @@ class GridAPPSD(GOSS):
             self._simulation_id = simulation_id
             self._simulation_log_topic = t.simulation_log_topic(self._simulation_id)
 
+    def _get_status(self):
+        """Return self._process_status as its plain string value."""
+        return self._process_status.value
+
     def get_application_status(self):
         """
         Return the application status
         :return:
         """
-        return self._process_status.value
+        return self._get_status()
 
     def get_application_id(self):
         return utils.get_gridappsd_application_id()
@@ -163,7 +170,7 @@ class GridAPPSD(GOSS):
         Return the service status
         :return:
         """
-        return self._process_status.value
+        return self._get_status()
 
     def query_object_types(self, model_id=None):
         """Allows the caller to query the different object types.
