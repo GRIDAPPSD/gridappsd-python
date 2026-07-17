@@ -52,6 +52,12 @@ class TestApplicationAndServiceStatusShareState:
         # it must be set explicitly so the warning path itself does not raise.
         monkeypatch.setenv("GRIDAPPSD_APPLICATION_ID", "test-app-id")
         gappsd = _make_gappsd()
+        # GOSS.send() calls _make_connection() unconditionally, even though
+        # this instance was constructed with attempt_connection=False, so the
+        # logger's warning path (get_logger().warning -> Logger.log ->
+        # self._gaps.send) would otherwise open a real stomp socket. Stub the
+        # network boundary, not the status logic under test.
+        monkeypatch.setattr(gappsd, "send", lambda topic, message: None)
         gappsd.set_service_status("COMPLETE")
 
         gappsd.set_service_status("Foo")
@@ -62,6 +68,9 @@ class TestApplicationAndServiceStatusShareState:
     def test_invalid_application_status_is_ignored_and_retains_old_value(self, monkeypatch):
         monkeypatch.setenv("GRIDAPPSD_APPLICATION_ID", "test-app-id")
         gappsd = _make_gappsd()
+        # See the comment in test_invalid_service_status_is_ignored_and_retains_old_value:
+        # the warning path on an invalid status sends a log message over stomp.
+        monkeypatch.setattr(gappsd, "send", lambda topic, message: None)
         gappsd.set_application_status("RUNNING")
 
         gappsd.set_application_status("NotAValidStatus")
