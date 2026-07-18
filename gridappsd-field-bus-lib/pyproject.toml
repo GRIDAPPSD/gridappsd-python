@@ -17,7 +17,7 @@ authors = [
 keywords = ["gridappsd", "grid", "activemq", "powergrid", "simulation", "library"]
 dependencies = [
     "gridappsd-python>=2025.3.1a1",
-    "cim-graph>=0.4.3a6",
+    "cim-graph>=0.4.3a6,<0.5.0",
     "click>=8.1",
 ]
 
