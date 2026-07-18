@@ -33,13 +33,21 @@ from gridappsd_field_bus.field_interface.field_proxy_forwarder import FieldProxy
     show_default="from environment variable GRIDAPPSD_ADDRESS",
     help="Connection URL.",
 )
-def start_forwarder(username, password, connection_url):
+@click.option(
+    "--mrid",
+    default=lambda: os.getenv("GRIDAPPSD_FIELD_BUS_MRID"),
+    type=str,
+    metavar="MRID",
+    show_default="from environment variable GRIDAPPSD_FIELD_BUS_MRID",
+    help="mRID of the distribution area/substation to bridge for field bus forwarding.",
+)
+def start_forwarder(username, password, connection_url, mrid):
     """Start the field proxy forwarder with either a YAML configuration or cmd-line arguments."""
 
-    required = [username, password, connection_url]
+    required = [username, password, connection_url, mrid]
     if not all(required):
         click.echo(
-            "Username, password, and connection URL must be provided either through environment variables or command-line arguments."
+            "Username, password, connection URL, and mrid must be provided either through environment variables or command-line arguments."
         )
         click.Abort()
 
@@ -49,9 +57,14 @@ def start_forwarder(username, password, connection_url):
         click.Abort()
 
     # Use command-line arguments
-    click.echo(f"Using command line arguments: {username}, {password}, {connection_url}")
+    click.echo(f"Using command line arguments: {username}, {password}, {connection_url}, {mrid}")
 
-    FieldProxyForwarder(username, password, connection_url, None)
+    FieldProxyForwarder(
+        connection_url=connection_url,
+        username=username,
+        password=password,
+        mrid=mrid,
+    )
 
     time.sleep(0.1)
 
