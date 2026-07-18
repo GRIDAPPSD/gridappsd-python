@@ -46,38 +46,37 @@ class Query:
             self.last = n
         return self
 
+    def _add_filter(self, operator, value):
+        """Append a single {key, operator: value} filter for the current key.
+
+        :param operator: one of "ge", "le", "eq"
+        :param value: value to filter on
+        """
+        if self.key is None:
+            raise ValueError("Key is not specified. Call where_key first.")
+        self.queryFilter.append({"key": self.key, operator: value})
+        return self
+
     def ge(self, value):
         """Method to add 'value greater than or equal to' filter to a key.
 
         :param value:
         """
-        if self.key is None:
-            raise ValueError("Key is not specified. Call where_key first.")
-        obj = {"key": self.key, "ge": value}
-        self.queryFilter.append(obj)
-        return self
+        return self._add_filter("ge", value)
 
     def le(self, value):
         """Method to add 'value less than or equal to' filter to a key.
 
         :param value:
         """
-        if self.key is None:
-            raise ValueError("Key is not specified. Call where_key first.")
-        obj = {"key": self.key, "le": value}
-        self.queryFilter.append(obj)
-        return self
+        return self._add_filter("le", value)
 
     def eq(self, value):
         """Method to add 'value equal to' filter to a key.
 
         :param value:
         """
-        if self.key is None:
-            raise ValueError("Key is not specified. Call where_key first.")
-        obj = {"key": self.key, "eq": value}
-        self.queryFilter.append(obj)
-        return self
+        return self._add_filter("eq", value)
 
     def between(self, value1, value2):
         """Method to add 'value between' value1 and value2 filter to a key.
@@ -85,13 +84,8 @@ class Query:
         :param value1: defines 'greater than equal to' filter for key's value
         :param value2: defines 'less than equal to' filter for key's value
         """
-        if self.key is None:
-            raise ValueError("Key is not specified. Call where_key first.")
-        obj = {"key": self.key, "ge": value1}
-        self.queryFilter.append(obj)
-        obj = {"key": self.key, "le": value2}
-        self.queryFilter.append(obj)
-        return self
+        self._add_filter("ge", value1)
+        return self._add_filter("le", value2)
 
     def where_key(self, key):
         self.key = key

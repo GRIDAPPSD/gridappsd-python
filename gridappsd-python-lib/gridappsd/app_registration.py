@@ -1,6 +1,7 @@
 # import json
 import logging
 import os
+from enum import Enum
 from queue import Queue
 import time
 import subprocess
@@ -13,6 +14,30 @@ from .topics import REQUEST_REGISTER_APP
 from . import utils, json_extension as json
 
 _log = logging.getLogger(__name__)
+
+GRIDAPPSD_APPLICATION_STATUS = "GRIDAPPSD_APPLICATION_STATUS"
+
+
+class ApplicationStatusEnum(Enum):
+    """Values this module writes to the GRIDAPPSD_APPLICATION_STATUS environment variable.
+
+    This is a distinct enum from gridappsd.utils.ProcessStatusEnum: this module's
+    STOPPED value has no equivalent in ProcessStatusEnum (which has CLOSED
+    instead), so reusing that enum here would either drop STOPPED or introduce
+    a mismatch between the value written and the value a reader expects.
+    """
+
+    STARTING = "STARTING"
+    STOPPING = "STOPPING"
+    RUNNING = "RUNNING"
+    STOPPED = "STOPPED"
+    ERROR = "ERROR"
+
+
+def _set_application_status(status: ApplicationStatusEnum) -> None:
+    """Write status to the GRIDAPPSD_APPLICATION_STATUS environment variable."""
+    os.environ[GRIDAPPSD_APPLICATION_STATUS] = status.value
+
 
 # determine OS type
 posix = False
@@ -35,20 +60,20 @@ class Job(threading.Thread):
     def run(self):
         try:
             self.running = True
-            os.environ["GRIDAPPSD_APPLICATION_STATUS"] = "RUNNING"
+            _set_application_status(ApplicationStatusEnum.RUNNING)
 
             p = subprocess.Popen(args=self._args, shell=False, stdout=self._out, stderr=self._err)
 
             # Loop while process is executing
             while p.poll() is None and self.running:
-                os.environ["GRIDAPPSD_APPLICATION_STATUS"] = "RUNNING"
+                _set_application_status(ApplicationStatusEnum.RUNNING)
                 time.sleep(1)
 
         except Exception as e:
-            os.environ["GRIDAPPSD_APPLICATION_STATUS"] = "ERROR"
+            _set_application_status(ApplicationStatusEnum.ERROR)
             _log.error(repr(e))
         else:
-            os.environ["GRIDAPPSD_APPLICATION_STATUS"] = "STOPPED"
+            _set_application_status(ApplicationStatusEnum.STOPPED)
 
 
 class ApplicationController(object):
@@ -58,7 +83,7 @@ class ApplicationController(object):
         if not isinstance(gridappsd, GridAPPSD):
             raise ValueError("Invalid gridappsd instance passed.")
 
-        os.environ["GRIDAPPSD_APPLICATION_STATUS"] = "STOPPED"
+        _set_application_status(ApplicationStatusEnum.STOPPED)
         self._configDict = config.copy()
         self._validate_config()
         self._gapd = gridappsd
@@ -80,7 +105,7 @@ class ApplicationController(object):
         self._end_callback = None
         self._print_queue = Queue()
         self._heartbeat_thread = None
-        os.environ["GRIDAPPSD_APPLICATION_STATUS"] = "STOPPED"
+        _set_application_status(ApplicationStatusEnum.STOPPED)
 
         if "type" not in self._configDict or self._configDict["type"] != "REMOTE":
             _log.warning(
@@ -119,7 +144,7 @@ class ApplicationController(object):
         self._stop_control_topic = response.get("stopControlTopic")
 
         os.environ["GRIDAPPSD_APPLICATION_ID"] = self._application_id
-        os.environ["GRIDAPPSD_APPLICATION_STATUS"] = "STOPPED"
+        _set_application_status(ApplicationStatusEnum.STOPPED)
 
         self._gapd.subscribe(self._stop_control_topic, self.__handle_stop)
         self._gapd.subscribe(self._start_control_topic, self.__handle_start)
@@ -160,7 +185,7 @@ class ApplicationController(object):
             obj = json.loads(message)
         else:
             obj = message
-        os.environ["GRIDAPPSD_APPLICATION_STATUS"] = "STARTING"
+        _set_application_status(ApplicationStatusEnum.STARTING)
         self._gapd.get_logger().debug("Handling Start: {}\ndict:\n{}".format(headers, obj))
 
         if "command" not in obj:
@@ -176,12 +201,12 @@ class ApplicationController(object):
 
     def __handle_stop(self, headers, message):
         print("Handling Stop: {} {}".format(headers, message))
-        os.environ["GRIDAPPSD_APPLICATION_STATUS"] = "STOPPING"
+        _set_application_status(ApplicationStatusEnum.STOPPING)
         if self._thread:
             self._thread.join()
         if self._end_callback is not None:
             self._end_callback()
-        os.environ["GRIDAPPSD_APPLICATION_STATUS"] = "STOPPED"
+        _set_application_status(ApplicationStatusEnum.STOPPED)
 
     def shutdown(self):
         self._shutting_down = True

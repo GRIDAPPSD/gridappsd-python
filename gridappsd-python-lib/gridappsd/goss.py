@@ -57,7 +57,6 @@ from enum import Enum
 from logging import Logger
 from queue import Queue
 
-import stomp as _stomp_module
 from stomp import Connection12 as Connection
 from stomp.exception import NotConnectedException
 from time import sleep
@@ -66,19 +65,41 @@ from gridappsd import json_extension as json
 
 _log: Logger = logging.getLogger(inspect.getmodulename(__file__))
 
-# stomp.py 8.x changed listener callbacks from (headers, body) to (frame)
-_stomp_major = (
-    int(getattr(_stomp_module, "__version__", (0,))[0])
-    if isinstance(getattr(_stomp_module, "__version__", None), tuple)
-    else 0
-)
-try:
-    from importlib.metadata import version as _pkg_version
 
-    _stomp_major = int(_pkg_version("stomp-py").split(".")[0])
-except Exception:
-    pass
-_STOMP_V8 = _stomp_major >= 8
+def _unpack_stomp_args(*args):
+    """Return (headers, body) from a stomp listener callback's arguments.
+
+    stomp-py pre 8.x, and this module's own CallbackRouter dispatch, call
+    on_message/on_error with two positional arguments: headers and body.
+    stomp-py 8.x's raw listener protocol calls with a single Frame object
+    exposing .headers and .body instead. A listener reached through
+    CallbackRouter (any listener registered via subscribe()) always
+    receives the two argument shape, regardless of the installed stomp-py
+    version, because CallbackRouter.run_callbacks is the caller, not
+    stomp itself. Only a listener registered directly on a raw stomp
+    Connection (CallbackRouter itself, TokenResponseListener) is actually
+    invoked by stomp's own version dependent dispatch. Detecting the
+    argument shape at each call, instead of trusting a single global
+    version sniffed flag, is correct for both callers.
+    """
+    if len(args) >= 2:
+        return args[0], args[1]
+    frame = args[0]
+    if hasattr(frame, "headers") and hasattr(frame, "body"):
+        return frame.headers, frame.body
+    headers, body = frame
+    return headers, body
+
+
+def _serialize_message(message):
+    """Return message ready to send on the wire.
+
+    A list or dict body is serialized to a JSON string; any other body
+    (already a string, bytes, etc.) is passed through unchanged.
+    """
+    if isinstance(message, (list, dict)):
+        return json.dumps(message)
+    return message
 
 
 class GRIDAPPSD_ENV_ENUM(Enum):
@@ -168,8 +189,7 @@ class GOSS(object):
 
     def send(self, topic, message):
         self._make_connection()
-        if isinstance(message, list) or isinstance(message, dict):
-            message = json.dumps(message)
+        message = _serialize_message(message)
         _log.debug("Sending topic: {} body: {}".format(topic, message))
         self._conn.send(
             body=message, destination=topic, headers={"GOSS_HAS_SUBJECT": True, "GOSS_SUBJECT": self.__token}
@@ -185,11 +205,8 @@ class GOSS(object):
         if "resultFormat" in message:
             self.result_format = message["resultFormat"]
 
-        # Change message to string if we have a dictionary.
-        if isinstance(message, dict):
-            message = json.dumps(message)
-        elif isinstance(message, list):
-            message = json.dumps(message)
+        # Change message to string if we have a dictionary or list.
+        message = _serialize_message(message)
 
         class ResponseListener(object):
             def __init__(self, topic, result_format):
@@ -198,11 +215,7 @@ class GOSS(object):
                 self.result_format = result_format
 
             def on_message(self, *args):
-                if _STOMP_V8:
-                    frame = args[0]
-                    header, message = frame.headers, frame.body
-                else:
-                    header, message = args[0], args[1]
+                header, message = _unpack_stomp_args(*args)
                 _log.debug("Internal on message is: {} {}".format(header, message))
                 try:
                     if self.result_format == "JSON":
@@ -216,11 +229,7 @@ class GOSS(object):
                     self.response = dict(error="Invalid json returned", header=header, message=message)
 
             def on_error(self, *args):
-                if _STOMP_V8:
-                    frame = args[0]
-                    headers, message = frame.headers, frame.body
-                else:
-                    headers, message = args[0], args[1]
+                headers, message = _unpack_stomp_args(*args)
                 _log.error("ERR: {}".format(headers))
                 _log.error("OUR ERROR: {}".format(message))
 
@@ -337,21 +346,13 @@ class GOSS(object):
                         return self.__token
 
                     def on_message(self, *args):
-                        if _STOMP_V8:
-                            frame = args[0]
-                            header, message = frame.headers, frame.body
-                        else:
-                            header, message = args[0], args[1]
+                        header, message = _unpack_stomp_args(*args)
                         _log.debug("Internal on message is: {} {}".format(header, message))
 
                         self.__token = str(message)
 
                     def on_error(self, *args):
-                        if _STOMP_V8:
-                            frame = args[0]
-                            headers, message = frame.headers, frame.body
-                        else:
-                            headers, message = args[0], args[1]
+                        headers, message = _unpack_stomp_args(*args)
                         _log.error("ERR: {}".format(headers))
                         _log.error("OUR ERROR: {}".format(message))
 
@@ -404,9 +405,10 @@ class CallbackRouter(object):
             cb, hdrs, msg = self._queue_callerback.get()
             try:
                 msg = json.loads(msg)
-            except:
+            except (TypeError, ValueError):
+                # msg was not JSON text (already a dict, or plain string body);
+                # pass it through unchanged rather than as a decode failure.
                 pass
-                # msg = message
 
             for c in cb:
                 c(hdrs, msg)
@@ -429,11 +431,7 @@ class CallbackRouter(object):
                 pass
 
     def on_message(self, *args):
-        if _STOMP_V8:
-            frame = args[0]
-            headers, message = frame.headers, frame.body
-        else:
-            headers, message = args[0], args[1]
+        headers, message = _unpack_stomp_args(*args)
         destination = headers["destination"]
         # _log.debug("Topic map keys are: {keys}".format(keys=self._topics_callback_map.keys()))
         if destination in self._topics_callback_map:
@@ -442,11 +440,7 @@ class CallbackRouter(object):
             _log.error("INVALID DESTINATION {destination}".format(destination=destination))
 
     def on_error(self, *args):
-        if _STOMP_V8:
-            frame = args[0]
-            header, message = frame.headers, frame.body
-        else:
-            header, message = args[0], args[1]
+        header, message = _unpack_stomp_args(*args)
         _log.error("Error in callback router")
         _log.error(header)
         _log.error(message)
