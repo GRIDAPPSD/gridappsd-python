@@ -278,7 +278,7 @@ class DistributedAgent:
         self.subscribe_to_messages()
         self.subscribe_to_requests()
 
-        #if "context_manager" not in self.app_id:
+        # if "context_manager" not in self.app_id:
         LocalContext.register_agent(self.downstream_message_bus, self.upstream_message_bus, self)
 
     def disconnect(self):
