@@ -40,13 +40,13 @@ jobs:
           fi
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Pixi
-        uses: prefix-dev/setup-pixi@v0.8.1
+        uses: prefix-dev/setup-pixi@v0.10.2
         with:
           pixi-version: v0.61.0
 
@@ -136,7 +136,7 @@ jobs:
         run: pixi run publish
 
       - name: Create GitHub Release
-        uses: ncipollo/release-action@v1.15.0
+        uses: ncipollo/release-action@v1.21.0
         with:
           artifacts: "dist/*.tar.gz,dist/*.whl"
           artifactErrorsFailBuild: true
@@ -183,18 +183,18 @@ jobs:
 
       # Docker build and push
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Login to Docker Hub
         if: github.repository_owner == 'GRIDAPPSD'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
       # Build default image (Python 3.12) with develop tag
       - name: Build and push Docker image (Python 3.12 - default)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: ${{ github.repository_owner == 'GRIDAPPSD' }}
@@ -211,7 +211,7 @@ jobs:
 
       # Build Python 3.10 variant
       - name: Build and push Docker image (Python 3.10)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: ${{ github.repository_owner == 'GRIDAPPSD' }}
@@ -226,7 +226,7 @@ jobs:
 
       # Build Python 3.11 variant
       - name: Build and push Docker image (Python 3.11)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: ${{ github.repository_owner == 'GRIDAPPSD' }}
