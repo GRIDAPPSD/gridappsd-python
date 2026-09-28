@@ -52,6 +52,7 @@ class LocalContext:
         request = {"request_type": "register_agent", "agent": agent.get_registration_details()}
         downstream_message_bus.send(t.context_request_queue(downstream_message_bus.id), request)
         upstream_message_bus.send(t.context_request_queue(upstream_message_bus.id), request)
+        upstream_message_bus.send("goss.gridappsd.process.request.field", request)
 
     @classmethod
     def get_agents(cls, downstream_message_bus: FieldMessageBus):

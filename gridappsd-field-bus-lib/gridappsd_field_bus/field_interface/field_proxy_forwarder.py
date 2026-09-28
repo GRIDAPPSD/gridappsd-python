@@ -14,8 +14,8 @@ except Exception:
 from cimgraph.databases import BlazegraphConnection
 from cimgraph.models import BusBranchModel
 
+import importlib
 import os
-import cimgraph.data_profile.cimhub_ufls as cim
 
 REQUEST_FIELD = ".".join((topics.PROCESS_PREFIX, "request.field"))
 
@@ -64,7 +64,16 @@ class FieldProxyForwarder:
     when direct connection is not possible.
     """
 
-    def __init__(self, connection_url: str, username: str, password: str, mrid: str):
+    def __init__(
+        self,
+        connection_url: str,
+        username: str,
+        password: str,
+        mrid: str,
+        cim_profile: str = os.environ.get("CIMG_CIM_PROFILE", "cimhub_2023"),
+    ):
+        self.cim = importlib.import_module("cimgraph.data_profile." + cim_profile)
+
         # Connect to OT
         self.ot_connection = GridAPPSD()
 
@@ -89,7 +98,7 @@ class FieldProxyForwarder:
         # Subscribe to messages on OT bus
         self.ot_connection.subscribe(topics.field_input_topic(), self.on_message_from_ot)
 
-        os.environ["CIMG_CIM_PROFILE"] = "cimhub_ufls"
+        os.environ["CIMG_CIM_PROFILE"] = cim_profile
         os.environ["CIMG_URL"] = "http://localhost:8889/bigdata/namespace/kb/sparql"
         os.environ["CIMG_DATABASE"] = "powergridmodel"
         os.environ["CIMG_NAMESPACE"] = "http://iec.ch/TC57/CIM100#"
@@ -97,12 +106,12 @@ class FieldProxyForwarder:
         os.environ["CIMG_USE_UNITS"] = "False"
 
         self.database = BlazegraphConnection()
-        distribution_area = cim.DistributionArea(mRID=mrid)
+        distribution_area = self.cim.DistributionArea(mRID=mrid)
         self.network = BusBranchModel(connection=self.database, container=distribution_area, distributed=False)
-        self.network.get_all_edges(cim.DistributionArea)
-        self.network.get_all_edges(cim.Substation)
+        self.network.get_all_edges(self.cim.DistributionArea)
+        self.network.get_all_edges(self.cim.Substation)
 
-        for substation in self.network.graph.get(cim.Substation, {}).values():
+        for substation in self.network.graph.get(self.cim.Substation, {}).values():
             mrid = substation.mRID  # type: ignore[attr-defined]
             print(f"Subscribing to Substation: /topic/goss.gridappsd.field.{mrid}")
             self.ot_connection.subscribe("/topic/goss.gridappsd.field." + mrid, self.on_message_from_ot)
