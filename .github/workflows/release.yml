@@ -72,7 +72,11 @@ jobs:
         run: pixi install
 
       - name: Run quality checks
-        run: pixi run check
+        run: |
+          pixi run lint
+          pixi run format-check
+          # py310 env matches mypy's python_version = 3.10 target
+          pixi run -e py310 typecheck
 
       - name: Run tests
         run: pixi run test-all
